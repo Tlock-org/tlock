@@ -1,0 +1,75 @@
+syntax = "proto3";
+package post.v1;
+
+import "cosmos/msg/v1/msg.proto";
+import "post/v1/genesis.proto";
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/rollchains/tlock/x/post/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams defines a governance operation for updating the parameters.
+  //
+  // Since: cosmos-sdk 0.47
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // SetServiceName allows a user to set their accounts name.
+  rpc SetServiceName(MsgSetServiceName) returns (MsgSetServiceNameResponse);
+
+  // CreatePost allows user to create a new post
+  rpc CreatePost(MsgCreatePost) returns (MsgCreatePostResponse);
+
+}
+
+// MsgSetServiceName defines the structure for setting a name.
+message MsgSetServiceName {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  string name = 2;
+}
+
+// MsgSetServiceNameResponse is an empty reply.
+message MsgSetServiceNameResponse {}
+
+// MsgCreatePost defines the structure for creating a new post
+message MsgCreatePost {
+  option (cosmos.msg.v1.signer) = "sender";
+  string postId = 1;
+  string title = 2;
+  string content = 3;
+  string sender = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  int64 timestamp = 5; // Unix timestamp in seconds or milliseconds，根据需求调整
+}
+
+// MsgCreatePostResponse is the response returned after creating a post
+message MsgCreatePostResponse {
+  string post_id = 1; // 唯一标识帖子ID
+}
+
+// MsgUpdateParams is the Msg/UpdateParams request type.
+//
+// Since: cosmos-sdk 0.47
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // authority is the address of the governance account.
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the parameters to update.
+  //
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+//
+// Since: cosmos-sdk 0.47
+message MsgUpdateParamsResponse {}

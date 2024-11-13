@@ -1,0 +1,168 @@
+{
+    "chains": [
+        {
+            "name": "tlock",
+            "chain_id": "localchain-1",
+            "docker_image": {
+                "repository": "tlock",
+                "version": "local",
+                "uid-gid": ""
+            },
+            "gas_prices": "0.0TOK",
+            "gas_adjustment": 2,
+            "genesis": {
+                "modify": [
+                    {
+                        "key": "app_state.gov.params.voting_period",
+                        "value": "10s"
+                    },
+                    {
+                        "key": "app_state.gov.params.max_deposit_period",
+                        "value": "10s"
+                    },
+                    {
+                        "key": "app_state.gov.params.min_deposit.0.denom",
+                        "value": "TOK"
+                    },
+                    {
+                        "key": "app_state.gov.params.min_deposit.0.amount",
+                        "value": "1"
+                    }
+                ],
+                "accounts": [
+                    {
+                        "name": "acc0",
+                        "amount": "25000000000%DENOM%",
+                        "address": "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p",
+                        "mnemonic": "decorate bright ozone fork gallery riot bus exhaust worth way bone indoor calm squirrel merry zero scheme cotton until shop any excess stage laundry"
+                    },
+                    {
+                        "name": "acc1",
+                        "amount": "24000000000%DENOM%",
+                        "address": "tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg",
+                        "mnemonic": "wealth flavor believe regret funny network recall kiss grape useless pepper cram hint member few certain unveil rather brick bargain curious require crowd raise"
+                    },
+                    {
+                        "name": "user0",
+                        "amount": "100000%DENOM%",
+                        "address": "tlock143avukuqats6x8ru42x5kpwgezwlece8qnyctu",
+                        "mnemonic": "float coconut lottery capable notice upper pulp resist useless lazy reunion ensure thought teach truck cycle sell proof volcano text robot elbow icon party"
+                    },
+                    {
+                        "name": "user1",
+                        "amount": "100000%DENOM%",
+                        "address": "tlock1pvzw4xd0ml7fq4hg09mmz0mzr3pc4lqq0u82gz",
+                        "mnemonic": "radar glue place nut equip buzz truly weather candy tube grief exit kiss casino great supreme feel crowd tomato deny rescue beauty lawsuit slide"
+                    }
+                ]
+            },
+            "config_file_overrides": [
+                {
+                    "file": "config/app.toml",
+                    "paths": {
+                        "api.enabled-unsafe-cors": true
+                    }
+                },
+                {
+                    "file": "config/config.toml",
+                    "paths": {
+                        "rpc.cors_allowed_origins": [
+                            "*"
+                        ]
+                    }
+                }
+            ],
+            "ibc_paths": [
+                "localchain-1_localchain-2"
+            ],
+            "number_vals": 1,
+            "number_node": 0,
+            "chain_type": "cosmos",
+            "coin_type": 118,
+            "binary": "tlockd",
+            "bech32_prefix": "tlock",
+            "denom": "TOK",
+            "trusting_period": "336h",
+            "debugging": false,
+            "block_time": "2000ms",
+            "host_port_override": {
+                "1317": "1317",
+                "26656": "26656",
+                "26657": "26657",
+                "9090": "9090"
+            },
+            "ics_version_override": {}
+        },
+        {
+            "name": "tlock",
+            "chain_id": "localchain-2",
+            "docker_image": {
+                "repository": "tlock",
+                "version": "local",
+                "uid-gid": ""
+            },
+            "gas_prices": "0.0TOK",
+            "gas_adjustment": 2,
+            "genesis": {
+                "modify": [
+                    {
+                        "key": "app_state.gov.params.voting_period",
+                        "value": "3s"
+                    },
+                    {
+                        "key": "app_state.gov.params.max_deposit_period",
+                        "value": "10s"
+                    },
+                    {
+                        "key": "app_state.gov.params.min_deposit.0.denom",
+                        "value": "TOK"
+                    },
+                    {
+                        "key": "app_state.gov.params.min_deposit.0.amount",
+                        "value": "1"
+                    }
+                ],
+                "accounts": [
+                    {
+                        "name": "acc0",
+                        "amount": "25000000000%DENOM%",
+                        "address": "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p",
+                        "mnemonic": "decorate bright ozone fork gallery riot bus exhaust worth way bone indoor calm squirrel merry zero scheme cotton until shop any excess stage laundry"
+                    },
+                    {
+                        "name": "acc1",
+                        "amount": "24000000000%DENOM%",
+                        "address": "tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg",
+                        "mnemonic": "wealth flavor believe regret funny network recall kiss grape useless pepper cram hint member few certain unveil rather brick bargain curious require crowd raise"
+                    },
+                    {
+                        "name": "user0",
+                        "amount": "100000%DENOM%",
+                        "address": "tlock1m0358jdttya25rvsrk63rvrha9yygccumvdnu0",
+                        "mnemonic": "lumber myself plastic total hockey crazy history bird denial seat machine warfare mobile drum predict wear learn silly elegant exhaust jacket shell off sponsor"
+                    },
+                    {
+                        "name": "user1",
+                        "amount": "100000%DENOM%",
+                        "address": "tlock10g8qxt2rtn4v8syhfz9pfyj2pvju7zqt2jzlu7",
+                        "mnemonic": "pumpkin fatigue garage dolphin motion rubber soup shallow wrap syrup away tragic debris shield traffic grant female sausage girl ketchup pulse major oak smile"
+                    }
+                ]
+            },
+            "ibc_paths": [
+                "localchain-1_localchain-2"
+            ],
+            "number_vals": 1,
+            "number_node": 0,
+            "chain_type": "cosmos",
+            "coin_type": 118,
+            "binary": "tlockd",
+            "bech32_prefix": "tlock",
+            "denom": "TOK",
+            "trusting_period": "336h",
+            "debugging": false,
+            "block_time": "2000ms",
+            "ics_version_override": {}
+        }
+    ]
+}
