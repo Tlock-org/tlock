@@ -1090,9 +1090,9 @@ func (app *ChainApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*
 	}
 
 	freeGrantModuleAccount := app.AccountKeeper.GetModuleAccount(ctx, posttypes.ModuleName)
-	if freeGrantModuleAccount != nil {
-		fmt.Printf("===================freeGrantModuleAccount address: %s\n", freeGrantModuleAccount.GetAddress())
-	}
+
+	fmt.Printf("===================freeGrantModuleAccount address: %s\n", freeGrantModuleAccount)
+
 	freeGrantErr := app.BankKeeper.MintCoins(ctx, feegrant.ModuleName, initialBalance)
 	if freeGrantErr != nil {
 		panic(freeGrantErr)
