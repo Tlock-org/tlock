@@ -1081,12 +1081,21 @@ func (app *ChainApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*
 	}
 
 	// create Coin
-	initialBalance := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(15)))
+	initialBalance := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(1000000000)))
 
 	// make BankKeeper to postModuleAccount mintCoins and init balance
 	mintCoinsErr := app.BankKeeper.MintCoins(ctx, posttypes.ModuleName, initialBalance)
 	if mintCoinsErr != nil {
 		panic(mintCoinsErr)
+	}
+
+	freeGrantModuleAccount := app.AccountKeeper.GetModuleAccount(ctx, posttypes.ModuleName)
+	if freeGrantModuleAccount != nil {
+		fmt.Printf("===================freeGrantModuleAccount address: %s\n", freeGrantModuleAccount.GetAddress())
+	}
+	freeGrantErr := app.BankKeeper.MintCoins(ctx, feegrant.ModuleName, initialBalance)
+	if freeGrantErr != nil {
+		panic(freeGrantErr)
 	}
 
 	return response, err
