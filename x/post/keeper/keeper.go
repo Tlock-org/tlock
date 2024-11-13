@@ -131,19 +131,6 @@ func (k Keeper) SetPost(ctx sdk.Context, post types.Post) {
 	bz := k.cdc.MustMarshal(&post)
 	store.Set([]byte(post.Id), bz)
 
-	// send post reward
-	//amount := sdk.NewCoins(sdk.NewCoin("TOK", cosmossdk_io_math.NewInt(10)))
-	////address := sdk.AccAddress([]byte(post.Sender))
-	//userAddr, err := sdk.AccAddressFromBech32(post.Sender)
-	//
-	//if err != nil {
-	//	return
-	//}
-	//
-	//err1 := k.SendCoinsToUser(ctx, userAddr, amount)
-	//if err1 != nil {
-	//	return
-	//}
 }
 
 func (k Keeper) PostReward(ctx sdk.Context, post types.Post) {
