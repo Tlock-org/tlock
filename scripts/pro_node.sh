@@ -11,7 +11,7 @@ export KEY2="node1"
 export CHAIN_ID=${CHAIN_ID:-10889}
 export MONIKER="tlock"
 export KEYALGO="secp256k1"
-export KEYRING=${KEYRING:-"test"}
+#export KEYRING=${KEYRING:-"test"}
 export HOME_DIR=$(eval echo "${HOME_DIR:-"~/.tlock"}")
 export BINARY=${BINARY:-tlockd}
 export DENOM=${DENOM:-TOK}
@@ -44,7 +44,7 @@ command -v jq > /dev/null 2>&1 || { echo >&2 "jq not installed. More info: https
 
 set_config() {
   $BINARY config set client chain-id $CHAIN_ID
-  $BINARY config set client keyring-backend $KEYRING
+#  $BINARY config set client keyring-backend $KEYRING
 }
 set_config
 
@@ -66,7 +66,8 @@ from_scratch () {
   add_key() {
     key=$1
     mnemonic=$2
-    echo $mnemonic | BINARY keys add $key --keyring-backend $KEYRING --algo $KEYALGO --recover
+#    echo $mnemonic | BINARY keys add $key --keyring-backend $KEYRING --algo $KEYALGO --recover
+    echo $mnemonic | BINARY keys add $key --algo $KEYALGO --recover
   }
 
   # tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg
@@ -77,41 +78,41 @@ from_scratch () {
   # chain initial setup
   BINARY init $MONIKER --chain-id $CHAIN_ID --default-denom $DENOM
 
-  update_test_genesis () {
+  update_genesis () {
     cat $HOME_DIR/config/genesis.json | jq "$1" > $HOME_DIR/config/tmp_genesis.json && mv $HOME_DIR/config/tmp_genesis.json $HOME_DIR/config/genesis.json
   }
 
   # === CORE MODULES ===
 
   # Block
-  update_test_genesis '.consensus_params["block"]["max_gas"]="100000000"'
+  update_genesis '.consensus_params["block"]["max_gas"]="100000000"'
 
   # Gov
-  update_test_genesis `printf '.app_state["gov"]["params"]["min_deposit"]=[{"denom":"%s","amount":"1000000"}]' $DENOM`
-  update_test_genesis '.app_state["gov"]["params"]["voting_period"]="30s"'
-  update_test_genesis '.app_state["gov"]["params"]["expedited_voting_period"]="15s"'
+  update_genesis `printf '.app_state["gov"]["params"]["min_deposit"]=[{"denom":"%s","amount":"1000000"}]' $DENOM`
+  update_genesis '.app_state["gov"]["params"]["voting_period"]="30s"'
+  update_genesis '.app_state["gov"]["params"]["expedited_voting_period"]="15s"'
 
   # staking
-  update_test_genesis `printf '.app_state["staking"]["params"]["bond_denom"]="%s"' $DENOM`
-  update_test_genesis '.app_state["staking"]["params"]["min_commission_rate"]="0.050000000000000000"'
+  update_genesis `printf '.app_state["staking"]["params"]["bond_denom"]="%s"' $DENOM`
+  update_genesis '.app_state["staking"]["params"]["min_commission_rate"]="0.050000000000000000"'
 
   # mint
-  update_test_genesis `printf '.app_state["mint"]["params"]["mint_denom"]="%s"' $DENOM`
+  update_genesis `printf '.app_state["mint"]["params"]["mint_denom"]="%s"' $DENOM`
 
   # crisis
-  update_test_genesis `printf '.app_state["crisis"]["constant_fee"]={"denom":"%s","amount":"1000"}' $DENOM`
+  update_genesis `printf '.app_state["crisis"]["constant_fee"]={"denom":"%s","amount":"1000"}' $DENOM`
 
   # === CUSTOM MODULES ===
   # tokenfactory
-  update_test_genesis '.app_state["tokenfactory"]["params"]["denom_creation_fee"]=[]'
-  update_test_genesis '.app_state["tokenfactory"]["params"]["denom_creation_gas_consume"]=100000'
+  update_genesis '.app_state["tokenfactory"]["params"]["denom_creation_fee"]=[]'
+  update_genesis '.app_state["tokenfactory"]["params"]["denom_creation_gas_consume"]=100000'
 
   # Allocate genesis accounts
-  BINARY genesis add-genesis-account $KEY 10000000$DENOM,900test --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $KEY2 10000000$DENOM,800test --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY 10000000$DENOM,900$DENOM --append
+  BINARY genesis add-genesis-account $KEY2 10000000$DENOM,800$DENOM --append
 
   # Sign genesis transaction
-  BINARY genesis gentx $KEY 1000000$DENOM --keyring-backend $KEYRING --chain-id $CHAIN_ID
+  BINARY genesis gentx $KEY 1000000$DENOM --chain-id $CHAIN_ID
 
   BINARY genesis collect-gentxs
 
@@ -156,6 +157,6 @@ sed -i -e 's/address = ":8080"/address = "0.0.0.0:'$ROSETTA'"/g' $HOME_DIR/confi
 sed -i -e 's/timeout_commit = "5s"/timeout_commit = "'$BLOCK_TIME'"/g' $HOME_DIR/config/config.toml
 
 # Start the node with 0 gas fees
-BINARY start --pruning=nothing  --minimum-gas-prices=0$DENOM --rpc.laddr="tcp://0.0.0.0:$RPC"
+BINARY start --pruning=nothing  --minimum-gas-prices=2$DENOM --rpc.laddr="tcp://0.0.0.0:$RPC"
 
 # check if CLEAN is no
