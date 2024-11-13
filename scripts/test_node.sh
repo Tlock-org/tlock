@@ -156,6 +156,6 @@ sed -i -e 's/address = ":8080"/address = "0.0.0.0:'$ROSETTA'"/g' $HOME_DIR/confi
 sed -i -e 's/timeout_commit = "5s"/timeout_commit = "'$BLOCK_TIME'"/g' $HOME_DIR/config/config.toml
 
 # Start the node with 0 gas fees
-BINARY start --pruning=nothing  --minimum-gas-prices=2$DENOM --rpc.laddr="tcp://0.0.0.0:$RPC"
+BINARY start --pruning=nothing  --minimum-gas-prices=0.000001$DENOM --rpc.laddr="tcp://0.0.0.0:$RPC"
 
 # check if CLEAN is no
