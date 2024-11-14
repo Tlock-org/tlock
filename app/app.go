@@ -1092,19 +1092,6 @@ func (app *ChainApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*
 	if mintCoinsErr != nil {
 		panic(mintCoinsErr)
 	}
-	//freeGrantModuleAccount := app.AccountKeeper.GetModuleAccount(ctx, feegrant.ModuleName)
-	//if freeGrantModuleAccount == nil {
-	//	// if the module account is not exist, to create
-	//	freeGrantModuleAccount = authtypes.NewEmptyModuleAccount(feegrant.ModuleName, authtypes.Minter, authtypes.Burner)
-	//	app.AccountKeeper.SetModuleAccount(ctx, freeGrantModuleAccount)
-	//}
-	//
-	//fmt.Printf("===================freeGrantModuleAccount address: %s\n", freeGrantModuleAccount)
-	//
-	//freeGrantErr := app.BankKeeper.MintCoins(ctx, feegrant.ModuleName, initialBalance)
-	//if freeGrantErr != nil {
-	//	panic(freeGrantErr)
-	//}
 
 	return response, err
 }
