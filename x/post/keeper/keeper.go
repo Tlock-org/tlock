@@ -169,6 +169,7 @@ func (k Keeper) generatePostID(ctx sdk.Context) string {
 	// Use the current block time and a counter or other mechanism
 	timestamp := ctx.BlockTime().UnixNano()
 	return fmt.Sprintf("post-%d", timestamp)
+
 }
 
 // get post module address
