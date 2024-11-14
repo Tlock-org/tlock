@@ -2,13 +2,17 @@ package keeper
 
 import (
 	"context"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
+	kvtypes "cosmossdk.io/store/types"
+	"cosmossdk.io/x/feegrant"
+	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"time"
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -17,8 +21,6 @@ import (
 	storetypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	"cosmossdk.io/orm/model/ormdb"
-
-	kvtypes "cosmossdk.io/store/types"
 	apiv1 "github.com/rollchains/tlock/api/post/v1"
 	"github.com/rollchains/tlock/x/post/types"
 
@@ -39,8 +41,8 @@ type Keeper struct {
 	storeKey      kvtypes.StoreKey
 	AccountKeeper authkeeper.AccountKeeper
 	bankKeeper    bankkeeper.Keeper
-
-	authority string
+	feeKeeper     feegrantkeeper.Keeper
+	authority     string
 }
 
 // NewKeeper creates a new Keeper instance
@@ -52,6 +54,7 @@ func NewKeeper(
 	authority string,
 	ak authkeeper.AccountKeeper,
 	bk bankkeeper.Keeper,
+	feeKeeper feegrantkeeper.Keeper,
 ) Keeper {
 	logger = logger.With(log.ModuleKey, "x/"+types.ModuleName)
 
@@ -182,4 +185,29 @@ func (k Keeper) SendCoinsToUser(ctx sdk.Context, userAddr sdk.AccAddress, amount
 	moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
 	fmt.Printf("==============types.ModuleName: [%s], =moduleAddress: [%s]", types.ModuleName, moduleAddress)
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userAddr, amount)
+}
+
+func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
+	now := ctx.BlockTime()
+	oneHour := now.Add(1 * time.Hour)
+	oneDay := now.Add(24 * time.Hour)
+	period := 24 * time.Hour
+	spendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(3)))
+	// create a basic allowance
+	allowance := feegrant.BasicAllowance{
+		spendLimit,
+		&oneHour,
+	}
+
+	// create a periodic allowance
+	periodicAllowance := &feegrant.PeriodicAllowance{
+		allowance,
+		period,
+		spendLimit,
+		spendLimit,
+		oneDay,
+	}
+
+	k.feeKeeper.GrantAllowance(ctx, k.AccountKeeper.GetModuleAddress(types.ModuleName), userAddr, periodicAllowance)
+
 }

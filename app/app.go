@@ -618,6 +618,7 @@ func NewChainApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.AccountKeeper,
 		app.BankKeeper,
+		app.FeeGrantKeeper,
 	)
 
 	// post module account permissions
