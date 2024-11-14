@@ -196,7 +196,7 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 	// create a basic allowance
 	allowance := feegrant.BasicAllowance{
 		spendLimit,
-		&oneHour,
+		&oneDay,
 	}
 
 	// create a periodic allowance
@@ -205,7 +205,7 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 		period,
 		spendLimit,
 		spendLimit,
-		oneDay,
+		oneHour,
 	}
 
 	k.feeKeeper.GrantAllowance(ctx, k.AccountKeeper.GetModuleAddress(types.ModuleName), userAddr, periodicAllowance)
