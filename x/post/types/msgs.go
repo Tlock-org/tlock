@@ -21,7 +21,7 @@ func NewMsgCreatePost(title, content, sender string, timestamp int64) *MsgCreate
 
 func NewMsgSetApprove(address string) *MsgSetApprove {
 	return &MsgSetApprove{
-		Address: Address,
+		Address: address,
 	}
 }
 
