@@ -214,11 +214,11 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 	}
 	fmt.Printf("=============periodicAllowance: %v\n", periodicAllowance)
 
-	//granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
-	granter, _ := sdk.AccAddressFromBech32("tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg")
+	granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+	//granter, _ := sdk.AccAddressFromBech32("tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg")
 	grantee := userAddr
 
-	err := k.FeeGrantKeeper.GrantAllowance(ctx, grantee, granter, periodicAllowance)
+	err := k.FeeGrantKeeper.GrantAllowance(ctx, granter, grantee, periodicAllowance)
 	if err != nil {
 		ctx.Logger().Error("Failed to grant allowance", "error", err)
 		return
