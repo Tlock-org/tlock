@@ -192,29 +192,34 @@ func (k Keeper) SendCoinsToUser(ctx sdk.Context, userAddr sdk.AccAddress, amount
 
 func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 	now := ctx.BlockTime()
-	oneHour := now.Add(1 * time.Hour)
+	//oneHour := now.Add(1 * time.Hour)
 	oneDay := now.Add(24 * time.Hour)
 	period := 24 * time.Hour
+	totalSpendLimit := sdk.NewCoins(sdk.NewCoin("TOK", cosmossdk_io_math.NewInt(10)))
 	spendLimit := sdk.NewCoins(sdk.NewCoin("TOK", cosmossdk_io_math.NewInt(3)))
 	// create a basic allowance
 	allowance := feegrant.BasicAllowance{
-		SpendLimit: spendLimit,
+		SpendLimit: totalSpendLimit,
 		Expiration: &oneDay,
 	}
 
-	fmt.Printf("=============allowance: %s\n", allowance)
+	fmt.Printf("=============allowance: %v\n", allowance)
 	// create a periodic allowance
 	periodicAllowance := &feegrant.PeriodicAllowance{
 		Basic:            allowance,
 		Period:           period,
 		PeriodSpendLimit: spendLimit,
 		PeriodCanSpend:   spendLimit,
-		PeriodReset:      oneHour,
+		PeriodReset:      now.Add(period),
 	}
-	fmt.Printf("=============periodicAllowance: %s\n", periodicAllowance)
+	fmt.Printf("=============periodicAllowance: %v\n", periodicAllowance)
 
-	err := k.FeeGrantKeeper.GrantAllowance(ctx, k.AccountKeeper.GetModuleAddress(types.ModuleName), userAddr, periodicAllowance)
+	granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+	grantee := userAddr
+
+	err := k.FeeGrantKeeper.GrantAllowance(ctx, grantee, granter, periodicAllowance)
 	if err != nil {
+		ctx.Logger().Error("Failed to grant allowance", "error", err)
 		return
 	}
 
