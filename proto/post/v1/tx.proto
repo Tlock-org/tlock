@@ -81,4 +81,6 @@ message MsgSetApprove {
   string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
-message MsgApproveResponse {}
+message MsgApproveResponse {
+  string status = 1;
+}
