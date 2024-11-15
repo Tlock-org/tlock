@@ -74,7 +74,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "SetApprove",
 					Use:       "SetApprove [sender]",
-					Short:     "create a new post",
+					Short:     "set approve",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "sender",
