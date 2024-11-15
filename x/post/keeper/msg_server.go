@@ -94,7 +94,7 @@ func (ms msgServer) SetApprove(goCtx context.Context, msg *types.MsgSetApprove) 
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	sender, err := sdk.AccAddressFromBech32(msg.Address)
+	sender, err := sdk.AccAddressFromBech32(msg.address)
 	if err != nil {
 		return &types.MsgApproveResponse{}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
 	}

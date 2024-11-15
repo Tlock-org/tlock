@@ -73,10 +73,10 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "SetApprove",
-					Use:       "set [userAddress]",
+					Use:       "set [address]",
 					Short:     "Set Approve",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "Address"},
+						{ProtoField: "address"},
 					},
 				},
 			},

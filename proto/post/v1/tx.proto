@@ -78,7 +78,7 @@ message MsgUpdateParamsResponse {}
 
 message MsgSetApprove {
   option (cosmos.msg.v1.signer) = "sender";
-  string Address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
 message MsgApproveResponse {
