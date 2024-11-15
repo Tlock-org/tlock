@@ -94,11 +94,11 @@ func (ms msgServer) SetApprove(goCtx context.Context, msg *types.MsgSetApprove) 
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	sender, err := sdk.AccAddressFromBech32(msg.address)
+	sender, err := sdk.AccAddressFromBech32(msg.Address)
 	if err != nil {
-		return &types.MsgApproveResponse{status: "failed"}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+		return &types.MsgApproveResponse{}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
 	}
 	ms.k.ApproveFeegrant(ctx, sender)
 
-	return &types.MsgApproveResponse{status: "success"}, nil
+	return &types.MsgApproveResponse{}, nil
 }
