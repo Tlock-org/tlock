@@ -3,15 +3,19 @@ package keeper
 import (
 	"context"
 	"cosmossdk.io/store/prefix"
+	"cosmossdk.io/x/feegrant"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"time"
 
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 
 	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/core/store"
@@ -35,10 +39,11 @@ type Keeper struct {
 	Params collections.Item[types.Params]
 	OrmDB  apiv1.StateStore
 
-	NameMapping   collections.Map[string, string]
-	storeKey      kvtypes.StoreKey
-	AccountKeeper authkeeper.AccountKeeper
-	bankKeeper    bankkeeper.Keeper
+	NameMapping    collections.Map[string, string]
+	storeKey       kvtypes.StoreKey
+	AccountKeeper  authkeeper.AccountKeeper
+	bankKeeper     bankkeeper.Keeper
+	FeeGrantKeeper feegrantkeeper.Keeper
 
 	authority string
 }
@@ -52,6 +57,7 @@ func NewKeeper(
 	authority string,
 	ak authkeeper.AccountKeeper,
 	bk bankkeeper.Keeper,
+	fk feegrantkeeper.Keeper,
 ) Keeper {
 	logger = logger.With(log.ModuleKey, "x/"+types.ModuleName)
 
@@ -78,10 +84,11 @@ func NewKeeper(
 		Params: collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		OrmDB:  store,
 
-		NameMapping:   collections.NewMap(sb, collections.NewPrefix(1), "name_mapping", collections.StringKey, collections.StringValue),
-		storeKey:      storeKey,
-		AccountKeeper: ak,
-		bankKeeper:    bk,
+		NameMapping:    collections.NewMap(sb, collections.NewPrefix(1), "name_mapping", collections.StringKey, collections.StringValue),
+		storeKey:       storeKey,
+		AccountKeeper:  ak,
+		bankKeeper:     bk,
+		FeeGrantKeeper: fk,
 
 		authority: authority,
 	}
@@ -181,4 +188,32 @@ func (k Keeper) SendCoinsToUser(ctx sdk.Context, userAddr sdk.AccAddress, amount
 	moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
 	fmt.Printf("==============types.ModuleName: [%s], =moduleAddress: [%s]", types.ModuleName, moduleAddress)
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userAddr, amount)
+}
+
+func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
+	now := ctx.BlockTime()
+	oneHour := now.Add(1 * time.Hour)
+	oneDay := now.Add(24 * time.Hour)
+	period := 24 * time.Hour
+	spendLimit := sdk.NewCoins(sdk.NewCoin("TOK", cosmossdk_io_math.NewInt(3)))
+	// create a basic allowance
+	allowance := feegrant.BasicAllowance{
+		SpendLimit: spendLimit,
+		Expiration: &oneDay,
+	}
+
+	// create a periodic allowance
+	periodicAllowance := &feegrant.PeriodicAllowance{
+		Basic:            allowance,
+		Period:           period,
+		PeriodSpendLimit: spendLimit,
+		PeriodCanSpend:   spendLimit,
+		PeriodReset:      oneHour,
+	}
+
+	err := k.FeeGrantKeeper.GrantAllowance(ctx, k.AccountKeeper.GetModuleAddress(types.ModuleName), userAddr, periodicAllowance)
+	if err != nil {
+		return
+	}
+
 }

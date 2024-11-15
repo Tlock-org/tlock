@@ -89,3 +89,17 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 
 	return &types.MsgCreatePostResponse{PostId: postID}, nil
 }
+
+// SetApprove implements types.MsgServer.
+func (ms msgServer) SetApprove(goCtx context.Context, msg *types.MsgSetApprove) (*types.MsgSetApproveResponse, error) {
+	// ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return &types.MsgSetApproveResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+	}
+	ms.k.ApproveFeegrant(ctx, sender)
+
+	return &types.MsgSetApproveResponse{Status: true}, nil
+}

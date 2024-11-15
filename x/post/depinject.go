@@ -2,6 +2,7 @@ package module
 
 import (
 	kvtypes "cosmossdk.io/store/types"
+	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -50,8 +51,9 @@ type ModuleInputs struct {
 	StakingKeeper  stakingkeeper.Keeper
 	SlashingKeeper slashingkeeper.Keeper
 
-	AccountKeeper authkeeper.AccountKeeper
-	BankKeeper    bankkeeper.Keeper
+	AccountKeeper  authkeeper.AccountKeeper
+	BankKeeper     bankkeeper.Keeper
+	FeeGrantKeeper feegrantkeeper.Keeper
 }
 
 type ModuleOutputs struct {
@@ -64,7 +66,7 @@ type ModuleOutputs struct {
 func ProvideModule(in ModuleInputs) ModuleOutputs {
 	govAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
-	k := keeper.NewKeeper(in.Cdc, in.storeKey, in.StoreService, log.NewLogger(os.Stderr), govAddr, in.AccountKeeper, in.BankKeeper)
+	k := keeper.NewKeeper(in.Cdc, in.storeKey, in.StoreService, log.NewLogger(os.Stderr), govAddr, in.AccountKeeper, in.BankKeeper, in.FeeGrantKeeper)
 	m := NewAppModule(in.Cdc, k)
 
 	return ModuleOutputs{Module: m, Keeper: k, Out: depinject.Out{}}

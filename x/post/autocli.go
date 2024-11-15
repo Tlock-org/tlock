@@ -71,6 +71,16 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					RpcMethod: "UpdateParams",
 					Skip:      false, // set to true if authority gated
 				},
+				{
+					RpcMethod: "SetApprove",
+					Use:       "SetApprove [sender]",
+					Short:     "create a new post",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "sender",
+						},
+					},
+				},
 			},
 		},
 	}
