@@ -217,7 +217,7 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 	granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
 	grantee := userAddr
 
-	err := k.FeeGrantKeeper.GrantAllowance(ctx, granter, grantee, periodicAllowance)
+	err := k.FeeGrantKeeper.GrantAllowance(ctx, grantee, granter, periodicAllowance)
 	if err != nil {
 		ctx.Logger().Error("Failed to grant allowance", "error", err)
 		return
