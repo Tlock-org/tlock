@@ -19,12 +19,6 @@ func NewMsgCreatePost(title, content, sender string, timestamp int64) *MsgCreate
 	}
 }
 
-func NewMsgSetApprove(address string) *MsgSetApprove {
-	return &MsgSetApprove{
-		Address: address,
-	}
-}
-
 // NewMsgUpdateParams creates new instance of MsgUpdateParams
 func NewMsgUpdateParams(
 	sender sdk.Address,
