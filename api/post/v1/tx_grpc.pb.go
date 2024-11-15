@@ -22,6 +22,7 @@ const (
 	Msg_UpdateParams_FullMethodName   = "/post.v1.Msg/UpdateParams"
 	Msg_SetServiceName_FullMethodName = "/post.v1.Msg/SetServiceName"
 	Msg_CreatePost_FullMethodName     = "/post.v1.Msg/CreatePost"
+	Msg_SetApprove_FullMethodName     = "/post.v1.Msg/SetApprove"
 )
 
 // MsgClient is the client API for Msg service.
@@ -36,6 +37,7 @@ type MsgClient interface {
 	SetServiceName(ctx context.Context, in *MsgSetServiceName, opts ...grpc.CallOption) (*MsgSetServiceNameResponse, error)
 	// CreatePost allows user to create a new post
 	CreatePost(ctx context.Context, in *MsgCreatePost, opts ...grpc.CallOption) (*MsgCreatePostResponse, error)
+	SetApprove(ctx context.Context, in *MsgSetApprove, opts ...grpc.CallOption) (*MsgApproveResponse, error)
 }
 
 type msgClient struct {
@@ -73,6 +75,15 @@ func (c *msgClient) CreatePost(ctx context.Context, in *MsgCreatePost, opts ...g
 	return out, nil
 }
 
+func (c *msgClient) SetApprove(ctx context.Context, in *MsgSetApprove, opts ...grpc.CallOption) (*MsgApproveResponse, error) {
+	out := new(MsgApproveResponse)
+	err := c.cc.Invoke(ctx, Msg_SetApprove_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility
@@ -85,6 +96,7 @@ type MsgServer interface {
 	SetServiceName(context.Context, *MsgSetServiceName) (*MsgSetServiceNameResponse, error)
 	// CreatePost allows user to create a new post
 	CreatePost(context.Context, *MsgCreatePost) (*MsgCreatePostResponse, error)
+	SetApprove(context.Context, *MsgSetApprove) (*MsgApproveResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -100,6 +112,9 @@ func (UnimplementedMsgServer) SetServiceName(context.Context, *MsgSetServiceName
 }
 func (UnimplementedMsgServer) CreatePost(context.Context, *MsgCreatePost) (*MsgCreatePostResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreatePost not implemented")
+}
+func (UnimplementedMsgServer) SetApprove(context.Context, *MsgSetApprove) (*MsgApproveResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetApprove not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 
@@ -168,6 +183,24 @@ func _Msg_CreatePost_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_SetApprove_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSetApprove)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).SetApprove(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_SetApprove_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).SetApprove(ctx, req.(*MsgSetApprove))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -186,6 +219,10 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreatePost",
 			Handler:    _Msg_CreatePost_Handler,
+		},
+		{
+			MethodName: "SetApprove",
+			Handler:    _Msg_SetApprove_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
