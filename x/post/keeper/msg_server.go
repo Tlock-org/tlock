@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -76,7 +77,7 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
 	// post reward
-	ms.k.PostReward(ctx, post)
+	//ms.k.PostReward(ctx, post)
 
 	// Emit an event for the creation
 	//ctx.EventManager().EmitEvent(
@@ -96,6 +97,7 @@ func (ms msgServer) SetApprove(goCtx context.Context, msg *types.MsgSetApprove) 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	fmt.Printf("====sender: %s\n", sender)
 	if err != nil {
 		return &types.MsgSetApproveResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
 	}

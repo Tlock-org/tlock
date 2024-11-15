@@ -73,7 +73,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "SetApprove",
-					Use:       "SetApprove [sender]",
+					Use:       "setApprove [sender]",
 					Short:     "set approve",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{

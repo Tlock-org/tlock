@@ -202,6 +202,7 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 		Expiration: &oneDay,
 	}
 
+	fmt.Printf("=============allowance: %s\n", allowance)
 	// create a periodic allowance
 	periodicAllowance := &feegrant.PeriodicAllowance{
 		Basic:            allowance,
@@ -210,6 +211,7 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 		PeriodCanSpend:   spendLimit,
 		PeriodReset:      oneHour,
 	}
+	fmt.Printf("=============periodicAllowance: %s\n", periodicAllowance)
 
 	err := k.FeeGrantKeeper.GrantAllowance(ctx, k.AccountKeeper.GetModuleAddress(types.ModuleName), userAddr, periodicAllowance)
 	if err != nil {
