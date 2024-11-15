@@ -76,7 +76,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Use:       "set [userAddress]",
 					Short:     "Set Approve",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "address"},
+						{ProtoField: "Address"},
 					},
 				},
 			},
