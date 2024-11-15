@@ -26,7 +26,7 @@ import (
 	apiv1 "github.com/rollchains/tlock/api/post/v1"
 	"github.com/rollchains/tlock/x/post/types"
 
-	cosmossdk_io_math "cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 )
 
 type Keeper struct {
@@ -142,7 +142,7 @@ func (k Keeper) SetPost(ctx sdk.Context, post types.Post) {
 
 func (k Keeper) PostReward(ctx sdk.Context, post types.Post) {
 	// send post reward
-	amount := sdk.NewCoins(sdk.NewCoin("TOK", cosmossdk_io_math.NewInt(10)))
+	amount := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(10)))
 	//address := sdk.AccAddress([]byte(post.Sender))
 	userAddr, err := sdk.AccAddressFromBech32(post.Sender)
 
@@ -195,8 +195,8 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 	//oneHour := now.Add(1 * time.Hour)
 	oneDay := now.Add(24 * time.Hour)
 	period := 24 * time.Hour
-	totalSpendLimit := sdk.NewCoins(sdk.NewCoin("TOK", cosmossdk_io_math.NewInt(10)))
-	spendLimit := sdk.NewCoins(sdk.NewCoin("TOK", cosmossdk_io_math.NewInt(3)))
+	totalSpendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(10)))
+	spendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(3)))
 	// create a basic allowance
 	allowance := feegrant.BasicAllowance{
 		SpendLimit: totalSpendLimit,
@@ -217,10 +217,16 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 	granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
 	grantee := userAddr
 
-	err := k.FeeGrantKeeper.GrantAllowance(ctx, grantee, granter, periodicAllowance)
+	err := k.FeeGrantKeeper.GrantAllowance(ctx, granter, grantee, periodicAllowance)
 	if err != nil {
 		ctx.Logger().Error("Failed to grant allowance", "error", err)
 		return
 	}
+
+	//coinsErr := k.bankKeeper.SendCoins(ctx, granter, k.FeeGrantKeeper.GetFeeAuthorityAddress(), sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(10))))
+	//if coinsErr != nil {
+	//	ctx.Logger().Error("Failed to grant allowance", "error", err)
+	//	return
+	//}
 
 }
