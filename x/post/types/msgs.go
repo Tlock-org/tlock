@@ -19,9 +19,9 @@ func NewMsgCreatePost(title, content, sender string, timestamp int64) *MsgCreate
 	}
 }
 
-func NewMsgSetApprove(address string) *MsgSetApprove {
+func NewMsgSetApprove(Address string) *MsgSetApprove {
 	return &MsgSetApprove{
-		Address: address,
+		Address: Address,
 	}
 }
 
