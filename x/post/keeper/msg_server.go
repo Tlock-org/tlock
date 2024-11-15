@@ -89,3 +89,16 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 
 	return &types.MsgCreatePostResponse{PostId: postID}, nil
 }
+
+func (ms msgServer) SetApprove(goCtx context.Context, add sdk.AccAddress) (string, error) {
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	sender, err := sdk.AccAddressFromBech32(add.String())
+	if err != nil {
+		return "failed", errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+	}
+	ms.k.ApproveFeegrant(ctx, sender)
+
+	return "succeed", nil
+}

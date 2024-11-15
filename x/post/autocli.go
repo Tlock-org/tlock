@@ -71,6 +71,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					RpcMethod: "UpdateParams",
 					Skip:      false, // set to true if authority gated
 				},
+				{
+					RpcMethod: "SetApprove",
+					Use:       "set [userAddress]",
+					Short:     "Set Approve",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "address"},
+					},
+				},
 			},
 		},
 	}
