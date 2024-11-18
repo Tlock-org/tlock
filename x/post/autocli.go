@@ -73,7 +73,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "setFeeGrantApprove",
-					Use:       "setApprove [userAddress]",
+					Use:       "setFeeGrantApprove [userAddress]",
 					Short:     "set feeGrant approve",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
