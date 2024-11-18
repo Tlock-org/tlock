@@ -195,7 +195,7 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 	//oneHour := now.Add(1 * time.Hour)
 	oneDay := now.Add(24 * time.Hour)
 	//period := 24 * time.Hour
-	period := 2 * time.Minute
+	period := 10 * time.Second
 	totalSpendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(5)))
 	spendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(2)))
 	// create a basic allowance
