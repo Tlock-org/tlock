@@ -77,6 +77,9 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Short:     "set feeGrant approve",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
+							ProtoField: "sender",
+						},
+						{
 							ProtoField: "userAddress",
 						},
 					},
