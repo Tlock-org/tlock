@@ -93,7 +93,6 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 
 // SetApprove implements types.MsgServer.
 func (ms msgServer) SetApprove(goCtx context.Context, msg *types.MsgSetFeeGrantApproveRequest) (*types.MsgSetFeeGrantApproveResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(goCtx)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender, senderErr := sdk.AccAddressFromBech32(msg.Sender)
