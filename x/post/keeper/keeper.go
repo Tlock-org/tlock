@@ -203,7 +203,6 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 		Expiration: &oneDay,
 	}
 
-	fmt.Printf("=============allowance: %v\n", allowance)
 	// create a periodic allowance
 	periodicAllowance := &feegrant.PeriodicAllowance{
 		Basic:            allowance,
@@ -212,7 +211,6 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 		PeriodCanSpend:   spendLimit,
 		PeriodReset:      now.Add(period),
 	}
-	fmt.Printf("=============periodicAllowance: %v\n", periodicAllowance)
 
 	granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
 	//granter, _ := sdk.AccAddressFromBech32("tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg")
@@ -223,11 +221,4 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 		ctx.Logger().Error("Failed to grant allowance", "error", err)
 		return
 	}
-
-	//coinsErr := k.bankKeeper.SendCoins(ctx, granter, k.FeeGrantKeeper.GetFeeAuthorityAddress(), sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(10))))
-	//if coinsErr != nil {
-	//	ctx.Logger().Error("Failed to grant allowance", "error", err)
-	//	return
-	//}
-
 }
