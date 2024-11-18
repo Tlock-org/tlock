@@ -24,7 +24,7 @@ service Msg {
   // CreatePost allows user to create a new post
   rpc CreatePost(MsgCreatePost) returns (MsgCreatePostResponse);
 
-  rpc setFeeGrantApprove(MsgSetFeeGrantApproveRequest) returns (MsgSetFeeGrantApproveResponse);
+  rpc SetFeeGrantApprove(MsgSetFeeGrantApproveRequest) returns (MsgSetFeeGrantApproveResponse);
 }
 
 // MsgSetServiceName defines the structure for setting a name.
