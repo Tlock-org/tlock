@@ -72,7 +72,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Skip:      false, // set to true if authority gated
 				},
 				{
-					RpcMethod: "setFeeGrantApprove",
+					RpcMethod: "SetFeeGrantApprove",
 					Use:       "setFeeGrantApprove [userAddress]",
 					Short:     "set feeGrant approve",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
