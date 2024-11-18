@@ -24,7 +24,7 @@ service Msg {
   // CreatePost allows user to create a new post
   rpc CreatePost(MsgCreatePost) returns (MsgCreatePostResponse);
 
-  rpc SetApprove(MsgSetApprove) returns (MsgSetApproveResponse);
+  rpc SetApprove(MsgSetFeeGrantApproveRequest) returns (MsgSetFeeGrantApproveResponse);
 }
 
 // MsgSetServiceName defines the structure for setting a name.
@@ -75,12 +75,13 @@ message MsgUpdateParams {
 // Since: cosmos-sdk 0.47
 message MsgUpdateParamsResponse {}
 
-message MsgSetApprove {
+message MsgSetFeeGrantApproveRequest {
   option (cosmos.msg.v1.signer) = "sender";
   string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string userAddress = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
 // MsgCreatePostResponse is the response returned after creating a post
-message MsgSetApproveResponse {
+message MsgSetFeeGrantApproveResponse {
   bool status = 1;
 }

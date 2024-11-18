@@ -7,10 +7,9 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"time"
-
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"time"
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -190,37 +189,52 @@ func (k Keeper) SendCoinsToUser(ctx sdk.Context, userAddr sdk.AccAddress, amount
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userAddr, amount)
 }
 
-func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
-	now := ctx.BlockTime()
-	//oneHour := now.Add(1 * time.Hour)
-	oneDay := now.Add(24 * time.Hour)
-	//oneDay := now.Add(10 * time.Second)
-	//period := 24 * time.Hour
-	period := 10 * time.Second
-	totalSpendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(5)))
-	spendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(2)))
-	// create a basic allowance
-	allowance := feegrant.BasicAllowance{
-		SpendLimit: totalSpendLimit,
-		Expiration: &oneDay,
+func (k Keeper) ApproveFeegrant(ctx sdk.Context, sender sdk.AccAddress, userAddr sdk.AccAddress) {
+	var flag = false
+
+	// Define a specific address
+	specificAddress := sdk.MustAccAddressFromBech32("tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg")
+
+	if sender.Equals(specificAddress) {
+		flag = true
 	}
 
-	// create a periodic allowance
-	periodicAllowance := &feegrant.PeriodicAllowance{
-		Basic:            allowance,
-		Period:           period,
-		PeriodSpendLimit: spendLimit,
-		PeriodCanSpend:   spendLimit,
-		PeriodReset:      now.Add(period),
-	}
+	if flag {
+		now := ctx.BlockTime()
+		//oneHour := now.Add(1 * time.Hour)
+		oneDay := now.Add(24 * time.Hour)
+		//oneDay := now.Add(10 * time.Second)
+		//period := 24 * time.Hour
+		period := 10 * time.Second
+		totalSpendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(5)))
+		spendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(2)))
+		// create a basic allowance
+		basicAllowance := feegrant.BasicAllowance{
+			SpendLimit: totalSpendLimit,
+			Expiration: &oneDay,
+		}
 
-	granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
-	//granter, _ := sdk.AccAddressFromBech32("tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg")
-	grantee := userAddr
+		// create a periodic allowance
+		periodicAllowance := &feegrant.PeriodicAllowance{
+			Basic:            basicAllowance,
+			Period:           period,
+			PeriodSpendLimit: spendLimit,
+			PeriodCanSpend:   spendLimit,
+			PeriodReset:      now.Add(period),
+		}
 
-	err := k.FeeGrantKeeper.GrantAllowance(ctx, granter, grantee, periodicAllowance)
-	if err != nil {
-		ctx.Logger().Error("Failed to grant allowance", "error", err)
+		granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+		//granter, _ := sdk.AccAddressFromBech32("tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg")
+		grantee := userAddr
+
+		err := k.FeeGrantKeeper.GrantAllowance(ctx, granter, grantee, periodicAllowance)
+		if err != nil {
+			ctx.Logger().Error("Failed to grant allowance", "error", err)
+			return
+		}
+	} else {
+		ctx.Logger().Error("Failed to grant allowance", "error", "=====")
 		return
 	}
+
 }
