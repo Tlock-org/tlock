@@ -193,7 +193,8 @@ func (k Keeper) SendCoinsToUser(ctx sdk.Context, userAddr sdk.AccAddress, amount
 func (k Keeper) ApproveFeegrant(ctx sdk.Context, userAddr sdk.AccAddress) {
 	now := ctx.BlockTime()
 	//oneHour := now.Add(1 * time.Hour)
-	oneDay := now.Add(24 * time.Hour)
+	//oneDay := now.Add(24 * time.Hour)
+	oneDay := now.Add(10 * time.Second)
 	//period := 24 * time.Hour
 	period := 10 * time.Second
 	totalSpendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(5)))
