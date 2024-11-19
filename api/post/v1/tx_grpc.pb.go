@@ -19,10 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Msg_UpdateParams_FullMethodName   = "/post.v1.Msg/UpdateParams"
-	Msg_SetServiceName_FullMethodName = "/post.v1.Msg/SetServiceName"
-	Msg_CreatePost_FullMethodName     = "/post.v1.Msg/CreatePost"
-	Msg_SetApprove_FullMethodName     = "/post.v1.Msg/SetApprove"
+	Msg_UpdateParams_FullMethodName       = "/post.v1.Msg/UpdateParams"
+	Msg_SetServiceName_FullMethodName     = "/post.v1.Msg/SetServiceName"
+	Msg_CreatePost_FullMethodName         = "/post.v1.Msg/CreatePost"
+	Msg_SetFeeGrantApprove_FullMethodName = "/post.v1.Msg/SetFeeGrantApprove"
 )
 
 // MsgClient is the client API for Msg service.
@@ -37,7 +37,7 @@ type MsgClient interface {
 	SetServiceName(ctx context.Context, in *MsgSetServiceName, opts ...grpc.CallOption) (*MsgSetServiceNameResponse, error)
 	// CreatePost allows user to create a new post
 	CreatePost(ctx context.Context, in *MsgCreatePost, opts ...grpc.CallOption) (*MsgCreatePostResponse, error)
-	SetApprove(ctx context.Context, in *MsgSetApprove, opts ...grpc.CallOption) (*MsgSetApproveResponse, error)
+	SetFeeGrantApprove(ctx context.Context, in *MsgSetFeeGrantApproveRequest, opts ...grpc.CallOption) (*MsgSetFeeGrantApproveResponse, error)
 }
 
 type msgClient struct {
@@ -75,9 +75,9 @@ func (c *msgClient) CreatePost(ctx context.Context, in *MsgCreatePost, opts ...g
 	return out, nil
 }
 
-func (c *msgClient) SetApprove(ctx context.Context, in *MsgSetApprove, opts ...grpc.CallOption) (*MsgSetApproveResponse, error) {
-	out := new(MsgSetApproveResponse)
-	err := c.cc.Invoke(ctx, Msg_SetApprove_FullMethodName, in, out, opts...)
+func (c *msgClient) SetFeeGrantApprove(ctx context.Context, in *MsgSetFeeGrantApproveRequest, opts ...grpc.CallOption) (*MsgSetFeeGrantApproveResponse, error) {
+	out := new(MsgSetFeeGrantApproveResponse)
+	err := c.cc.Invoke(ctx, Msg_SetFeeGrantApprove_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ type MsgServer interface {
 	SetServiceName(context.Context, *MsgSetServiceName) (*MsgSetServiceNameResponse, error)
 	// CreatePost allows user to create a new post
 	CreatePost(context.Context, *MsgCreatePost) (*MsgCreatePostResponse, error)
-	SetApprove(context.Context, *MsgSetApprove) (*MsgSetApproveResponse, error)
+	SetFeeGrantApprove(context.Context, *MsgSetFeeGrantApproveRequest) (*MsgSetFeeGrantApproveResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -113,8 +113,8 @@ func (UnimplementedMsgServer) SetServiceName(context.Context, *MsgSetServiceName
 func (UnimplementedMsgServer) CreatePost(context.Context, *MsgCreatePost) (*MsgCreatePostResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreatePost not implemented")
 }
-func (UnimplementedMsgServer) SetApprove(context.Context, *MsgSetApprove) (*MsgSetApproveResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetApprove not implemented")
+func (UnimplementedMsgServer) SetFeeGrantApprove(context.Context, *MsgSetFeeGrantApproveRequest) (*MsgSetFeeGrantApproveResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetFeeGrantApprove not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 
@@ -183,20 +183,20 @@ func _Msg_CreatePost_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_SetApprove_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgSetApprove)
+func _Msg_SetFeeGrantApprove_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSetFeeGrantApproveRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).SetApprove(ctx, in)
+		return srv.(MsgServer).SetFeeGrantApprove(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Msg_SetApprove_FullMethodName,
+		FullMethod: Msg_SetFeeGrantApprove_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).SetApprove(ctx, req.(*MsgSetApprove))
+		return srv.(MsgServer).SetFeeGrantApprove(ctx, req.(*MsgSetFeeGrantApproveRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -221,8 +221,8 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_CreatePost_Handler,
 		},
 		{
-			MethodName: "SetApprove",
-			Handler:    _Msg_SetApprove_Handler,
+			MethodName: "SetFeeGrantApprove",
+			Handler:    _Msg_SetFeeGrantApprove_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

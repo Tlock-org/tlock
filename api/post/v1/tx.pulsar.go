@@ -2792,25 +2792,27 @@ func (x *fastReflection_MsgUpdateParamsResponse) ProtoMethods() *protoiface.Meth
 }
 
 var (
-	md_MsgSetApprove        protoreflect.MessageDescriptor
-	fd_MsgSetApprove_sender protoreflect.FieldDescriptor
+	md_MsgSetFeeGrantApproveRequest             protoreflect.MessageDescriptor
+	fd_MsgSetFeeGrantApproveRequest_sender      protoreflect.FieldDescriptor
+	fd_MsgSetFeeGrantApproveRequest_userAddress protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_post_v1_tx_proto_init()
-	md_MsgSetApprove = File_post_v1_tx_proto.Messages().ByName("MsgSetApprove")
-	fd_MsgSetApprove_sender = md_MsgSetApprove.Fields().ByName("sender")
+	md_MsgSetFeeGrantApproveRequest = File_post_v1_tx_proto.Messages().ByName("MsgSetFeeGrantApproveRequest")
+	fd_MsgSetFeeGrantApproveRequest_sender = md_MsgSetFeeGrantApproveRequest.Fields().ByName("sender")
+	fd_MsgSetFeeGrantApproveRequest_userAddress = md_MsgSetFeeGrantApproveRequest.Fields().ByName("userAddress")
 }
 
-var _ protoreflect.Message = (*fastReflection_MsgSetApprove)(nil)
+var _ protoreflect.Message = (*fastReflection_MsgSetFeeGrantApproveRequest)(nil)
 
-type fastReflection_MsgSetApprove MsgSetApprove
+type fastReflection_MsgSetFeeGrantApproveRequest MsgSetFeeGrantApproveRequest
 
-func (x *MsgSetApprove) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_MsgSetApprove)(x)
+func (x *MsgSetFeeGrantApproveRequest) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgSetFeeGrantApproveRequest)(x)
 }
 
-func (x *MsgSetApprove) slowProtoReflect() protoreflect.Message {
+func (x *MsgSetFeeGrantApproveRequest) slowProtoReflect() protoreflect.Message {
 	mi := &file_post_v1_tx_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2822,43 +2824,43 @@ func (x *MsgSetApprove) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_MsgSetApprove_messageType fastReflection_MsgSetApprove_messageType
-var _ protoreflect.MessageType = fastReflection_MsgSetApprove_messageType{}
+var _fastReflection_MsgSetFeeGrantApproveRequest_messageType fastReflection_MsgSetFeeGrantApproveRequest_messageType
+var _ protoreflect.MessageType = fastReflection_MsgSetFeeGrantApproveRequest_messageType{}
 
-type fastReflection_MsgSetApprove_messageType struct{}
+type fastReflection_MsgSetFeeGrantApproveRequest_messageType struct{}
 
-func (x fastReflection_MsgSetApprove_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_MsgSetApprove)(nil)
+func (x fastReflection_MsgSetFeeGrantApproveRequest_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgSetFeeGrantApproveRequest)(nil)
 }
-func (x fastReflection_MsgSetApprove_messageType) New() protoreflect.Message {
-	return new(fastReflection_MsgSetApprove)
+func (x fastReflection_MsgSetFeeGrantApproveRequest_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgSetFeeGrantApproveRequest)
 }
-func (x fastReflection_MsgSetApprove_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgSetApprove
+func (x fastReflection_MsgSetFeeGrantApproveRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgSetFeeGrantApproveRequest
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_MsgSetApprove) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgSetApprove
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgSetFeeGrantApproveRequest
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_MsgSetApprove) Type() protoreflect.MessageType {
-	return _fastReflection_MsgSetApprove_messageType
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) Type() protoreflect.MessageType {
+	return _fastReflection_MsgSetFeeGrantApproveRequest_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_MsgSetApprove) New() protoreflect.Message {
-	return new(fastReflection_MsgSetApprove)
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) New() protoreflect.Message {
+	return new(fastReflection_MsgSetFeeGrantApproveRequest)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_MsgSetApprove) Interface() protoreflect.ProtoMessage {
-	return (*MsgSetApprove)(x)
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) Interface() protoreflect.ProtoMessage {
+	return (*MsgSetFeeGrantApproveRequest)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -2866,10 +2868,16 @@ func (x *fastReflection_MsgSetApprove) Interface() protoreflect.ProtoMessage {
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_MsgSetApprove) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
 	if x.Sender != "" {
 		value := protoreflect.ValueOfString(x.Sender)
-		if !f(fd_MsgSetApprove_sender, value) {
+		if !f(fd_MsgSetFeeGrantApproveRequest_sender, value) {
+			return
+		}
+	}
+	if x.UserAddress != "" {
+		value := protoreflect.ValueOfString(x.UserAddress)
+		if !f(fd_MsgSetFeeGrantApproveRequest_userAddress, value) {
 			return
 		}
 	}
@@ -2886,15 +2894,17 @@ func (x *fastReflection_MsgSetApprove) Range(f func(protoreflect.FieldDescriptor
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_MsgSetApprove) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "post.v1.MsgSetApprove.sender":
+	case "post.v1.MsgSetFeeGrantApproveRequest.sender":
 		return x.Sender != ""
+	case "post.v1.MsgSetFeeGrantApproveRequest.userAddress":
+		return x.UserAddress != ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetApprove"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetFeeGrantApproveRequest"))
 		}
-		panic(fmt.Errorf("message post.v1.MsgSetApprove does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message post.v1.MsgSetFeeGrantApproveRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2904,15 +2914,17 @@ func (x *fastReflection_MsgSetApprove) Has(fd protoreflect.FieldDescriptor) bool
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgSetApprove) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "post.v1.MsgSetApprove.sender":
+	case "post.v1.MsgSetFeeGrantApproveRequest.sender":
 		x.Sender = ""
+	case "post.v1.MsgSetFeeGrantApproveRequest.userAddress":
+		x.UserAddress = ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetApprove"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetFeeGrantApproveRequest"))
 		}
-		panic(fmt.Errorf("message post.v1.MsgSetApprove does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message post.v1.MsgSetFeeGrantApproveRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2922,16 +2934,19 @@ func (x *fastReflection_MsgSetApprove) Clear(fd protoreflect.FieldDescriptor) {
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_MsgSetApprove) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "post.v1.MsgSetApprove.sender":
+	case "post.v1.MsgSetFeeGrantApproveRequest.sender":
 		value := x.Sender
+		return protoreflect.ValueOfString(value)
+	case "post.v1.MsgSetFeeGrantApproveRequest.userAddress":
+		value := x.UserAddress
 		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetApprove"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetFeeGrantApproveRequest"))
 		}
-		panic(fmt.Errorf("message post.v1.MsgSetApprove does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message post.v1.MsgSetFeeGrantApproveRequest does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -2945,15 +2960,17 @@ func (x *fastReflection_MsgSetApprove) Get(descriptor protoreflect.FieldDescript
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgSetApprove) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "post.v1.MsgSetApprove.sender":
+	case "post.v1.MsgSetFeeGrantApproveRequest.sender":
 		x.Sender = value.Interface().(string)
+	case "post.v1.MsgSetFeeGrantApproveRequest.userAddress":
+		x.UserAddress = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetApprove"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetFeeGrantApproveRequest"))
 		}
-		panic(fmt.Errorf("message post.v1.MsgSetApprove does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message post.v1.MsgSetFeeGrantApproveRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2967,40 +2984,44 @@ func (x *fastReflection_MsgSetApprove) Set(fd protoreflect.FieldDescriptor, valu
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgSetApprove) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "post.v1.MsgSetApprove.sender":
-		panic(fmt.Errorf("field sender of message post.v1.MsgSetApprove is not mutable"))
+	case "post.v1.MsgSetFeeGrantApproveRequest.sender":
+		panic(fmt.Errorf("field sender of message post.v1.MsgSetFeeGrantApproveRequest is not mutable"))
+	case "post.v1.MsgSetFeeGrantApproveRequest.userAddress":
+		panic(fmt.Errorf("field userAddress of message post.v1.MsgSetFeeGrantApproveRequest is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetApprove"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetFeeGrantApproveRequest"))
 		}
-		panic(fmt.Errorf("message post.v1.MsgSetApprove does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message post.v1.MsgSetFeeGrantApproveRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_MsgSetApprove) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "post.v1.MsgSetApprove.sender":
+	case "post.v1.MsgSetFeeGrantApproveRequest.sender":
+		return protoreflect.ValueOfString("")
+	case "post.v1.MsgSetFeeGrantApproveRequest.userAddress":
 		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetApprove"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetFeeGrantApproveRequest"))
 		}
-		panic(fmt.Errorf("message post.v1.MsgSetApprove does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message post.v1.MsgSetFeeGrantApproveRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_MsgSetApprove) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in post.v1.MsgSetApprove", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in post.v1.MsgSetFeeGrantApproveRequest", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -3008,7 +3029,7 @@ func (x *fastReflection_MsgSetApprove) WhichOneof(d protoreflect.OneofDescriptor
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_MsgSetApprove) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -3019,7 +3040,7 @@ func (x *fastReflection_MsgSetApprove) GetUnknown() protoreflect.RawFields {
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgSetApprove) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -3031,7 +3052,7 @@ func (x *fastReflection_MsgSetApprove) SetUnknown(fields protoreflect.RawFields)
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_MsgSetApprove) IsValid() bool {
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) IsValid() bool {
 	return x != nil
 }
 
@@ -3041,9 +3062,9 @@ func (x *fastReflection_MsgSetApprove) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_MsgSetApprove) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_MsgSetFeeGrantApproveRequest) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*MsgSetApprove)
+		x := input.Message.Interface().(*MsgSetFeeGrantApproveRequest)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3059,6 +3080,10 @@ func (x *fastReflection_MsgSetApprove) ProtoMethods() *protoiface.Methods {
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		l = len(x.UserAddress)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -3069,7 +3094,7 @@ func (x *fastReflection_MsgSetApprove) ProtoMethods() *protoiface.Methods {
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*MsgSetApprove)
+		x := input.Message.Interface().(*MsgSetFeeGrantApproveRequest)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3087,6 +3112,13 @@ func (x *fastReflection_MsgSetApprove) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.UserAddress) > 0 {
+			i -= len(x.UserAddress)
+			copy(dAtA[i:], x.UserAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.UserAddress)))
+			i--
+			dAtA[i] = 0x12
 		}
 		if len(x.Sender) > 0 {
 			i -= len(x.Sender)
@@ -3106,7 +3138,7 @@ func (x *fastReflection_MsgSetApprove) ProtoMethods() *protoiface.Methods {
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*MsgSetApprove)
+		x := input.Message.Interface().(*MsgSetFeeGrantApproveRequest)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3138,10 +3170,10 @@ func (x *fastReflection_MsgSetApprove) ProtoMethods() *protoiface.Methods {
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgSetApprove: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgSetFeeGrantApproveRequest: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgSetApprove: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgSetFeeGrantApproveRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
@@ -3175,6 +3207,38 @@ func (x *fastReflection_MsgSetApprove) ProtoMethods() *protoiface.Methods {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
 				x.Sender = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 2:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field UserAddress", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.UserAddress = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
@@ -3212,25 +3276,25 @@ func (x *fastReflection_MsgSetApprove) ProtoMethods() *protoiface.Methods {
 }
 
 var (
-	md_MsgSetApproveResponse        protoreflect.MessageDescriptor
-	fd_MsgSetApproveResponse_status protoreflect.FieldDescriptor
+	md_MsgSetFeeGrantApproveResponse        protoreflect.MessageDescriptor
+	fd_MsgSetFeeGrantApproveResponse_status protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_post_v1_tx_proto_init()
-	md_MsgSetApproveResponse = File_post_v1_tx_proto.Messages().ByName("MsgSetApproveResponse")
-	fd_MsgSetApproveResponse_status = md_MsgSetApproveResponse.Fields().ByName("status")
+	md_MsgSetFeeGrantApproveResponse = File_post_v1_tx_proto.Messages().ByName("MsgSetFeeGrantApproveResponse")
+	fd_MsgSetFeeGrantApproveResponse_status = md_MsgSetFeeGrantApproveResponse.Fields().ByName("status")
 }
 
-var _ protoreflect.Message = (*fastReflection_MsgSetApproveResponse)(nil)
+var _ protoreflect.Message = (*fastReflection_MsgSetFeeGrantApproveResponse)(nil)
 
-type fastReflection_MsgSetApproveResponse MsgSetApproveResponse
+type fastReflection_MsgSetFeeGrantApproveResponse MsgSetFeeGrantApproveResponse
 
-func (x *MsgSetApproveResponse) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_MsgSetApproveResponse)(x)
+func (x *MsgSetFeeGrantApproveResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgSetFeeGrantApproveResponse)(x)
 }
 
-func (x *MsgSetApproveResponse) slowProtoReflect() protoreflect.Message {
+func (x *MsgSetFeeGrantApproveResponse) slowProtoReflect() protoreflect.Message {
 	mi := &file_post_v1_tx_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3242,43 +3306,43 @@ func (x *MsgSetApproveResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_MsgSetApproveResponse_messageType fastReflection_MsgSetApproveResponse_messageType
-var _ protoreflect.MessageType = fastReflection_MsgSetApproveResponse_messageType{}
+var _fastReflection_MsgSetFeeGrantApproveResponse_messageType fastReflection_MsgSetFeeGrantApproveResponse_messageType
+var _ protoreflect.MessageType = fastReflection_MsgSetFeeGrantApproveResponse_messageType{}
 
-type fastReflection_MsgSetApproveResponse_messageType struct{}
+type fastReflection_MsgSetFeeGrantApproveResponse_messageType struct{}
 
-func (x fastReflection_MsgSetApproveResponse_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_MsgSetApproveResponse)(nil)
+func (x fastReflection_MsgSetFeeGrantApproveResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgSetFeeGrantApproveResponse)(nil)
 }
-func (x fastReflection_MsgSetApproveResponse_messageType) New() protoreflect.Message {
-	return new(fastReflection_MsgSetApproveResponse)
+func (x fastReflection_MsgSetFeeGrantApproveResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgSetFeeGrantApproveResponse)
 }
-func (x fastReflection_MsgSetApproveResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgSetApproveResponse
+func (x fastReflection_MsgSetFeeGrantApproveResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgSetFeeGrantApproveResponse
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_MsgSetApproveResponse) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgSetApproveResponse
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgSetFeeGrantApproveResponse
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_MsgSetApproveResponse) Type() protoreflect.MessageType {
-	return _fastReflection_MsgSetApproveResponse_messageType
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) Type() protoreflect.MessageType {
+	return _fastReflection_MsgSetFeeGrantApproveResponse_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_MsgSetApproveResponse) New() protoreflect.Message {
-	return new(fastReflection_MsgSetApproveResponse)
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) New() protoreflect.Message {
+	return new(fastReflection_MsgSetFeeGrantApproveResponse)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_MsgSetApproveResponse) Interface() protoreflect.ProtoMessage {
-	return (*MsgSetApproveResponse)(x)
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) Interface() protoreflect.ProtoMessage {
+	return (*MsgSetFeeGrantApproveResponse)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -3286,10 +3350,10 @@ func (x *fastReflection_MsgSetApproveResponse) Interface() protoreflect.ProtoMes
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_MsgSetApproveResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
 	if x.Status != false {
 		value := protoreflect.ValueOfBool(x.Status)
-		if !f(fd_MsgSetApproveResponse_status, value) {
+		if !f(fd_MsgSetFeeGrantApproveResponse_status, value) {
 			return
 		}
 	}
@@ -3306,15 +3370,15 @@ func (x *fastReflection_MsgSetApproveResponse) Range(f func(protoreflect.FieldDe
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_MsgSetApproveResponse) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "post.v1.MsgSetApproveResponse.status":
+	case "post.v1.MsgSetFeeGrantApproveResponse.status":
 		return x.Status != false
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetApproveResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetFeeGrantApproveResponse"))
 		}
-		panic(fmt.Errorf("message post.v1.MsgSetApproveResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message post.v1.MsgSetFeeGrantApproveResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -3324,15 +3388,15 @@ func (x *fastReflection_MsgSetApproveResponse) Has(fd protoreflect.FieldDescript
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgSetApproveResponse) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "post.v1.MsgSetApproveResponse.status":
+	case "post.v1.MsgSetFeeGrantApproveResponse.status":
 		x.Status = false
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetApproveResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetFeeGrantApproveResponse"))
 		}
-		panic(fmt.Errorf("message post.v1.MsgSetApproveResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message post.v1.MsgSetFeeGrantApproveResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -3342,16 +3406,16 @@ func (x *fastReflection_MsgSetApproveResponse) Clear(fd protoreflect.FieldDescri
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_MsgSetApproveResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "post.v1.MsgSetApproveResponse.status":
+	case "post.v1.MsgSetFeeGrantApproveResponse.status":
 		value := x.Status
 		return protoreflect.ValueOfBool(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetApproveResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetFeeGrantApproveResponse"))
 		}
-		panic(fmt.Errorf("message post.v1.MsgSetApproveResponse does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message post.v1.MsgSetFeeGrantApproveResponse does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -3365,15 +3429,15 @@ func (x *fastReflection_MsgSetApproveResponse) Get(descriptor protoreflect.Field
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgSetApproveResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "post.v1.MsgSetApproveResponse.status":
+	case "post.v1.MsgSetFeeGrantApproveResponse.status":
 		x.Status = value.Bool()
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetApproveResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetFeeGrantApproveResponse"))
 		}
-		panic(fmt.Errorf("message post.v1.MsgSetApproveResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message post.v1.MsgSetFeeGrantApproveResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -3387,40 +3451,40 @@ func (x *fastReflection_MsgSetApproveResponse) Set(fd protoreflect.FieldDescript
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgSetApproveResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "post.v1.MsgSetApproveResponse.status":
-		panic(fmt.Errorf("field status of message post.v1.MsgSetApproveResponse is not mutable"))
+	case "post.v1.MsgSetFeeGrantApproveResponse.status":
+		panic(fmt.Errorf("field status of message post.v1.MsgSetFeeGrantApproveResponse is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetApproveResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetFeeGrantApproveResponse"))
 		}
-		panic(fmt.Errorf("message post.v1.MsgSetApproveResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message post.v1.MsgSetFeeGrantApproveResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_MsgSetApproveResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "post.v1.MsgSetApproveResponse.status":
+	case "post.v1.MsgSetFeeGrantApproveResponse.status":
 		return protoreflect.ValueOfBool(false)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetApproveResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: post.v1.MsgSetFeeGrantApproveResponse"))
 		}
-		panic(fmt.Errorf("message post.v1.MsgSetApproveResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message post.v1.MsgSetFeeGrantApproveResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_MsgSetApproveResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in post.v1.MsgSetApproveResponse", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in post.v1.MsgSetFeeGrantApproveResponse", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -3428,7 +3492,7 @@ func (x *fastReflection_MsgSetApproveResponse) WhichOneof(d protoreflect.OneofDe
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_MsgSetApproveResponse) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -3439,7 +3503,7 @@ func (x *fastReflection_MsgSetApproveResponse) GetUnknown() protoreflect.RawFiel
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgSetApproveResponse) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -3451,7 +3515,7 @@ func (x *fastReflection_MsgSetApproveResponse) SetUnknown(fields protoreflect.Ra
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_MsgSetApproveResponse) IsValid() bool {
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) IsValid() bool {
 	return x != nil
 }
 
@@ -3461,9 +3525,9 @@ func (x *fastReflection_MsgSetApproveResponse) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_MsgSetApproveResponse) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_MsgSetFeeGrantApproveResponse) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*MsgSetApproveResponse)
+		x := input.Message.Interface().(*MsgSetFeeGrantApproveResponse)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3488,7 +3552,7 @@ func (x *fastReflection_MsgSetApproveResponse) ProtoMethods() *protoiface.Method
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*MsgSetApproveResponse)
+		x := input.Message.Interface().(*MsgSetFeeGrantApproveResponse)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3528,7 +3592,7 @@ func (x *fastReflection_MsgSetApproveResponse) ProtoMethods() *protoiface.Method
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*MsgSetApproveResponse)
+		x := input.Message.Interface().(*MsgSetFeeGrantApproveResponse)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3560,10 +3624,10 @@ func (x *fastReflection_MsgSetApproveResponse) ProtoMethods() *protoiface.Method
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgSetApproveResponse: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgSetFeeGrantApproveResponse: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgSetApproveResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgSetFeeGrantApproveResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
@@ -3889,16 +3953,17 @@ func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
 	return file_post_v1_tx_proto_rawDescGZIP(), []int{5}
 }
 
-type MsgSetApprove struct {
+type MsgSetFeeGrantApproveRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	Sender      string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	UserAddress string `protobuf:"bytes,2,opt,name=userAddress,proto3" json:"userAddress,omitempty"`
 }
 
-func (x *MsgSetApprove) Reset() {
-	*x = MsgSetApprove{}
+func (x *MsgSetFeeGrantApproveRequest) Reset() {
+	*x = MsgSetFeeGrantApproveRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_post_v1_tx_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3906,26 +3971,33 @@ func (x *MsgSetApprove) Reset() {
 	}
 }
 
-func (x *MsgSetApprove) String() string {
+func (x *MsgSetFeeGrantApproveRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MsgSetApprove) ProtoMessage() {}
+func (*MsgSetFeeGrantApproveRequest) ProtoMessage() {}
 
-// Deprecated: Use MsgSetApprove.ProtoReflect.Descriptor instead.
-func (*MsgSetApprove) Descriptor() ([]byte, []int) {
+// Deprecated: Use MsgSetFeeGrantApproveRequest.ProtoReflect.Descriptor instead.
+func (*MsgSetFeeGrantApproveRequest) Descriptor() ([]byte, []int) {
 	return file_post_v1_tx_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *MsgSetApprove) GetSender() string {
+func (x *MsgSetFeeGrantApproveRequest) GetSender() string {
 	if x != nil {
 		return x.Sender
 	}
 	return ""
 }
 
+func (x *MsgSetFeeGrantApproveRequest) GetUserAddress() string {
+	if x != nil {
+		return x.UserAddress
+	}
+	return ""
+}
+
 // MsgCreatePostResponse is the response returned after creating a post
-type MsgSetApproveResponse struct {
+type MsgSetFeeGrantApproveResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -3933,8 +4005,8 @@ type MsgSetApproveResponse struct {
 	Status bool `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
 }
 
-func (x *MsgSetApproveResponse) Reset() {
-	*x = MsgSetApproveResponse{}
+func (x *MsgSetFeeGrantApproveResponse) Reset() {
+	*x = MsgSetFeeGrantApproveResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_post_v1_tx_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3942,18 +4014,18 @@ func (x *MsgSetApproveResponse) Reset() {
 	}
 }
 
-func (x *MsgSetApproveResponse) String() string {
+func (x *MsgSetFeeGrantApproveResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MsgSetApproveResponse) ProtoMessage() {}
+func (*MsgSetFeeGrantApproveResponse) ProtoMessage() {}
 
-// Deprecated: Use MsgSetApproveResponse.ProtoReflect.Descriptor instead.
-func (*MsgSetApproveResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use MsgSetFeeGrantApproveResponse.ProtoReflect.Descriptor instead.
+func (*MsgSetFeeGrantApproveResponse) Descriptor() ([]byte, []int) {
 	return file_post_v1_tx_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *MsgSetApproveResponse) GetStatus() bool {
+func (x *MsgSetFeeGrantApproveResponse) GetStatus() bool {
 	if x != nil {
 		return x.Status
 	}
@@ -4005,44 +4077,51 @@ var file_post_v1_tx_proto_rawDesc = []byte{
 	0x61, 0x72, 0x61, 0x6d, 0x73, 0x42, 0x04, 0xc8, 0xde, 0x1f, 0x00, 0x52, 0x06, 0x70, 0x61, 0x72,
 	0x61, 0x6d, 0x73, 0x3a, 0x0e, 0x82, 0xe7, 0xb0, 0x2a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72,
 	0x69, 0x74, 0x79, 0x22, 0x19, 0x0a, 0x17, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
-	0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x4e,
-	0x0a, 0x0d, 0x4d, 0x73, 0x67, 0x53, 0x65, 0x74, 0x41, 0x70, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x12,
+	0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x99,
+	0x01, 0x0a, 0x1c, 0x4d, 0x73, 0x67, 0x53, 0x65, 0x74, 0x46, 0x65, 0x65, 0x47, 0x72, 0x61, 0x6e,
+	0x74, 0x41, 0x70, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
 	0x30, 0x0a, 0x06, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42,
 	0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72,
 	0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x06, 0x73, 0x65, 0x6e, 0x64, 0x65,
-	0x72, 0x3a, 0x0b, 0x82, 0xe7, 0xb0, 0x2a, 0x06, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x22, 0x2f,
-	0x0a, 0x15, 0x4d, 0x73, 0x67, 0x53, 0x65, 0x74, 0x41, 0x70, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75,
-	0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x32,
-	0xb6, 0x02, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x4a, 0x0a, 0x0c, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x18, 0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76,
-	0x31, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d,
-	0x73, 0x1a, 0x20, 0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x55,
-	0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x50, 0x0a, 0x0e, 0x53, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
-	0x65, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e,
+	0x72, 0x12, 0x3a, 0x0a, 0x0b, 0x75, 0x73, 0x65, 0x72, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d,
+	0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67,
+	0x52, 0x0b, 0x75, 0x73, 0x65, 0x72, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x3a, 0x0b, 0x82,
+	0xe7, 0xb0, 0x2a, 0x06, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x22, 0x37, 0x0a, 0x1d, 0x4d, 0x73,
+	0x67, 0x53, 0x65, 0x74, 0x46, 0x65, 0x65, 0x47, 0x72, 0x61, 0x6e, 0x74, 0x41, 0x70, 0x70, 0x72,
+	0x6f, 0x76, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x73,
+	0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x73, 0x74, 0x61,
+	0x74, 0x75, 0x73, 0x32, 0xd5, 0x02, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x4a, 0x0a, 0x0c, 0x55,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x18, 0x2e, 0x70, 0x6f,
+	0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50,
+	0x61, 0x72, 0x61, 0x6d, 0x73, 0x1a, 0x20, 0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e,
+	0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x50, 0x0a, 0x0e, 0x53, 0x65, 0x74, 0x53, 0x65,
+	0x72, 0x76, 0x69, 0x63, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x2e, 0x70, 0x6f, 0x73, 0x74,
+	0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x53, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
+	0x65, 0x4e, 0x61, 0x6d, 0x65, 0x1a, 0x22, 0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e,
 	0x4d, 0x73, 0x67, 0x53, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x4e, 0x61, 0x6d,
-	0x65, 0x1a, 0x22, 0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x53,
-	0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x44, 0x0a, 0x0a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50,
-	0x6f, 0x73, 0x74, 0x12, 0x16, 0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73,
-	0x67, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x6f, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x70, 0x6f,
-	0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50,
-	0x6f, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x44, 0x0a, 0x0a, 0x53,
-	0x65, 0x74, 0x41, 0x70, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x12, 0x16, 0x2e, 0x70, 0x6f, 0x73, 0x74,
-	0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x53, 0x65, 0x74, 0x41, 0x70, 0x70, 0x72, 0x6f, 0x76,
-	0x65, 0x1a, 0x1e, 0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x53,
-	0x65, 0x74, 0x41, 0x70, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x1a, 0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01, 0x42, 0x83, 0x01, 0x0a, 0x0b, 0x63, 0x6f, 0x6d,
-	0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72, 0x6f, 0x74,
-	0x6f, 0x50, 0x01, 0x5a, 0x2e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
-	0x72, 0x6f, 0x6c, 0x6c, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x73, 0x2f, 0x74, 0x6c, 0x6f, 0x63, 0x6b,
-	0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x6f, 0x73, 0x74, 0x2f, 0x76, 0x31, 0x3b, 0x70, 0x6f, 0x73,
-	0x74, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x50, 0x58, 0x58, 0xaa, 0x02, 0x07, 0x50, 0x6f, 0x73, 0x74,
-	0x2e, 0x56, 0x31, 0xca, 0x02, 0x07, 0x50, 0x6f, 0x73, 0x74, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x13,
-	0x50, 0x6f, 0x73, 0x74, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64,
-	0x61, 0x74, 0x61, 0xea, 0x02, 0x08, 0x50, 0x6f, 0x73, 0x74, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x44, 0x0a, 0x0a, 0x43, 0x72, 0x65,
+	0x61, 0x74, 0x65, 0x50, 0x6f, 0x73, 0x74, 0x12, 0x16, 0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76,
+	0x31, 0x2e, 0x4d, 0x73, 0x67, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x6f, 0x73, 0x74, 0x1a,
+	0x1e, 0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x43, 0x72, 0x65,
+	0x61, 0x74, 0x65, 0x50, 0x6f, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x63, 0x0a, 0x12, 0x53, 0x65, 0x74, 0x46, 0x65, 0x65, 0x47, 0x72, 0x61, 0x6e, 0x74, 0x41, 0x70,
+	0x70, 0x72, 0x6f, 0x76, 0x65, 0x12, 0x25, 0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e,
+	0x4d, 0x73, 0x67, 0x53, 0x65, 0x74, 0x46, 0x65, 0x65, 0x47, 0x72, 0x61, 0x6e, 0x74, 0x41, 0x70,
+	0x70, 0x72, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26, 0x2e, 0x70,
+	0x6f, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x53, 0x65, 0x74, 0x46, 0x65, 0x65,
+	0x47, 0x72, 0x61, 0x6e, 0x74, 0x41, 0x70, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x1a, 0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01, 0x42, 0x83, 0x01, 0x0a, 0x0b,
+	0x63, 0x6f, 0x6d, 0x2e, 0x70, 0x6f, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x42, 0x07, 0x54, 0x78, 0x50,
+	0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x2e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
+	0x6f, 0x6d, 0x2f, 0x72, 0x6f, 0x6c, 0x6c, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x73, 0x2f, 0x74, 0x6c,
+	0x6f, 0x63, 0x6b, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x6f, 0x73, 0x74, 0x2f, 0x76, 0x31, 0x3b,
+	0x70, 0x6f, 0x73, 0x74, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x50, 0x58, 0x58, 0xaa, 0x02, 0x07, 0x50,
+	0x6f, 0x73, 0x74, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x07, 0x50, 0x6f, 0x73, 0x74, 0x5c, 0x56, 0x31,
+	0xe2, 0x02, 0x13, 0x50, 0x6f, 0x73, 0x74, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65,
+	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x08, 0x50, 0x6f, 0x73, 0x74, 0x3a, 0x3a, 0x56,
+	0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -4059,26 +4138,26 @@ func file_post_v1_tx_proto_rawDescGZIP() []byte {
 
 var file_post_v1_tx_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_post_v1_tx_proto_goTypes = []interface{}{
-	(*MsgSetServiceName)(nil),         // 0: post.v1.MsgSetServiceName
-	(*MsgSetServiceNameResponse)(nil), // 1: post.v1.MsgSetServiceNameResponse
-	(*MsgCreatePost)(nil),             // 2: post.v1.MsgCreatePost
-	(*MsgCreatePostResponse)(nil),     // 3: post.v1.MsgCreatePostResponse
-	(*MsgUpdateParams)(nil),           // 4: post.v1.MsgUpdateParams
-	(*MsgUpdateParamsResponse)(nil),   // 5: post.v1.MsgUpdateParamsResponse
-	(*MsgSetApprove)(nil),             // 6: post.v1.MsgSetApprove
-	(*MsgSetApproveResponse)(nil),     // 7: post.v1.MsgSetApproveResponse
-	(*Params)(nil),                    // 8: post.v1.Params
+	(*MsgSetServiceName)(nil),             // 0: post.v1.MsgSetServiceName
+	(*MsgSetServiceNameResponse)(nil),     // 1: post.v1.MsgSetServiceNameResponse
+	(*MsgCreatePost)(nil),                 // 2: post.v1.MsgCreatePost
+	(*MsgCreatePostResponse)(nil),         // 3: post.v1.MsgCreatePostResponse
+	(*MsgUpdateParams)(nil),               // 4: post.v1.MsgUpdateParams
+	(*MsgUpdateParamsResponse)(nil),       // 5: post.v1.MsgUpdateParamsResponse
+	(*MsgSetFeeGrantApproveRequest)(nil),  // 6: post.v1.MsgSetFeeGrantApproveRequest
+	(*MsgSetFeeGrantApproveResponse)(nil), // 7: post.v1.MsgSetFeeGrantApproveResponse
+	(*Params)(nil),                        // 8: post.v1.Params
 }
 var file_post_v1_tx_proto_depIdxs = []int32{
 	8, // 0: post.v1.MsgUpdateParams.params:type_name -> post.v1.Params
 	4, // 1: post.v1.Msg.UpdateParams:input_type -> post.v1.MsgUpdateParams
 	0, // 2: post.v1.Msg.SetServiceName:input_type -> post.v1.MsgSetServiceName
 	2, // 3: post.v1.Msg.CreatePost:input_type -> post.v1.MsgCreatePost
-	6, // 4: post.v1.Msg.SetApprove:input_type -> post.v1.MsgSetApprove
+	6, // 4: post.v1.Msg.SetFeeGrantApprove:input_type -> post.v1.MsgSetFeeGrantApproveRequest
 	5, // 5: post.v1.Msg.UpdateParams:output_type -> post.v1.MsgUpdateParamsResponse
 	1, // 6: post.v1.Msg.SetServiceName:output_type -> post.v1.MsgSetServiceNameResponse
 	3, // 7: post.v1.Msg.CreatePost:output_type -> post.v1.MsgCreatePostResponse
-	7, // 8: post.v1.Msg.SetApprove:output_type -> post.v1.MsgSetApproveResponse
+	7, // 8: post.v1.Msg.SetFeeGrantApprove:output_type -> post.v1.MsgSetFeeGrantApproveResponse
 	5, // [5:9] is the sub-list for method output_type
 	1, // [1:5] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -4166,7 +4245,7 @@ func file_post_v1_tx_proto_init() {
 			}
 		}
 		file_post_v1_tx_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgSetApprove); i {
+			switch v := v.(*MsgSetFeeGrantApproveRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4178,7 +4257,7 @@ func file_post_v1_tx_proto_init() {
 			}
 		}
 		file_post_v1_tx_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgSetApproveResponse); i {
+			switch v := v.(*MsgSetFeeGrantApproveResponse); i {
 			case 0:
 				return &v.state
 			case 1:
