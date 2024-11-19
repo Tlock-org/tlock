@@ -84,8 +84,8 @@ from_scratch () {
   update_test_genesis '.app_state["tokenfactory"]["params"]["denom_creation_gas_consume"]=100000'
   # Allocate genesis accounts
 #  BINARY genesis add-genesis-account $KEY 10000000$DENOM,900test --keyring-backend $KEYRING --denom-metadata '{"display":"tok","base":"TOK","description":"TOK token","denom_units":[{"denom":"TOK","exponent":9}]}' --append
-  BINARY genesis add-genesis-account $KEY 10000000$DENOM,900test --keyring-backend $KEYRING --denom-metadata '{"display":"tok","base":"TOK","description":"TOK token","denom_units":[{"denom":"TOK","exponent":9}]}' --append
-  BINARY genesis add-genesis-account $KEY2 10000000$DENOM,800test --keyring-backend $KEYRING --denom-metadata '{"display":"tok","base":"TOK","description":"TOK token","denom_units":[{"denom":"TOK","exponent":9}]}' --append
+  BINARY genesis add-genesis-account $KEY 10000000000000000000$DENOM,900test --keyring-backend $KEYRING --denom-metadata '{"display":"tok","base":"TOK","description":"TOK token","denom_units":[{"denom":"TOK","exponent":9}]}' --append
+  BINARY genesis add-genesis-account $KEY2 100000000000000000$DENOM,800test --keyring-backend $KEYRING --denom-metadata '{"display":"tok","base":"TOK","description":"TOK token","denom_units":[{"denom":"TOK","exponent":9}]}' --append
   # Sign genesis transaction
   BINARY genesis gentx $KEY 1000000$DENOM --keyring-backend $KEYRING --chain-id $CHAIN_ID
   BINARY genesis collect-gentxs
