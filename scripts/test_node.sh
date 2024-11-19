@@ -83,14 +83,13 @@ from_scratch () {
   update_test_genesis '.app_state["tokenfactory"]["params"]["denom_creation_fee"]=[]'
   update_test_genesis '.app_state["tokenfactory"]["params"]["denom_creation_gas_consume"]=100000'
   # Allocate genesis accounts
-#  BINARY genesis add-genesis-account $KEY 10000000$DENOM,900test --keyring-backend $KEYRING --denom-metadata '{"display":"tok","base":"TOK","description":"TOK token","denom_units":[{"denom":"TOK","exponent":9}]}' --append
   BINARY genesis add-genesis-account $KEY 10000000000000000000$DENOM --keyring-backend $KEYRING --append
   BINARY genesis add-genesis-account $KEY2 100000000000000000$DENOM --keyring-backend $KEYRING --append
 
-  BINARY set-denom-metadata --base-denom=$DENOM --display-denom=tok --description="TOK token" --denom-units="TOK:6" --chain-id=$CHAIN_ID
+#  BINARY set-denom-metadata --base-denom=$DENOM --display-denom=tok --description="TOK token" --denom-units="TOK:6" --chain-id=$CHAIN_ID
 
   # Sign genesis transaction
-  BINARY genesis gentx $KEY 1824637772896$DENOM --keyring-backend $KEYRING --chain-id $CHAIN_ID
+  BINARY genesis gentx $KEY 100000000$DENOM --keyring-backend $KEYRING --chain-id $CHAIN_ID
   BINARY genesis collect-gentxs
   BINARY genesis validate-genesis
   err=$?
