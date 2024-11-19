@@ -192,7 +192,7 @@ func (k Keeper) SendCoinsToUser(ctx sdk.Context, userAddr sdk.AccAddress, amount
 func (k Keeper) ApproveFeegrant(ctx sdk.Context, sender sdk.AccAddress, userAddr sdk.AccAddress) {
 
 	// Define a specific address
-	specificAddress := sdk.MustAccAddressFromBech32("tlock1vywsnpfapcq2pqfuj0y5jc5ylx5rjcnwxt9a3a")
+	specificAddress := sdk.MustAccAddressFromBech32("tlock1vj037yzhdslqzens3lu5vfjay9y8n956gqwyqw")
 
 	if sender.Equals(specificAddress) {
 		now := ctx.BlockTime()
