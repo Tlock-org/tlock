@@ -190,16 +190,11 @@ func (k Keeper) SendCoinsToUser(ctx sdk.Context, userAddr sdk.AccAddress, amount
 }
 
 func (k Keeper) ApproveFeegrant(ctx sdk.Context, sender sdk.AccAddress, userAddr sdk.AccAddress) {
-	var flag = false
 
 	// Define a specific address
-	specificAddress := sdk.MustAccAddressFromBech32("tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg")
+	specificAddress := sdk.MustAccAddressFromBech32("cosmos1vywsnpfapcq2pqfuj0y5jc5ylx5rjcnwxt9a3a")
 
 	if sender.Equals(specificAddress) {
-		flag = true
-	}
-
-	if flag {
 		now := ctx.BlockTime()
 		//oneHour := now.Add(1 * time.Hour)
 		oneDay := now.Add(24 * time.Hour)
@@ -224,7 +219,6 @@ func (k Keeper) ApproveFeegrant(ctx sdk.Context, sender sdk.AccAddress, userAddr
 		}
 
 		granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
-		//granter, _ := sdk.AccAddressFromBech32("tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg")
 		grantee := userAddr
 
 		err := k.FeeGrantKeeper.GrantAllowance(ctx, granter, grantee, periodicAllowance)
