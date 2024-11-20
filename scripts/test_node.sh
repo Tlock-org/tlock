@@ -84,31 +84,29 @@ from_scratch () {
   update_test_genesis '.app_state["tokenfactory"]["params"]["denom_creation_gas_consume"]=100000'
 
    # set TOK decimal
-  update_test_genesis '.app_state["bank"]["denom_metadata"] += [{
-    "description": "Tlock token",
-    "denom_units": [
-      {
-        "denom": "uTOK",
-        "exponent": 0,
-        "aliases": ["microTOK"]
-      },
-      {
-        "denom": "TOK",
-        "exponent": 6
-      }
-    ],
-    "base": "uTOK",
-    "display": "TOK"
-  }]'
+#  update_test_genesis '.app_state["bank"]["denom_metadata"] += [{
+#    "description": "Tlock token",
+#    "denom_units": [
+#      {
+#        "denom": "uTOK",
+#        "exponent": 0,
+#        "aliases": ["microTOK"]
+#      },
+#      {
+#        "denom": "TOK",
+#        "exponent": 6
+#      }
+#    ],
+#    "base": "uTOK",
+#    "display": "TOK"
+#  }]'
 
   # Allocate genesis accounts
-  BINARY genesis add-genesis-account $KEY 10000000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $KEY2 100000000000000000$DENOM --keyring-backend $KEYRING --append
-
-#  BINARY set-denom-metadata --base-denom=$DENOM --display-denom=tok --description="TOK token" --denom-units="TOK:6" --chain-id=$CHAIN_ID
+  BINARY genesis add-genesis-account $KEY 100000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY2 100000000000000$DENOM --keyring-backend $KEYRING --append
 
   # Sign genesis transaction
-  BINARY genesis gentx $KEY 100000000$DENOM --keyring-backend $KEYRING --chain-id $CHAIN_ID
+  BINARY genesis gentx $KEY 924645167360$DENOM --keyring-backend $KEYRING --chain-id $CHAIN_ID
   BINARY genesis collect-gentxs
   BINARY genesis validate-genesis
   err=$?
