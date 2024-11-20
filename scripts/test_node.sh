@@ -89,8 +89,8 @@ from_scratch () {
     "display": "TOK",
     "name": "TOK",
     "symbol": "TOK",
-    "base": "TOK",
-    "scale": 8
+    "base": "uTOK",
+    "Exponent": 8
   }]'
 
   # Allocate genesis accounts
