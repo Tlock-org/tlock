@@ -84,15 +84,22 @@ from_scratch () {
   update_test_genesis '.app_state["tokenfactory"]["params"]["denom_creation_gas_consume"]=100000'
 
    # set TOK decimal
-#  update_test_genesis '.app_state["bank"]["denom_metadata"] += [{
-#    "description": "Tlock token",
-#    "DenomUnits": "[]*banktypes.DenomUnit{
-#                        {Denom: "uTOK", Exponent: 0, Aliases: []string{"microTOK"}},
-#                        {Denom: "TOK", Exponent: 6},
-#                    }",
-#    "display": "TOK",
-#    "base": "uTOK",
-#  }]'
+  update_test_genesis '.app_state["bank"]["denom_metadata"] += [{
+    "description": "Tlock token",
+    "denom_units": [
+      {
+        "denom": "uTOK",
+        "exponent": 0,
+        "aliases": ["microTOK"]
+      },
+      {
+        "denom": "TOK",
+        "exponent": 6
+      }
+    ],
+    "base": "uTOK",
+    "display": "TOK"
+  }]'
 
   # Allocate genesis accounts
   BINARY genesis add-genesis-account $KEY 10000000000000000000$DENOM --keyring-backend $KEYRING --append
