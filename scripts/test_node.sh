@@ -82,13 +82,8 @@ from_scratch () {
   # tokenfactory
   update_test_genesis '.app_state["tokenfactory"]["params"]["denom_creation_fee"]=[]'
   update_test_genesis '.app_state["tokenfactory"]["params"]["denom_creation_gas_consume"]=100000'
-  # Allocate genesis accounts
-  BINARY genesis add-genesis-account $KEY 10000000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $KEY2 100000000000000000$DENOM --keyring-backend $KEYRING --append
 
-#  BINARY set-denom-metadata --base-denom=$DENOM --display-denom=tok --description="TOK token" --denom-units="TOK:6" --chain-id=$CHAIN_ID
-
-  # set TOK decimal
+   # set TOK decimal
   update_test_genesis '.app_state["bank"]["denom_metadata"] += [{
     "description": "Tlock token",
     "denom": "TOK",
@@ -98,6 +93,12 @@ from_scratch () {
     "base": "TOK",
     "scale": 8
   }]'
+
+  # Allocate genesis accounts
+  BINARY genesis add-genesis-account $KEY 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY2 100000000000000000$DENOM --keyring-backend $KEYRING --append
+
+#  BINARY set-denom-metadata --base-denom=$DENOM --display-denom=tok --description="TOK token" --denom-units="TOK:6" --chain-id=$CHAIN_ID
 
   # Sign genesis transaction
   BINARY genesis gentx $KEY 100000000$DENOM --keyring-backend $KEYRING --chain-id $CHAIN_ID
