@@ -6,12 +6,12 @@
       "description": "The native token of tlock",
       "denom_units": [
         {
-          "denom": "TOK",
+          "denom": "uTOK",
           "exponent": 0
         },
         {
           "denom": "TOK",
-          "exponent": 6
+          "exponent": 9
         }
       ],
       "base": "TOK",
