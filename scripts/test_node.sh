@@ -83,27 +83,24 @@ from_scratch () {
   update_test_genesis '.app_state["tokenfactory"]["params"]["denom_creation_fee"]=[]'
   update_test_genesis '.app_state["tokenfactory"]["params"]["denom_creation_gas_consume"]=100000'
 
-   # set TOK decimal
-#  update_test_genesis '.app_state["bank"]["denom_metadata"] += [{
-#    "description": "Tlock token",
-#    "denom_units": [
-#      {
-#        "denom": "uTOK",
-#        "exponent": 0,
-#        "aliases": ["microTOK"]
-#      },
-#      {
-#        "denom": "TOK",
-#        "exponent": 6
-#      }
-#    ],
-#    "base": "uTOK",
-#    "display": "TOK"
-#  }]'
+  # set TOK decimal
+  update_test_genesis '.app_state["bank"]["denom_metadata"] = [
+      {
+        "description": "",
+        "denom_units": [
+          { "denom": "uTOK", "exponent": 0 },
+          { "denom": "TOK", "exponent": 9 }
+        ],
+        "base": "uTOK",
+        "display": "TOK",
+        "name": "TOK",
+        "symbol": "TOK"
+      }
+    ]'
 
   # Allocate genesis accounts
-  BINARY genesis add-genesis-account $KEY 10000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $KEY2 10000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY2 100000000000000000$DENOM --keyring-backend $KEYRING --append
 
   # Sign genesis transaction
   BINARY genesis gentx $KEY 1000000$DENOM --keyring-backend $KEYRING --chain-id $CHAIN_ID
@@ -116,7 +113,6 @@ from_scratch () {
     return
   fi
 }
-#===========================================================================
 #t set to false
 if [ "$CLEAN" != "false" ]; then
   echo "Starting from a clean state"
@@ -143,5 +139,5 @@ sed -i -e 's/address = ":8080"/address = "0.0.0.0:'$ROSETTA'"/g' $HOME_DIR/confi
 # Faster blocks
 sed -i -e 's/timeout_commit = "5s"/timeout_commit = "'$BLOCK_TIME'"/g' $HOME_DIR/config/config.toml
 # Start the node with 0 gas fees
-#BINARY start --pruning=nothing  --minimum-gas-prices=0.000001$DENOM --rpc.laddr="tcp://0.0.0.0:$RPC"
+BINARY start --pruning=nothing  --minimum-gas-prices=0.000001$DENOM --rpc.laddr="tcp://0.0.0.0:$RPC"
 # check if CLEAN is no
