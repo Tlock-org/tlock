@@ -88,6 +88,17 @@ from_scratch () {
 
 #  BINARY set-denom-metadata --base-denom=$DENOM --display-denom=tok --description="TOK token" --denom-units="TOK:6" --chain-id=$CHAIN_ID
 
+  # set TOK decimal
+  update_test_genesis '.app_state["bank"]["denom_metadata"] += [{
+    "description": "Tlock token",
+    "denom": "TOK",
+    "display": "TOK",
+    "name": "TOK",
+    "symbol": "TOK",
+    "base": "TOK",
+    "scale": 8
+  }]'
+
   # Sign genesis transaction
   BINARY genesis gentx $KEY 100000000$DENOM --keyring-backend $KEYRING --chain-id $CHAIN_ID
   BINARY genesis collect-gentxs
