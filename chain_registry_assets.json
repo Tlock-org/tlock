@@ -7,11 +7,11 @@
       "denom_units": [
         {
           "denom": "uTOK",
-          "exponent": 0
+          "exponent": 9
         },
         {
           "denom": "TOK",
-          "exponent": 9
+          "exponent": 18
         }
       ],
       "base": "TOK",
