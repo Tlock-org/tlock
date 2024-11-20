@@ -86,11 +86,12 @@ from_scratch () {
    # set TOK decimal
   update_test_genesis '.app_state["bank"]["denom_metadata"] += [{
     "description": "Tlock token",
+    "DenomUnits": "[]*banktypes.DenomUnit{
+                        {Denom: "uTOK", Exponent: 0, Aliases: []string{"microTOK"}},
+                        {Denom: "TOK", Exponent: 6},
+                    }",
     "display": "TOK",
-    "name": "TOK",
-    "symbol": "TOK",
     "base": "uTOK",
-    "Exponent": 8
   }]'
 
   # Allocate genesis accounts
