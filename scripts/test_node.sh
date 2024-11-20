@@ -12,7 +12,7 @@ export KEYALGO="secp256k1"
 export KEYRING=${KEYRING:-"test"}
 export HOME_DIR=$(eval echo "${HOME_DIR:-"~/.tlock"}")
 export BINARY=${BINARY:-tlockd}
-export DENOM=${DENOM:-uTOK}
+export DENOM=${DENOM:-TOK}
 export CLEAN=${CLEAN:-"false"}
 export RPC=${RPC:-"26657"}
 export REST=${REST:-"1317"}
@@ -143,5 +143,5 @@ sed -i -e 's/address = ":8080"/address = "0.0.0.0:'$ROSETTA'"/g' $HOME_DIR/confi
 # Faster blocks
 sed -i -e 's/timeout_commit = "5s"/timeout_commit = "'$BLOCK_TIME'"/g' $HOME_DIR/config/config.toml
 # Start the node with 0 gas fees
-BINARY start --pruning=nothing  --minimum-gas-prices=0.000001$DENOM --rpc.laddr="tcp://0.0.0.0:$RPC"
+#BINARY start --pruning=nothing  --minimum-gas-prices=0.000001$DENOM --rpc.laddr="tcp://0.0.0.0:$RPC"
 # check if CLEAN is no
