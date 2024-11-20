@@ -86,7 +86,6 @@ from_scratch () {
    # set TOK decimal
   update_test_genesis '.app_state["bank"]["denom_metadata"] += [{
     "description": "Tlock token",
-    "denom": "TOK",
     "display": "TOK",
     "name": "TOK",
     "symbol": "TOK",
