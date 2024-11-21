@@ -11,6 +11,8 @@ import (
 	"github.com/rollchains/tlock/x/post/types"
 )
 
+const MaxImageSize = 500 * 1024 // 500 KB
+
 type msgServer struct {
 	k Keeper
 }
@@ -61,6 +63,10 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
 	}
 
+	if len(msg.Image) > MaxImageSize {
+		return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
+	}
+
 	// Generate a unique post ID
 	//postID := ms.k.generatePostID(ctx) // 需要在 Keeper 中实现 generatePostID 方法
 	postID := msg.PostId // 需要在 Keeper 中实现 generatePostID 方法
@@ -70,6 +76,7 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 		Id:        postID,
 		Title:     msg.Title,
 		Content:   msg.Content,
+		Image:     msg.Image,
 		Sender:    msg.Sender,
 		Timestamp: msg.Timestamp,
 	}
@@ -79,12 +86,14 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 	// post reward
 	//ms.k.PostReward(ctx, post)
 
-	// Emit an event for the creation
+	//Emit an event for the creation
 	//ctx.EventManager().EmitEvent(
 	//	sdk.NewEvent(
 	//		types.EventTypeCreatePost,
 	//		sdk.NewAttribute(types.AttributeKeyPostID, postID),
+	//		sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
 	//		sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
+	//		sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
 	//	),
 	//)
 
