@@ -22,7 +22,7 @@ export GRPC=${GRPC:-"9090"}
 export GRPC_WEB=${GRPC_WEB:-"9091"}
 export PROFF_LADDER=${PROFF_LADDER:-"6060"}
 export ROSETTA=${ROSETTA:-"8080"}
-export BLOCK_TIME=${BLOCK_TIME:-"5s"}
+export BLOCK_TIME=${BLOCK_TIME:-"3s"}
 # if which binary does not exist, install it
 if [ -z `which $BINARY` ]; then
   make install
@@ -67,6 +67,7 @@ from_scratch () {
   # === CORE MODULES ===
   # Block
   update_test_genesis '.consensus_params["block"]["max_gas"]="100000000"'
+#  update_test_genesis '.consensus_params["block"]["max_gas"]="10000000"'
   # Gov
   update_test_genesis `printf '.app_state["gov"]["params"]["min_deposit"]=[{"denom":"%s","amount":"1000000"}]' $DENOM`
   update_test_genesis '.app_state["gov"]["params"]["voting_period"]="30s"'
@@ -86,10 +87,10 @@ from_scratch () {
   # set TOK decimal
   update_test_genesis '.app_state["bank"]["denom_metadata"] = [
       {
-        "description": "",
+        "description": "tlock token",
         "denom_units": [
           { "denom": "uTOK", "exponent": 0 },
-          { "denom": "TOK", "exponent": 9 }
+          { "denom": "TOK", "exponent": 6 }
         ],
         "base": "uTOK",
         "display": "TOK",
@@ -137,7 +138,10 @@ sed -i -e 's/address = "localhost:9091"/address = "0.0.0.0:'$GRPC_WEB'"/g' $HOME
 # Rosetta Api
 sed -i -e 's/address = ":8080"/address = "0.0.0.0:'$ROSETTA'"/g' $HOME_DIR/config/app.toml
 # Faster blocks
-sed -i -e 's/timeout_commit = "5s"/timeout_commit = "'$BLOCK_TIME'"/g' $HOME_DIR/config/config.toml
+sed -i -e 's/timeout_commit = "3s"/timeout_commit = "'$BLOCK_TIME'"/g' $HOME_DIR/config/config.toml
+sed -i -e 's/timeout_propose = "1s"/timeout_propose = "1s"/g' $HOME_DIR/config/config.toml
+sed -i -e 's/timeout_prevote = "1s"/timeout_prevote = "1s"/g' $HOME_DIR/config/config.toml
+sed -i -e 's/timeout_precommit = "1s"/timeout_precommit = "1s"/g' $HOME_DIR/config/config.toml
 # Start the node with 0 gas fees
-BINARY start --pruning=nothing  --minimum-gas-prices=0.000001$DENOM --rpc.laddr="tcp://0.0.0.0:$RPC"
+BINARY start --pruning=nothing  --minimum-gas-prices=1$DENOM --rpc.laddr="tcp://0.0.0.0:$RPC"
 # check if CLEAN is no
