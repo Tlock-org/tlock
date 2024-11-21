@@ -45,8 +45,9 @@ message MsgCreatePost {
   string postId = 1;
   string title = 2;
   string content = 3;
-  string sender = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  int64 timestamp = 5;
+  bytes image = 4;
+  string sender = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  int64 timestamp = 6;
 }
 
 // MsgCreatePostResponse is the response returned after creating a post
