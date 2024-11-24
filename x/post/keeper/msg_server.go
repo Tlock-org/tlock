@@ -45,7 +45,7 @@ func (ms msgServer) SetServiceName(ctx context.Context, msg *types.MsgSetService
 }
 
 // CreatePost implements types.MsgServer.
-func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreatePost) (*types.MsgCreatePostResponse, error) {
+func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFreePost) (*types.MsgCreateFreePostResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Validate the message
@@ -97,7 +97,7 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreatePo
 	//	),
 	//)
 
-	return &types.MsgCreatePostResponse{PostId: postID}, nil
+	return &types.MsgCreateFreePostResponse{PostId: postID}, nil
 }
 
 // SetApprove implements types.MsgServer.

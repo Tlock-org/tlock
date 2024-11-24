@@ -21,8 +21,8 @@ service Msg {
   // SetServiceName allows a user to set their accounts name.
   rpc SetServiceName(MsgSetServiceName) returns (MsgSetServiceNameResponse);
 
-  // CreatePost allows user to create a new post
-  rpc CreateFreePost(MsgCreatePost) returns (MsgCreatePostResponse);
+  // CreateFreePost allows user to create a new post
+  rpc CreateFreePost(MsgCreateFreePost) returns (MsgCreateFreePostResponse);
 
   rpc SetFeeGrantApprove(MsgSetFeeGrantApproveRequest) returns (MsgSetFeeGrantApproveResponse);
 }
@@ -39,8 +39,8 @@ message MsgSetServiceName {
 // MsgSetServiceNameResponse is an empty reply.
 message MsgSetServiceNameResponse {}
 
-// MsgCreatePost defines the structure for creating a new post
-message MsgCreatePost {
+// MsgCreateFreePost defines the structure for creating a new post
+message MsgCreateFreePost {
   option (cosmos.msg.v1.signer) = "sender";
   string postId = 1;
   string title = 2;
@@ -50,8 +50,8 @@ message MsgCreatePost {
   int64 timestamp = 6;
 }
 
-// MsgCreatePostResponse is the response returned after creating a post
-message MsgCreatePostResponse {
+// MsgCreateFreePostResponse is the response returned after creating a post
+message MsgCreateFreePostResponse {
   string post_id = 1;
 }
 
@@ -82,7 +82,7 @@ message MsgSetFeeGrantApproveRequest {
   string userAddress = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
-// MsgCreatePostResponse is the response returned after creating a post
+// MsgSetFeeGrantApproveResponse is the response returned after creating a post
 message MsgSetFeeGrantApproveResponse {
   bool status = 1;
 }
