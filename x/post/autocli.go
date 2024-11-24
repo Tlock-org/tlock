@@ -71,6 +71,31 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
+					RpcMethod: "CreatePaidPost",
+					Use:       "createPaid [postId] [title] [content] [image] [sender] [timestamp]",
+					Short:     "create paid post",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "postId",
+						},
+						{
+							ProtoField: "title",
+						},
+						{
+							ProtoField: "content",
+						},
+						{
+							ProtoField: "image",
+						},
+						{
+							ProtoField: "sender",
+						},
+						{
+							ProtoField: "timestamp",
+						},
+					},
+				},
+				{
 					RpcMethod: "UpdateParams",
 					Skip:      false, // set to true if authority gated
 				},
