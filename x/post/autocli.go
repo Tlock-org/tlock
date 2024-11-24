@@ -47,7 +47,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "CreateFreePost",
-					Use:       "create free [postId] [title] [content] [image] [sender] [timestamp]",
+					Use:       "createFree [postId] [title] [content] [image] [sender] [timestamp]",
 					Short:     "create free post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
