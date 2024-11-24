@@ -45,7 +45,7 @@ func (ms msgServer) SetServiceName(ctx context.Context, msg *types.MsgSetService
 }
 
 // CreatePost implements types.MsgServer.
-func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) (*types.MsgCreatePostResponse, error) {
+func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreatePost) (*types.MsgCreatePostResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Validate the message
@@ -63,9 +63,9 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
 	}
 
-	if len(msg.Image) > MaxImageSize {
-		return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
-	}
+	//if len(msg.Image) > MaxImageSize {
+	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
+	//}
 
 	// Generate a unique post ID
 	//postID := ms.k.generatePostID(ctx) // 需要在 Keeper 中实现 generatePostID 方法
@@ -84,7 +84,7 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
 	// post reward
-	//ms.k.PostReward(ctx, post)
+	ms.k.PostReward(ctx, post)
 
 	//Emit an event for the creation
 	//ctx.EventManager().EmitEvent(

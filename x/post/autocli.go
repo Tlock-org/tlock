@@ -46,9 +46,9 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-					RpcMethod: "CreatePost",
-					Use:       "create [postId] [title] [content] [image] [sender] [timestamp]",
-					Short:     "create new post",
+					RpcMethod: "CreateFreePost",
+					Use:       "create free [postId] [title] [content] [image] [sender] [timestamp]",
+					Short:     "create free post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "postId",

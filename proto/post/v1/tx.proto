@@ -22,7 +22,7 @@ service Msg {
   rpc SetServiceName(MsgSetServiceName) returns (MsgSetServiceNameResponse);
 
   // CreatePost allows user to create a new post
-  rpc CreatePost(MsgCreatePost) returns (MsgCreatePostResponse);
+  rpc CreateFreePost(MsgCreatePost) returns (MsgCreatePostResponse);
 
   rpc SetFeeGrantApprove(MsgSetFeeGrantApproveRequest) returns (MsgSetFeeGrantApproveResponse);
 }
