@@ -10,8 +10,8 @@ var (
 )
 
 // NewMsgCreatePost creates a new MsgCreatePost instance
-func NewMsgCreatePost(title, content, sender string, timestamp int64) *MsgCreatePost {
-	return &MsgCreatePost{
+func NewMsgCreateFreePost(title, content, sender string, timestamp int64) *MsgCreateFreePost {
+	return &MsgCreateFreePost{
 		Title:     title,
 		Content:   content,
 		Sender:    sender,
