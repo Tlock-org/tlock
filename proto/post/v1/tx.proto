@@ -24,7 +24,7 @@ service Msg {
   // CreateFreePost allows user to create a free post
   rpc CreateFreePost(MsgCreateFreePost) returns (MsgCreateFreePostResponse);
   // CreatePaidPost allows user to create a paid post
-  rpc createPaidPost(MsgCreatePaidPost) returns (MsgCreatePaidPostResponse);
+  rpc CreatePaidPost(MsgCreatePaidPost) returns (MsgCreatePaidPostResponse);
 
   rpc SetFeeGrantApprove(MsgSetFeeGrantApproveRequest) returns (MsgSetFeeGrantApproveResponse);
 }

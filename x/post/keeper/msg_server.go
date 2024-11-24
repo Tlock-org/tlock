@@ -2,12 +2,10 @@ package keeper
 
 import (
 	"context"
+	"cosmossdk.io/errors"
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
-	"cosmossdk.io/errors"
 	"github.com/rollchains/tlock/x/post/types"
 )
 
@@ -87,15 +85,16 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	ms.k.PostReward(ctx, post)
 
 	//Emit an event for the creation
-	//ctx.EventManager().EmitEvent(
-	//	sdk.NewEvent(
-	//		types.EventTypeCreatePost,
-	//		sdk.NewAttribute(types.AttributeKeyPostID, postID),
-	//		sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
-	//		sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
-	//		sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
-	//	),
-	//)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCreateFreePost,
+			sdk.NewAttribute(types.AttributeKeyCreator, msg.Sender),
+			sdk.NewAttribute(types.AttributeKeyPostID, postID),
+			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
+			sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
+		),
+	})
 
 	return &types.MsgCreateFreePostResponse{PostId: postID}, nil
 }
@@ -143,15 +142,16 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 	ms.k.SetPost(ctx, post)
 
 	//Emit an event for the creation
-	//ctx.EventManager().EmitEvent(
-	//	sdk.NewEvent(
-	//		types.EventTypeCreatePost,
-	//		sdk.NewAttribute(types.AttributeKeyPostID, postID),
-	//		sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
-	//		sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
-	//		sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
-	//	),
-	//)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCreatePaidPost,
+			sdk.NewAttribute(types.AttributeKeyCreator, msg.Sender),
+			sdk.NewAttribute(types.AttributeKeyPostID, postID),
+			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
+			sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
+		),
+	})
 
 	return &types.MsgCreatePaidPostResponse{PostId: postID}, nil
 }
