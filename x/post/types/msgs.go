@@ -9,9 +9,19 @@ var (
 	_ sdk.Msg = &MsgUpdateParams{}
 )
 
-// NewMsgCreatePost creates a new MsgCreatePost instance
+// NewMsgCreateFreePost creates a new MsgCreateFreePost instance
 func NewMsgCreateFreePost(title, content, sender string, timestamp int64) *MsgCreateFreePost {
 	return &MsgCreateFreePost{
+		Title:     title,
+		Content:   content,
+		Sender:    sender,
+		Timestamp: timestamp,
+	}
+}
+
+// NewMsgCreatePaidPost creates a new MsgCreatePaidPost instance
+func NewMsgCreatePaidPost(title, content, sender string, timestamp int64) *MsgCreatePaidPost {
+	return &MsgCreatePaidPost{
 		Title:     title,
 		Content:   content,
 		Sender:    sender,
