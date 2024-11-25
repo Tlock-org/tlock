@@ -100,9 +100,9 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Skip:      false, // set to true if authority gated
 				},
 				{
-					RpcMethod: "SetFeeGrantApprove",
-					Use:       "setFeeGrantApprove [sender] [userAddress]",
-					Short:     "set feeGrant approve",
+					RpcMethod: "GrantAllowanceFromModule",
+					Use:       "grant-allowance-from-module [sender] [userAddress]",
+					Short:     "grant allowance from module account to user account",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "sender",
