@@ -18,6 +18,8 @@ const (
 
 	QuerierRoute = ModuleName
 
+	ChainCoin = "uTOK"
+
 	PostKeyPrefix = "Post/value/"
 )
 

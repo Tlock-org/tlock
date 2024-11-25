@@ -159,6 +159,7 @@ func (k Keeper) postPayment(ctx sdk.Context, post types.Post) {
 	amount := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(10)))
 	userAddr, err := sdk.AccAddressFromBech32(post.Sender)
 
+	ctx.Logger().Debug("===========userAddress, amount:", userAddr, amount)
 	if err != nil {
 		return
 	}
