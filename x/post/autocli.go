@@ -47,7 +47,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "CreateFreePost",
-					Use:       "createFree [postId] [title] [content] [image] [sender] [timestamp]",
+					Use:       "create-free-post [postId] [title] [content] [image] [sender] [timestamp]",
 					Short:     "create free post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
@@ -72,7 +72,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "CreatePaidPost",
-					Use:       "createPaid [postId] [title] [content] [image] [sender] [timestamp]",
+					Use:       "create-paid-post [postId] [title] [content] [image] [sender] [timestamp]",
 					Short:     "create paid post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{

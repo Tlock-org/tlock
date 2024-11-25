@@ -141,7 +141,7 @@ func (k Keeper) SetPost(ctx sdk.Context, post types.Post) {
 
 func (k Keeper) PostReward(ctx sdk.Context, post types.Post) {
 	// send post reward
-	amount := sdk.NewCoins(sdk.NewCoin(types.NativeCoin, sdkmath.NewInt(10)))
+	amount := sdk.NewCoins(sdk.NewCoin(types.DenomBase, sdkmath.NewInt(10)))
 	userAddr, err := sdk.AccAddressFromBech32(post.Sender)
 
 	if err != nil {
@@ -156,7 +156,7 @@ func (k Keeper) PostReward(ctx sdk.Context, post types.Post) {
 
 func (k Keeper) postPayment(ctx sdk.Context, post types.Post) {
 	// send post payment
-	amount := sdk.NewCoins(sdk.NewCoin(types.NativeCoin, sdkmath.NewInt(10)))
+	amount := sdk.NewCoins(sdk.NewCoin(types.DenomBase, sdkmath.NewInt(10)))
 	userAddr, err := sdk.AccAddressFromBech32(post.Sender)
 
 	ctx.Logger().Debug("===========userAddress, amount:", userAddr, amount)
@@ -210,7 +210,7 @@ func (k Keeper) SendCoinsFromAccountToModule(ctx sdk.Context, userAddr sdk.AccAd
 	return k.bankKeeper.SendCoinsFromAccountToModule(ctx, userAddr, types.ModuleName, amount)
 }
 
-func (k Keeper) ApproveFeegrant(ctx sdk.Context, sender sdk.AccAddress, userAddr sdk.AccAddress) {
+func (k Keeper) GrantPeriodicAllowance(ctx sdk.Context, sender sdk.AccAddress, userAddr sdk.AccAddress) {
 
 	// Define a specific address
 	specificAddress := sdk.MustAccAddressFromBech32("tlock1vj037yzhdslqzens3lu5vfjay9y8n956gqwyqw")

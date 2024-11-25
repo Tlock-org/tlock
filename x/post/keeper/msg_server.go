@@ -157,23 +157,23 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 }
 
 // SetApprove implements types.MsgServer.
-func (ms msgServer) SetFeeGrantApprove(goCtx context.Context, msg *types.MsgSetFeeGrantApproveRequest) (*types.MsgSetFeeGrantApproveResponse, error) {
+func (ms msgServer) GrantAllowanceFromModule(goCtx context.Context, msg *types.MsgGrantAllowanceFromModuleRequest) (*types.MsgGrantAllowanceFromModuleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender, senderErr := sdk.AccAddressFromBech32(msg.Sender)
 	fmt.Printf("====sender: %s\n", sender)
 	if senderErr != nil {
-		return &types.MsgSetFeeGrantApproveResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", senderErr)
+		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", senderErr)
 	}
 	userAddress, userErr := sdk.AccAddressFromBech32(msg.UserAddress)
 	fmt.Printf("=====userAddress: %s\n", userAddress)
 	if userErr != nil {
-		return &types.MsgSetFeeGrantApproveResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", userErr)
+		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", userErr)
 	}
 
-	ms.k.ApproveFeegrant(ctx, sender, userAddress)
+	ms.k.GrantPeriodicAllowance(ctx, sender, userAddress)
 
-	return &types.MsgSetFeeGrantApproveResponse{Status: true}, nil
+	return &types.MsgGrantAllowanceFromModuleResponse{Status: true}, nil
 }
 
 // createPaidPost implements types.MsgServer.

@@ -26,7 +26,7 @@ service Msg {
   // CreatePaidPost allows user to create a paid post
   rpc CreatePaidPost(MsgCreatePaidPost) returns (MsgCreatePaidPostResponse);
 
-  rpc SetFeeGrantApprove(MsgSetFeeGrantApproveRequest) returns (MsgSetFeeGrantApproveResponse);
+  rpc GrantAllowanceFromModule(MsgGrantAllowanceFromModuleRequest) returns (MsgGrantAllowanceFromModuleResponse);
 }
 
 // MsgSetServiceName defines the structure for setting a name.
@@ -92,13 +92,13 @@ message MsgUpdateParams {
 // Since: cosmos-sdk 0.47
 message MsgUpdateParamsResponse {}
 
-message MsgSetFeeGrantApproveRequest {
+message MsgGrantAllowanceFromModuleRequest {
   option (cosmos.msg.v1.signer) = "sender";
   string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string userAddress = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
 // MsgSetFeeGrantApproveResponse is the response returned after creating a post
-message MsgSetFeeGrantApproveResponse {
+message MsgGrantAllowanceFromModuleResponse {
   bool status = 1;
 }
