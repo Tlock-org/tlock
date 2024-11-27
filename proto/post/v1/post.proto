@@ -1,0 +1,34 @@
+syntax = "proto3";
+package post.v1;
+
+import "post/v1/genesis.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/rollchains/tlock/x/post/types";
+
+enum PostType {
+  ORIGINAL = 0;
+  ARTICLE = 1;
+  ADVERTISEMENT = 2;
+  QUOTE = 3;
+  POLL = 4;
+}
+
+// Post defines the structure of a post
+message Post {
+  string id = 1;
+  PostType post_type = 2;
+  string title = 3;
+  string content = 4;
+  string creator = 5;
+  uint64 timestamp = 6;
+  repeated bytes images_base64 = 7;
+  repeated string images_url = 8;
+  repeated string videos_url = 9;
+  string quote = 10;
+  uint64 comment_count = 11;
+  uint64 like_count = 12;
+  float score = 13;
+  uint64 report_count = 14;
+}
+

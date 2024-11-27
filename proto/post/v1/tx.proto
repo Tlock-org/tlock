@@ -6,6 +6,7 @@ import "post/v1/genesis.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/api/annotations.proto";
+import "post/v1/post.proto";
 
 option go_package = "github.com/rollchains/tlock/x/post/types";
 
@@ -21,9 +22,13 @@ service Msg {
   // SetServiceName allows a user to set their accounts name.
   rpc SetServiceName(MsgSetServiceName) returns (MsgSetServiceNameResponse);
 
-  // CreateFreePost allows user to create a free post
+  // CreateFreePostWithTitle allows user to create a free post with title
+  rpc CreateFreePostWithTitle(MsgCreateFreePostWithTitle) returns (MsgCreateFreePostWithTitleResponse);
+
+  // CreateFreePost allows user to create a free post without title
   rpc CreateFreePost(MsgCreateFreePost) returns (MsgCreateFreePostResponse);
-  // CreatePaidPost allows user to create a paid post
+
+  // CreatePaidPost allows user to create a paid post without title
   rpc CreatePaidPost(MsgCreatePaidPost) returns (MsgCreatePaidPostResponse);
 
   rpc GrantAllowanceFromModule(MsgGrantAllowanceFromModuleRequest) returns (MsgGrantAllowanceFromModuleResponse);
@@ -41,15 +46,39 @@ message MsgSetServiceName {
 // MsgSetServiceNameResponse is an empty reply.
 message MsgSetServiceNameResponse {}
 
+// MsgCreateFreePostWithTitle defines the structure for creating a new post
+message MsgCreateFreePostWithTitle {
+  option (cosmos.msg.v1.signer) = "creator";
+  string postId = 1;
+  PostType postType = 2;
+  string title = 3;
+  string content = 4;
+  string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 timestamp = 6;
+  repeated bytes imagesBase64 = 7;
+  repeated string imagesUrl = 8;
+  repeated string videosUrl = 9;
+  string quote = 10;
+}
+
+// MsgCreateFreePostWithTitleResponse is the response returned after creating a post
+message MsgCreateFreePostWithTitleResponse {
+  string post_id = 1;
+}
+
 // MsgCreateFreePost defines the structure for creating a new post
 message MsgCreateFreePost {
-  option (cosmos.msg.v1.signer) = "sender";
+  option (cosmos.msg.v1.signer) = "creator";
   string postId = 1;
-  string title = 2;
-  string content = 3;
-  bytes image = 4;
-  string sender = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  int64 timestamp = 6;
+  PostType postType = 2;
+  string title = 3;
+  string content = 4;
+  string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 timestamp = 6;
+  repeated bytes imagesBase64 = 7;
+  repeated string imagesUrl = 8;
+  repeated string videosUrl = 9;
+  string quote = 10;
 }
 
 // MsgCreateFreePostResponse is the response returned after creating a post
@@ -58,13 +87,17 @@ message MsgCreateFreePostResponse {
 }
 
 message MsgCreatePaidPost {
-  option (cosmos.msg.v1.signer) = "sender";
+  option (cosmos.msg.v1.signer) = "creator";
   string postId = 1;
-  string title = 2;
-  string content = 3;
-  bytes image = 4;
-  string sender = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  int64 timestamp = 6;
+  PostType postType = 2;
+  string title = 3;
+  string content = 4;
+  string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 timestamp = 6;
+  repeated bytes imagesBase64 = 7;
+  repeated string imagesUrl = 8;
+  repeated string videosUrl = 9;
+  string quote = 10;
 }
 
 message MsgCreatePaidPostResponse {

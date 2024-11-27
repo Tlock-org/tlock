@@ -46,52 +46,83 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
+					RpcMethod: "CreateFreePostWithTitle",
+					Use:       "create-free-post-with-title [postId] [title] [content] [creator] [timestamp] [imagesUrl] [videosUrl]",
+					Short:     "create free post with title",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "postId",
+						},
+						{
+							ProtoField: "title",
+						},
+						{
+							ProtoField: "content",
+						},
+						{
+							ProtoField: "creator",
+						},
+						{
+							ProtoField: "timestamp",
+						},
+						{
+							ProtoField: "imagesUrl",
+						},
+						{
+							ProtoField: "videosUrl",
+						},
+					},
+				},
+				{
 					RpcMethod: "CreateFreePost",
-					Use:       "create-free-post [postId] [title] [content] [image] [sender] [timestamp]",
+					Use:       "create-free-post [postId] [content] [creator] [timestamp] [imagesUrl] [videosUrl]",
 					Short:     "create free post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "postId",
 						},
 						{
-							ProtoField: "title",
-						},
-						{
 							ProtoField: "content",
 						},
 						{
-							ProtoField: "image",
-						},
-						{
-							ProtoField: "sender",
+							ProtoField: "creator",
 						},
 						{
 							ProtoField: "timestamp",
+						},
+						{
+							ProtoField: "imagesUrl",
+						},
+						{
+							ProtoField: "videosUrl",
 						},
 					},
 				},
 				{
 					RpcMethod: "CreatePaidPost",
-					Use:       "create-paid-post [postId] [title] [content] [image] [sender] [timestamp]",
+					Use:       "create-paid-post [postId] [content] [creator] [timestamp] [imagesBase64] [imagesUrl] [videosUrl]",
 					Short:     "create paid post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "postId",
 						},
 						{
-							ProtoField: "title",
-						},
-						{
 							ProtoField: "content",
 						},
 						{
-							ProtoField: "image",
-						},
-						{
-							ProtoField: "sender",
+							ProtoField: "creator",
 						},
 						{
 							ProtoField: "timestamp",
+						},
+						{
+							ProtoField: "imagesBase64",
+						},
+						{
+							ProtoField: "imagesUrl",
+						},
+						{
+							ProtoField: "videosUrl",
 						},
 					},
 				},

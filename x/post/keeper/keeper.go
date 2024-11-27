@@ -142,7 +142,7 @@ func (k Keeper) SetPost(ctx sdk.Context, post types.Post) {
 func (k Keeper) PostReward(ctx sdk.Context, post types.Post) {
 	// send post reward
 	amount := sdk.NewCoins(sdk.NewCoin(types.DenomBase, sdkmath.NewInt(10)))
-	userAddr, err := sdk.AccAddressFromBech32(post.Sender)
+	userAddr, err := sdk.AccAddressFromBech32(post.Creator)
 
 	if err != nil {
 		return
@@ -157,7 +157,7 @@ func (k Keeper) PostReward(ctx sdk.Context, post types.Post) {
 func (k Keeper) postPayment(ctx sdk.Context, post types.Post) {
 	// send post payment
 	amount := sdk.NewCoins(sdk.NewCoin(types.DenomBase, sdkmath.NewInt(10)))
-	userAddr, err := sdk.AccAddressFromBech32(post.Sender)
+	userAddr, err := sdk.AccAddressFromBech32(post.Creator)
 
 	ctx.Logger().Debug("===========userAddress, amount:", userAddr, amount)
 	if err != nil {

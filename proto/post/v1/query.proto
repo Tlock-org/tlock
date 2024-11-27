@@ -3,6 +3,7 @@ package post.v1;
 
 import "post/v1/genesis.proto";
 import "google/api/annotations.proto";
+import "post/v1/post.proto";
 
 option go_package = "github.com/rollchains/tlock/x/post/types";
 
@@ -20,10 +21,7 @@ service Query {
 
   // QueryPost allows querying a specific post by its ID
   rpc QueryPost(QueryPostRequest) returns (QueryPostResponse) {
-//    option (google.api.http).get = "/post/v1/post/{post_id}";
-    option (google.api.http) = {
-      get: "/post/v1/post/{post_id}"
-    };
+    option (google.api.http).get = "/post/v1/post/{post_id}";
   }
 }
 
@@ -40,16 +38,6 @@ message QueryResolveNameResponse {
 // QueryPostRequest defines the request for querying a post
 message QueryPostRequest {
   string post_id = 1;
-}
-
-// Post defines the structure of a post
-message Post {
-  string id = 1;
-  string title = 2;
-  string content = 3;
-  bytes image = 4;
-  string sender = 5;
-  int64 timestamp = 6;
 }
 
 // QueryPostResponse defines the response for querying a post

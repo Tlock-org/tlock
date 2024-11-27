@@ -42,8 +42,8 @@ func (ms msgServer) SetServiceName(ctx context.Context, msg *types.MsgSetService
 	return &types.MsgSetServiceNameResponse{}, nil
 }
 
-// CreateFreePost implements types.MsgServer.
-func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFreePost) (*types.MsgCreateFreePostResponse, error) {
+// CreateFreePostWithTitle implements types.MsgServer.
+func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.MsgCreateFreePostWithTitle) (*types.MsgCreateFreePostWithTitleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Validate the message
@@ -56,7 +56,7 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 
 	// Validate sender address
 	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	_, err := sdk.AccAddressFromBech32(msg.Sender)
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
 	}
@@ -72,11 +72,13 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	// Create the post
 	post := types.Post{
 		Id:        postID,
+		PostType:  types.PostType_ARTICLE,
 		Title:     msg.Title,
 		Content:   msg.Content,
-		Image:     msg.Image,
-		Sender:    msg.Sender,
+		Creator:   msg.Creator,
 		Timestamp: msg.Timestamp,
+		ImagesUrl: msg.ImagesUrl,
+		VideosUrl: msg.VideosUrl,
 	}
 
 	// Store the post in the state
@@ -88,31 +90,28 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeCreateFreePost,
-			sdk.NewAttribute(types.AttributeKeyCreator, msg.Sender),
+			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyPostID, postID),
 			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
-			sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
 		),
 	})
 
-	return &types.MsgCreateFreePostResponse{PostId: postID}, nil
+	return &types.MsgCreateFreePostWithTitleResponse{PostId: postID}, nil
 }
 
-func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePaidPost) (*types.MsgCreatePaidPostResponse, error) {
+// CreateFreePost implements types.MsgServer.
+func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFreePost) (*types.MsgCreateFreePostResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Validate the message
-	if len(msg.Title) == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidRequest, "Title cannot be empty")
-	}
 	if len(msg.Content) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
 	}
 
 	// Validate sender address
 	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	_, err := sdk.AccAddressFromBech32(msg.Sender)
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
 	}
@@ -128,11 +127,66 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 	// Create the post
 	post := types.Post{
 		Id:        postID,
-		Title:     msg.Title,
+		PostType:  types.PostType_ORIGINAL,
 		Content:   msg.Content,
-		Image:     msg.Image,
-		Sender:    msg.Sender,
+		Creator:   msg.Creator,
 		Timestamp: msg.Timestamp,
+		ImagesUrl: msg.ImagesUrl,
+		VideosUrl: msg.VideosUrl,
+	}
+
+	// Store the post in the state
+	ms.k.SetPost(ctx, post)
+	// post reward
+	ms.k.PostReward(ctx, post)
+
+	//Emit an event for the creation
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCreateFreePost,
+			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+			sdk.NewAttribute(types.AttributeKeyPostID, postID),
+			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
+		),
+	})
+
+	return &types.MsgCreateFreePostResponse{PostId: postID}, nil
+}
+
+func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePaidPost) (*types.MsgCreatePaidPostResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Validate the message
+	if len(msg.Content) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
+	}
+
+	// Validate sender address
+	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+	}
+
+	//if len(msg.Image) > MaxImageSize {
+	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
+	//}
+
+	// Generate a unique post ID
+	//postID := ms.k.generatePostID(ctx) // 需要在 Keeper 中实现 generatePostID 方法
+	postID := msg.PostId // 需要在 Keeper 中实现 generatePostID 方法
+
+	// Create the post
+	post := types.Post{
+		Id:           postID,
+		PostType:     types.PostType_ADVERTISEMENT,
+		Content:      msg.Content,
+		Creator:      msg.Creator,
+		Timestamp:    msg.Timestamp,
+		ImagesBase64: msg.ImagesBase64,
+		ImagesUrl:    msg.ImagesUrl,
+		VideosUrl:    msg.VideosUrl,
 	}
 
 	// post payment
@@ -145,10 +199,9 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeCreatePaidPost,
-			sdk.NewAttribute(types.AttributeKeyCreator, msg.Sender),
+			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyPostID, postID),
 			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
-			sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
 		),
 	})
@@ -174,11 +227,4 @@ func (ms msgServer) GrantAllowanceFromModule(goCtx context.Context, msg *types.M
 	ms.k.GrantPeriodicAllowance(ctx, sender, userAddress)
 
 	return &types.MsgGrantAllowanceFromModuleResponse{Status: true}, nil
-}
-
-// createPaidPost implements types.MsgServer.
-func (ms msgServer) createPaidPost(ctx context.Context, msg *types.MsgCreatePaidPost) (*types.MsgCreatePaidPostResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(goCtx)
-	panic("createPaidPost is unimplemented")
-	return &types.MsgCreatePaidPostResponse{}, nil
 }
