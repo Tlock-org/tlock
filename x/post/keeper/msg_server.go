@@ -42,6 +42,26 @@ func (ms msgServer) SetServiceName(ctx context.Context, msg *types.MsgSetService
 	return &types.MsgSetServiceNameResponse{}, nil
 }
 
+// SetApprove implements types.MsgServer.
+func (ms msgServer) GrantAllowanceFromModule(goCtx context.Context, msg *types.MsgGrantAllowanceFromModuleRequest) (*types.MsgGrantAllowanceFromModuleResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	sender, senderErr := sdk.AccAddressFromBech32(msg.Sender)
+	fmt.Printf("====sender: %s\n", sender)
+	if senderErr != nil {
+		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", senderErr)
+	}
+	userAddress, userErr := sdk.AccAddressFromBech32(msg.UserAddress)
+	fmt.Printf("=====userAddress: %s\n", userAddress)
+	if userErr != nil {
+		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", userErr)
+	}
+
+	ms.k.GrantPeriodicAllowance(ctx, sender, userAddress)
+
+	return &types.MsgGrantAllowanceFromModuleResponse{Status: true}, nil
+}
+
 // CreateFreePostWithTitle implements types.MsgServer.
 func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.MsgCreateFreePostWithTitle) (*types.MsgCreateFreePostWithTitleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -66,8 +86,8 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 	//}
 
 	// Generate a unique post ID
-	//postID := ms.k.generatePostID(ctx) // 需要在 Keeper 中实现 generatePostID 方法
-	postID := msg.PostId // 需要在 Keeper 中实现 generatePostID 方法
+	//postID := ms.k.generatePostID(ctx)
+	postID := msg.PostId
 
 	// Create the post
 	post := types.Post{
@@ -89,7 +109,7 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeCreateFreePost,
+			types.EventTypeCreateFreePostWithTitle,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyPostID, postID),
 			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
@@ -121,8 +141,8 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	//}
 
 	// Generate a unique post ID
-	//postID := ms.k.generatePostID(ctx) // 需要在 Keeper 中实现 generatePostID 方法
-	postID := msg.PostId // 需要在 Keeper 中实现 generatePostID 方法
+	//postID := ms.k.generatePostID(ctx)
+	postID := msg.PostId
 
 	// Create the post
 	post := types.Post{
@@ -174,8 +194,8 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 	//}
 
 	// Generate a unique post ID
-	//postID := ms.k.generatePostID(ctx) // 需要在 Keeper 中实现 generatePostID 方法
-	postID := msg.PostId // 需要在 Keeper 中实现 generatePostID 方法
+	//postID := ms.k.generatePostID(ctx)
+	postID := msg.PostId
 
 	// Create the post
 	post := types.Post{
@@ -209,22 +229,101 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 	return &types.MsgCreatePaidPostResponse{PostId: postID}, nil
 }
 
-// SetApprove implements types.MsgServer.
-func (ms msgServer) GrantAllowanceFromModule(goCtx context.Context, msg *types.MsgGrantAllowanceFromModuleRequest) (*types.MsgGrantAllowanceFromModuleResponse, error) {
+// LikePost implements types.MsgServer.
+func (ms msgServer) LikePost(goCtx context.Context, msg *types.MsgLikePostRequest) (*types.MsgLikePostResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	post, found := ms.k.GetPost(ctx, msg.PostId)
+	if !found {
+		return nil, errors.Wrap(types.ErrPostNotFound, msg.PostId)
+	}
+	post.LikeCount += 1
+
+	// update post
+	ms.k.SetPost(ctx, post)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeLikePost,
+			sdk.NewAttribute(types.AttributeKeyPostID, msg.PostId),
+			sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
+		),
+	})
+
+	return &types.MsgLikePostResponse{Status: true}, nil
+}
+
+// UnlikePost implements types.MsgServer.
+func (ms msgServer) UnlikePost(goCtx context.Context, msg *types.MsgUnlikePostRequest) (*types.MsgUnlikePostResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	sender, senderErr := sdk.AccAddressFromBech32(msg.Sender)
-	fmt.Printf("====sender: %s\n", sender)
-	if senderErr != nil {
-		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", senderErr)
-	}
-	userAddress, userErr := sdk.AccAddressFromBech32(msg.UserAddress)
-	fmt.Printf("=====userAddress: %s\n", userAddress)
-	if userErr != nil {
-		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", userErr)
+	post, found := ms.k.GetPost(ctx, msg.PostId)
+	if !found {
+		return nil, errors.Wrap(types.ErrPostNotFound, msg.PostId)
 	}
 
-	ms.k.GrantPeriodicAllowance(ctx, sender, userAddress)
+	if post.LikeCount > 0 {
+		post.LikeCount -= 1
+	} else {
+		return nil, errors.Wrap(types.ErrInvalidLikeCount, "like count is already zero")
+	}
 
-	return &types.MsgGrantAllowanceFromModuleResponse{Status: true}, nil
+	ms.k.SetPost(ctx, post)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeUnlikePost,
+			sdk.NewAttribute(types.AttributeKeyPostID, msg.PostId),
+			sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
+		),
+	})
+
+	return &types.MsgUnlikePostResponse{Status: true}, nil
+}
+
+// QuotePost implements types.MsgServer.
+func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequest) (*types.MsgQuotePostResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Validate the message
+	if len(msg.Comment) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidRequest, "Comment cannot be empty")
+	}
+	if len(msg.Quote) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidRequest, "Quote cannot be empty")
+	}
+
+	// Validate sender address
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+	}
+
+	postID := msg.PostId
+
+	// Create the post
+	post := types.Post{
+		Id:        postID,
+		PostType:  types.PostType_QUOTE,
+		Content:   msg.Comment,
+		Creator:   msg.Creator,
+		Timestamp: msg.Timestamp,
+		Quote:     msg.Quote,
+	}
+
+	// Store the post in the state
+	ms.k.SetPost(ctx, post)
+	// post reward
+	ms.k.PostReward(ctx, post)
+
+	//Emit an event for the creation
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCreateFreePostWithTitle,
+			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+			sdk.NewAttribute(types.AttributeKeyPostID, postID),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
+		),
+	})
+
+	return &types.MsgQuotePostResponse{}, nil
 }

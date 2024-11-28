@@ -22,6 +22,8 @@ service Msg {
   // SetServiceName allows a user to set their accounts name.
   rpc SetServiceName(MsgSetServiceName) returns (MsgSetServiceNameResponse);
 
+  rpc GrantAllowanceFromModule(MsgGrantAllowanceFromModuleRequest) returns (MsgGrantAllowanceFromModuleResponse);
+
   // CreateFreePostWithTitle allows user to create a free post with title
   rpc CreateFreePostWithTitle(MsgCreateFreePostWithTitle) returns (MsgCreateFreePostWithTitleResponse);
 
@@ -31,7 +33,11 @@ service Msg {
   // CreatePaidPost allows user to create a paid post without title
   rpc CreatePaidPost(MsgCreatePaidPost) returns (MsgCreatePaidPostResponse);
 
-  rpc GrantAllowanceFromModule(MsgGrantAllowanceFromModuleRequest) returns (MsgGrantAllowanceFromModuleResponse);
+  rpc LikePost(MsgLikePostRequest) returns (MsgLikePostResponse);
+
+  rpc UnlikePost(MsgUnlikePostRequest) returns (MsgUnlikePostResponse);
+
+  rpc QuotePost(MsgQuotePostRequest) returns (MsgQuotePostResponse);
 }
 
 // MsgSetServiceName defines the structure for setting a name.
@@ -45,64 +51,6 @@ message MsgSetServiceName {
 
 // MsgSetServiceNameResponse is an empty reply.
 message MsgSetServiceNameResponse {}
-
-// MsgCreateFreePostWithTitle defines the structure for creating a new post
-message MsgCreateFreePostWithTitle {
-  option (cosmos.msg.v1.signer) = "creator";
-  string postId = 1;
-  PostType postType = 2;
-  string title = 3;
-  string content = 4;
-  string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  uint64 timestamp = 6;
-  repeated bytes imagesBase64 = 7;
-  repeated string imagesUrl = 8;
-  repeated string videosUrl = 9;
-  string quote = 10;
-}
-
-// MsgCreateFreePostWithTitleResponse is the response returned after creating a post
-message MsgCreateFreePostWithTitleResponse {
-  string post_id = 1;
-}
-
-// MsgCreateFreePost defines the structure for creating a new post
-message MsgCreateFreePost {
-  option (cosmos.msg.v1.signer) = "creator";
-  string postId = 1;
-  PostType postType = 2;
-  string title = 3;
-  string content = 4;
-  string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  uint64 timestamp = 6;
-  repeated bytes imagesBase64 = 7;
-  repeated string imagesUrl = 8;
-  repeated string videosUrl = 9;
-  string quote = 10;
-}
-
-// MsgCreateFreePostResponse is the response returned after creating a post
-message MsgCreateFreePostResponse {
-  string post_id = 1;
-}
-
-message MsgCreatePaidPost {
-  option (cosmos.msg.v1.signer) = "creator";
-  string postId = 1;
-  PostType postType = 2;
-  string title = 3;
-  string content = 4;
-  string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  uint64 timestamp = 6;
-  repeated bytes imagesBase64 = 7;
-  repeated string imagesUrl = 8;
-  repeated string videosUrl = 9;
-  string quote = 10;
-}
-
-message MsgCreatePaidPostResponse {
-  string post_id = 1;
-}
 
 // MsgUpdateParams is the Msg/UpdateParams request type.
 //
@@ -131,7 +79,93 @@ message MsgGrantAllowanceFromModuleRequest {
   string userAddress = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
-// MsgSetFeeGrantApproveResponse is the response returned after creating a post
 message MsgGrantAllowanceFromModuleResponse {
+  bool status = 1;
+}
+
+message MsgCreateFreePostWithTitle {
+  option (cosmos.msg.v1.signer) = "creator";
+  string postId = 1;
+  PostType postType = 2;
+  string title = 3;
+  string content = 4;
+  string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 timestamp = 6;
+  repeated bytes imagesBase64 = 7;
+  repeated string imagesUrl = 8;
+  repeated string videosUrl = 9;
+  string quote = 10;
+}
+
+message MsgCreateFreePostWithTitleResponse {
+  string post_id = 1;
+}
+
+message MsgCreateFreePost {
+  option (cosmos.msg.v1.signer) = "creator";
+  string postId = 1;
+  PostType postType = 2;
+  string title = 3;
+  string content = 4;
+  string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 timestamp = 6;
+  repeated bytes imagesBase64 = 7;
+  repeated string imagesUrl = 8;
+  repeated string videosUrl = 9;
+  string quote = 10;
+}
+
+message MsgCreateFreePostResponse {
+  string post_id = 1;
+}
+
+message MsgCreatePaidPost {
+  option (cosmos.msg.v1.signer) = "creator";
+  string postId = 1;
+  PostType postType = 2;
+  string title = 3;
+  string content = 4;
+  string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 timestamp = 6;
+  repeated bytes imagesBase64 = 7;
+  repeated string imagesUrl = 8;
+  repeated string videosUrl = 9;
+  string quote = 10;
+}
+
+message MsgCreatePaidPostResponse {
+  string post_id = 1;
+}
+
+message MsgLikePostRequest {
+  option (cosmos.msg.v1.signer) = "sender";
+  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string postId = 2;
+}
+
+message MsgLikePostResponse {
+  bool status = 1;
+}
+
+message MsgUnlikePostRequest {
+  option (cosmos.msg.v1.signer) = "sender";
+  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string postId = 2;
+}
+
+message MsgUnlikePostResponse {
+  bool status = 1;
+}
+
+message MsgQuotePostRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string postId = 2;
+  string quote = 3;
+  string comment = 4;
+  uint64 timestamp = 5;
+}
+
+message MsgQuotePostResponse {
   bool status = 1;
 }

@@ -46,10 +46,30 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
+					RpcMethod: "UpdateParams",
+					Skip:      false, // set to true if authority gated
+				},
+				{
+					RpcMethod: "GrantAllowanceFromModule",
+					Use:       "grant-allowance-from-module [sender] [userAddress]",
+					Short:     "grant allowance from module account to user account",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "sender",
+						},
+						{
+							ProtoField: "userAddress",
+						},
+					},
+				},
+				{
 					RpcMethod: "CreateFreePostWithTitle",
-					Use:       "create-free-post-with-title [postId] [title] [content] [creator] [timestamp] [imagesUrl] [videosUrl]",
+					Use:       "create-free-post-with-title [creator] [postId] [title] [content] [timestamp] [imagesUrl] [videosUrl]",
 					Short:     "create free post with title",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+						},
 						{
 							ProtoField: "postId",
 						},
@@ -58,9 +78,6 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 						{
 							ProtoField: "content",
-						},
-						{
-							ProtoField: "creator",
 						},
 						{
 							ProtoField: "timestamp",
@@ -75,17 +92,17 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "CreateFreePost",
-					Use:       "create-free-post [postId] [content] [creator] [timestamp] [imagesUrl] [videosUrl]",
+					Use:       "create-free-post [creator] [postId] [content] [timestamp] [imagesUrl] [videosUrl]",
 					Short:     "create free post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+						},
 						{
 							ProtoField: "postId",
 						},
 						{
 							ProtoField: "content",
-						},
-						{
-							ProtoField: "creator",
 						},
 						{
 							ProtoField: "timestamp",
@@ -100,17 +117,17 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "CreatePaidPost",
-					Use:       "create-paid-post [postId] [content] [creator] [timestamp] [imagesBase64] [imagesUrl] [videosUrl]",
+					Use:       "create-paid-post [creator] [postId] [content] [timestamp] [imagesBase64] [imagesUrl] [videosUrl]",
 					Short:     "create paid post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+						},
 						{
 							ProtoField: "postId",
 						},
 						{
 							ProtoField: "content",
-						},
-						{
-							ProtoField: "creator",
 						},
 						{
 							ProtoField: "timestamp",
@@ -127,19 +144,50 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-					RpcMethod: "UpdateParams",
-					Skip:      false, // set to true if authority gated
-				},
-				{
-					RpcMethod: "GrantAllowanceFromModule",
-					Use:       "grant-allowance-from-module [sender] [userAddress]",
-					Short:     "grant allowance from module account to user account",
+					RpcMethod: "LikePost",
+					Use:       "like-post [postId] [sender]",
+					Short:     "like post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "postId",
+						},
 						{
 							ProtoField: "sender",
 						},
+					},
+				},
+				{
+					RpcMethod: "UnlikePost",
+					Use:       "unlike-post [postId] [sender]",
+					Short:     "unlike post",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
-							ProtoField: "userAddress",
+							ProtoField: "postId",
+						},
+						{
+							ProtoField: "sender",
+						},
+					},
+				},
+				{
+					RpcMethod: "Quote",
+					Use:       "quote [creator] [postId] [quote] [comment] [timestamp]",
+					Short:     "quote post",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+						},
+						{
+							ProtoField: "postId",
+						},
+						{
+							ProtoField: "quote",
+						},
+						{
+							ProtoField: "comment",
+						},
+						{
+							ProtoField: "timestamp",
 						},
 					},
 				},
