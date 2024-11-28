@@ -170,8 +170,8 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-					RpcMethod: "Quote",
-					Use:       "quote [creator] [postId] [quote] [comment] [timestamp]",
+					RpcMethod: "QuotePost",
+					Use:       "quote-post [creator] [postId] [quote] [comment] [timestamp]",
 					Short:     "quote post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
