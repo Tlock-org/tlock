@@ -12,23 +12,25 @@ enum PostType {
   ADVERTISEMENT = 2;
   QUOTE = 3;
   POLL = 4;
+  COMMENT = 5;
 }
 
 // Post defines the structure of a post
 message Post {
   string id = 1;
   PostType post_type = 2;
-  string title = 3;
-  string content = 4;
-  string creator = 5;
-  uint64 timestamp = 6;
-  repeated bytes images_base64 = 7;
-  repeated string images_url = 8;
-  repeated string videos_url = 9;
-  string quote = 10;
-  uint64 comment_count = 11;
+  string parent_id = 3;
+  string title = 4;
+  string content = 5;
+  string creator = 6;
+  int64 timestamp = 7;
+  repeated bytes images_base64 = 8;
+  repeated string images_url = 9;
+  repeated string videos_url = 10;
+  string quote = 11;
   uint64 like_count = 12;
-  float score = 13;
+  uint64 comment_count = 13;
   uint64 report_count = 14;
+  float score = 15;
 }
 

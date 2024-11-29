@@ -85,18 +85,19 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
 	//}
 
+	blockTime := ctx.BlockTime().Unix()
 	// Generate a unique post ID
-	//postID := ms.k.generatePostID(ctx)
-	postID := msg.PostId
+	data := fmt.Sprintf("%s|%s|%s|%d", msg.Creator, msg.Title, msg.Content, blockTime)
+	postID := ms.k.generatePostID(data)
 
 	// Create the post
 	post := types.Post{
-		Id:        postID,
+		Id:        "11",
 		PostType:  types.PostType_ARTICLE,
 		Title:     msg.Title,
 		Content:   msg.Content,
 		Creator:   msg.Creator,
-		Timestamp: msg.Timestamp,
+		Timestamp: blockTime,
 		ImagesUrl: msg.ImagesUrl,
 		VideosUrl: msg.VideosUrl,
 	}
@@ -113,7 +114,7 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyPostID, postID),
 			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
-			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})
 
@@ -141,8 +142,9 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	//}
 
 	// Generate a unique post ID
-	//postID := ms.k.generatePostID(ctx)
-	postID := msg.PostId
+	blockTime := ctx.BlockTime().Unix()
+	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
+	postID := ms.k.generatePostID(data)
 
 	// Create the post
 	post := types.Post{
@@ -150,7 +152,7 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 		PostType:  types.PostType_ORIGINAL,
 		Content:   msg.Content,
 		Creator:   msg.Creator,
-		Timestamp: msg.Timestamp,
+		Timestamp: blockTime,
 		ImagesUrl: msg.ImagesUrl,
 		VideosUrl: msg.VideosUrl,
 	}
@@ -167,11 +169,66 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyPostID, postID),
 			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
-			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})
 
 	return &types.MsgCreateFreePostResponse{PostId: postID}, nil
+}
+
+// CreateFreePostImagePayable implements types.MsgServer.
+func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types.MsgCreateFreePostImagePayable) (*types.MsgCreateFreePostImagePayableResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Validate the message
+	if len(msg.Content) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
+	}
+
+	// Validate sender address
+	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+	}
+
+	//if len(msg.Image) > MaxImageSize {
+	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
+	//}
+
+	blockTime := ctx.BlockTime().Unix()
+	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
+	postID := ms.k.generatePostID(data)
+
+	// Create the post
+	post := types.Post{
+		Id:           postID,
+		PostType:     types.PostType_ADVERTISEMENT,
+		Content:      msg.Content,
+		Creator:      msg.Creator,
+		Timestamp:    blockTime,
+		ImagesBase64: msg.ImagesBase64,
+		ImagesUrl:    msg.ImagesUrl,
+		VideosUrl:    msg.VideosUrl,
+	}
+
+	// post payment
+	ms.k.postPayment(ctx, post)
+
+	// Store the post in the state
+	ms.k.SetPost(ctx, post)
+
+	//Emit an event for the creation
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCreatePaidPost,
+			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+			sdk.NewAttribute(types.AttributeKeyPostID, postID),
+			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
+		),
+	})
+	return &types.MsgCreateFreePostImagePayableResponse{}, nil
 }
 
 func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePaidPost) (*types.MsgCreatePaidPostResponse, error) {
@@ -193,9 +250,9 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
 	//}
 
-	// Generate a unique post ID
-	//postID := ms.k.generatePostID(ctx)
-	postID := msg.PostId
+	blockTime := ctx.BlockTime().Unix()
+	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
+	postID := ms.k.generatePostID(data)
 
 	// Create the post
 	post := types.Post{
@@ -203,7 +260,7 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 		PostType:     types.PostType_ADVERTISEMENT,
 		Content:      msg.Content,
 		Creator:      msg.Creator,
-		Timestamp:    msg.Timestamp,
+		Timestamp:    blockTime,
 		ImagesBase64: msg.ImagesBase64,
 		ImagesUrl:    msg.ImagesUrl,
 		VideosUrl:    msg.VideosUrl,
@@ -222,62 +279,11 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyPostID, postID),
 			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
-			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})
 
 	return &types.MsgCreatePaidPostResponse{PostId: postID}, nil
-}
-
-// LikePost implements types.MsgServer.
-func (ms msgServer) LikePost(goCtx context.Context, msg *types.MsgLikePostRequest) (*types.MsgLikePostResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	post, found := ms.k.GetPost(ctx, msg.PostId)
-	if !found {
-		return nil, errors.Wrap(types.ErrPostNotFound, msg.PostId)
-	}
-	post.LikeCount += 1
-
-	// update post
-	ms.k.SetPost(ctx, post)
-
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeLikePost,
-			sdk.NewAttribute(types.AttributeKeyPostID, msg.PostId),
-			sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
-		),
-	})
-
-	return &types.MsgLikePostResponse{Status: true}, nil
-}
-
-// UnlikePost implements types.MsgServer.
-func (ms msgServer) UnlikePost(goCtx context.Context, msg *types.MsgUnlikePostRequest) (*types.MsgUnlikePostResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	post, found := ms.k.GetPost(ctx, msg.PostId)
-	if !found {
-		return nil, errors.Wrap(types.ErrPostNotFound, msg.PostId)
-	}
-
-	if post.LikeCount > 0 {
-		post.LikeCount -= 1
-	} else {
-		return nil, errors.Wrap(types.ErrInvalidLikeCount, "like count is already zero")
-	}
-
-	ms.k.SetPost(ctx, post)
-
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeUnlikePost,
-			sdk.NewAttribute(types.AttributeKeyPostID, msg.PostId),
-			sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
-		),
-	})
-
-	return &types.MsgUnlikePostResponse{Status: true}, nil
 }
 
 // QuotePost implements types.MsgServer.
@@ -298,7 +304,9 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
 	}
 
-	postID := msg.PostId
+	blockTime := ctx.BlockTime().Unix()
+	data := fmt.Sprintf("%s|%s|%s|%d", msg.Creator, msg.Quote, msg.Comment, blockTime)
+	postID := ms.k.generatePostID(data)
 
 	// Create the post
 	post := types.Post{
@@ -306,7 +314,7 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 		PostType:  types.PostType_QUOTE,
 		Content:   msg.Comment,
 		Creator:   msg.Creator,
-		Timestamp: msg.Timestamp,
+		Timestamp: blockTime,
 		Quote:     msg.Quote,
 	}
 
@@ -321,9 +329,118 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 			types.EventTypeCreateFreePostWithTitle,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyPostID, postID),
-			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", msg.Timestamp)),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})
 
 	return &types.MsgQuotePostResponse{}, nil
+}
+
+// LikePost implements types.MsgServer.
+func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*types.MsgLikeResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	post, found := ms.k.GetPost(ctx, msg.Id)
+	if !found {
+		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
+	}
+	post.LikeCount += 1
+
+	// update post
+	ms.k.SetPost(ctx, post)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeLikePost,
+			sdk.NewAttribute(types.AttributeKeyPostID, msg.Id),
+			sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
+		),
+	})
+
+	return &types.MsgLikeResponse{Status: true}, nil
+}
+
+// UnlikePost implements types.MsgServer.
+func (ms msgServer) Unlike(goCtx context.Context, msg *types.MsgUnlikeRequest) (*types.MsgUnlikeResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	post, found := ms.k.GetPost(ctx, msg.Id)
+	if !found {
+		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
+	}
+
+	if post.LikeCount > 0 {
+		post.LikeCount -= 1
+	} else {
+		return nil, errors.Wrap(types.ErrInvalidLikeCount, "like count is already zero")
+	}
+
+	ms.k.SetPost(ctx, post)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeUnlikePost,
+			sdk.NewAttribute(types.AttributeKeyPostID, msg.Id),
+			sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
+		),
+	})
+
+	return &types.MsgUnlikeResponse{Status: true}, nil
+}
+
+// Comment implements types.MsgServer.
+func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest) (*types.MsgCommentResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	// Validate the message
+	if len(msg.ParentId) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidRequest, "parent id cannot be empty")
+	}
+	if len(msg.Comment) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidRequest, "Comment cannot be empty")
+	}
+
+	// Validate sender address
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+	}
+
+	blockTime := ctx.BlockTime().Unix()
+	data := fmt.Sprintf("%s|%s|%s|%d", msg.Creator, msg.ParentId, msg.Comment, blockTime)
+	commentID := ms.k.generatePostID(data)
+
+	// Create the post
+	comment := types.Post{
+		Id:        commentID,
+		PostType:  types.PostType_COMMENT,
+		ParentId:  msg.ParentId,
+		Content:   msg.Comment,
+		Creator:   msg.Creator,
+		Timestamp: blockTime,
+	}
+
+	// Store the post in the state
+	ms.k.SetPost(ctx, comment)
+	// post reward
+	ms.k.PostReward(ctx, comment)
+
+	// update post commentCount
+	post, found := ms.k.GetPost(ctx, msg.ParentId)
+	if !found {
+		return nil, errors.Wrap(types.ErrPostNotFound, msg.ParentId)
+	}
+	post.CommentCount += 1
+
+	// update post
+	ms.k.SetPost(ctx, post)
+
+	//Emit an event for the creation
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCreateFreePostWithTitle,
+			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+			sdk.NewAttribute(types.AttributeKeyCommentID, commentID),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
+		),
+	})
+	return &types.MsgCommentResponse{}, nil
 }

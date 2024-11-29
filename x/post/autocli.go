@@ -64,23 +64,17 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "CreateFreePostWithTitle",
-					Use:       "create-free-post-with-title [creator] [postId] [title] [content] [timestamp] [imagesUrl] [videosUrl]",
+					Use:       "create-free-post-with-title [creator] [title] [content] [imagesUrl] [videosUrl]",
 					Short:     "create free post with title",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
 						},
 						{
-							ProtoField: "postId",
-						},
-						{
 							ProtoField: "title",
 						},
 						{
 							ProtoField: "content",
-						},
-						{
-							ProtoField: "timestamp",
 						},
 						{
 							ProtoField: "imagesUrl",
@@ -92,20 +86,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "CreateFreePost",
-					Use:       "create-free-post [creator] [postId] [content] [timestamp] [imagesUrl] [videosUrl]",
+					Use:       "create-free-post [creator] [content] [imagesUrl] [videosUrl]",
 					Short:     "create free post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
 						},
 						{
-							ProtoField: "postId",
-						},
-						{
 							ProtoField: "content",
-						},
-						{
-							ProtoField: "timestamp",
 						},
 						{
 							ProtoField: "imagesUrl",
@@ -116,21 +104,15 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-					RpcMethod: "CreatePaidPost",
-					Use:       "create-paid-post [creator] [postId] [content] [timestamp] [imagesBase64] [imagesUrl] [videosUrl]",
-					Short:     "create paid post",
+					RpcMethod: "CreateFreePostImagePayable",
+					Use:       "create-free-post-image-payable [creator] [content] [imagesBase64] [imagesUrl] [videosUrl]",
+					Short:     "create free post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
 						},
 						{
-							ProtoField: "postId",
-						},
-						{
 							ProtoField: "content",
-						},
-						{
-							ProtoField: "timestamp",
 						},
 						{
 							ProtoField: "imagesBase64",
@@ -144,41 +126,34 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-					RpcMethod: "LikePost",
-					Use:       "like-post [postId] [sender]",
-					Short:     "like post",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{
-							ProtoField: "postId",
-						},
-						{
-							ProtoField: "sender",
-						},
-					},
-				},
-				{
-					RpcMethod: "UnlikePost",
-					Use:       "unlike-post [postId] [sender]",
-					Short:     "unlike post",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{
-							ProtoField: "postId",
-						},
-						{
-							ProtoField: "sender",
-						},
-					},
-				},
-				{
-					RpcMethod: "QuotePost",
-					Use:       "quote-post [creator] [postId] [quote] [comment] [timestamp]",
-					Short:     "quote post",
+					RpcMethod: "CreatePaidPost",
+					Use:       "create-paid-post [creator] [content] [imagesBase64] [imagesUrl] [videosUrl]",
+					Short:     "create paid post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
 						},
 						{
-							ProtoField: "postId",
+							ProtoField: "content",
+						},
+						{
+							ProtoField: "imagesBase64",
+						},
+						{
+							ProtoField: "imagesUrl",
+						},
+						{
+							ProtoField: "videosUrl",
+						},
+					},
+				},
+				{
+					RpcMethod: "QuotePost",
+					Use:       "quote-post [creator] [quote] [comment]",
+					Short:     "quote post",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
 						},
 						{
 							ProtoField: "quote",
@@ -186,8 +161,47 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{
 							ProtoField: "comment",
 						},
+					},
+				},
+				{
+					RpcMethod: "Like",
+					Use:       "like [sender] [id]",
+					Short:     "like",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
-							ProtoField: "timestamp",
+							ProtoField: "sender",
+						},
+						{
+							ProtoField: "id",
+						},
+					},
+				},
+				{
+					RpcMethod: "Unlike",
+					Use:       "unlike [sender] [id]",
+					Short:     "unlike",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "sender",
+						},
+						{
+							ProtoField: "id",
+						},
+					},
+				},
+				{
+					RpcMethod: "Comment",
+					Use:       "comment [creator] [parentId] [comment]",
+					Short:     "comment",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+						},
+						{
+							ProtoField: "parentId",
+						},
+						{
+							ProtoField: "comment",
 						},
 					},
 				},

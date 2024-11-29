@@ -7,6 +7,7 @@ const (
 
 	AttributeKeyCreator   = "creator"
 	AttributeKeyPostID    = "post_id"
+	AttributeKeyCommentID = "comment_id"
 	AttributeKeyTitle     = "title"
 	AttributeKeyTimestamp = "timestamp"
 

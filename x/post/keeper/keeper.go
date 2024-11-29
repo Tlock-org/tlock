@@ -4,6 +4,8 @@ import (
 	"context"
 	"cosmossdk.io/store/prefix"
 	"cosmossdk.io/x/feegrant"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -186,11 +188,17 @@ func (k Keeper) GetPost(ctx sdk.Context, id string) (types.Post, bool) {
 // generatePostID generates a unique post ID.
 // This is a simple implementation using block time and some randomness.
 // Consider using a more robust method in production.
-func (k Keeper) generatePostID(ctx sdk.Context) string {
-	// Use the current block time and a counter or other mechanism
-	timestamp := ctx.BlockTime().UnixNano()
-	return fmt.Sprintf("post-%d", timestamp)
+func (k Keeper) generatePostID(data string) string {
+	hash := sha256.Sum256([]byte(data))
+	return hex.EncodeToString(hash[:])
 }
+
+//func GeneratePostID(data string) string {
+//	// 使用 RFC3339Nano 确保时间的高精度
+//	//data := userAddress + content + blockTime.Format(time.RFC3339Nano)
+//	hash := sha256.Sum256([]byte(data))
+//	return hex.EncodeToString(hash[:])
+//}
 
 // get post module address
 func (k Keeper) GetModuleAccountAddress() sdk.AccAddress {
