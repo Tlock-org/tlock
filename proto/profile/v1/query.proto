@@ -1,0 +1,37 @@
+syntax = "proto3";
+package profile.v1;
+
+import "google/api/annotations.proto";
+import "profile/v1/genesis.proto";
+import "profile/v1/profile.proto";
+
+option go_package = "github.com/rollchains/tlock/x/profile/types";
+
+// Query provides defines the gRPC querier service.
+service Query {
+  // Params queries all parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/profile/v1/params";
+  }
+
+  rpc QueryProfile(QueryProfileRequest) returns (QueryProfileResponse) {
+    option (google.api.http).get = "/profile/v1/get/{wallet_address}";
+  }
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1;
+}
+
+message QueryProfileRequest {
+  string wallet_address = 1;
+}
+
+message QueryProfileResponse {
+  Profile profile = 1;
+}
