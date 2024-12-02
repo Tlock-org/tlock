@@ -57,6 +57,8 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	profile := types.Profile{
 		WalletAddress: msg.Creator,
 		Nickname:      msg.Nickname,
+		UserHandle:    msg.UserHandle,
+		Avatar:        msg.Avatar,
 		CreationTime:  blockTime,
 	}
 

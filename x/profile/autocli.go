@@ -42,17 +42,16 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 							ProtoField: "creator",
 							Optional:   false,
 						},
-						{
-							ProtoField: "nickname",
-							Optional:   true,
+					},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"nickname": {
+							Shorthand: "nn",
 						},
-						{
-							ProtoField: "user_handle",
-							Optional:   true,
+						"user_handle": {
+							Shorthand: "uh",
 						},
-						{
-							ProtoField: "avatar",
-							Optional:   true,
+						"avatar": {
+							Shorthand: "av",
 						},
 					},
 				},
