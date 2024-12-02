@@ -35,7 +35,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "AddProfile",
-					Use:       "add-profile [creator] [nickname]",
+					Use:       "add-profile [creator]",
 					Short:     "add profile",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
