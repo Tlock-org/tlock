@@ -40,9 +40,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
+							Optional:   false,
 						},
 						{
 							ProtoField: "nickname",
+							Optional:   true,
 						},
 					},
 				},
