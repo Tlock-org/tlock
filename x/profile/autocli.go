@@ -27,14 +27,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "AddProfile",
-					Use:       "add-profile [creator] [walletAddress] [nickname]",
+					Use:       "add-profile [creator] [nickname]",
 					Short:     "add profile",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
-						},
-						{
-							ProtoField: "walletAddress",
 						},
 						{
 							ProtoField: "nickname",
