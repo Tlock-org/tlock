@@ -51,7 +51,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 							Shorthand: "u",
 						},
 						"avatar": {
-							Shorthand: "a",
+							Shorthand: "t",
 						},
 					},
 				},
