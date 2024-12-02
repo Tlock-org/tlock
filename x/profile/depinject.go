@@ -1,6 +1,7 @@
 package module
 
 import (
+	kvtypes "cosmossdk.io/store/types"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -39,6 +40,7 @@ type ModuleInputs struct {
 	depinject.In
 
 	Cdc          codec.Codec
+	storeKey     kvtypes.StoreKey
 	StoreService store.KVStoreService
 	AddressCodec address.Codec
 
@@ -56,7 +58,7 @@ type ModuleOutputs struct {
 func ProvideModule(in ModuleInputs) ModuleOutputs {
 	govAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
-	k := keeper.NewKeeper(in.Cdc, in.StoreService, log.NewLogger(os.Stderr), govAddr)
+	k := keeper.NewKeeper(in.Cdc, in.storeKey, in.StoreService, log.NewLogger(os.Stderr), govAddr)
 	m := NewAppModule(in.Cdc, k)
 
 	return ModuleOutputs{Module: m, Keeper: k, Out: depinject.Out{}}
