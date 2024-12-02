@@ -18,10 +18,10 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryProfile",
-					Use:       "get [walletAddress]",
-					Short:     "get the profile by walletAddress",
+					Use:       "get [wallet_address]",
+					Short:     "get the profile by wallet_address",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "walletAddress"},
+						{ProtoField: "wallet_address"},
 					},
 				},
 			},
