@@ -168,7 +168,6 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 			types.EventTypeCreateFreePost,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyPostID, postID),
-			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})

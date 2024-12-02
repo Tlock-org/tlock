@@ -1,0 +1,32 @@
+syntax = "proto3";
+package profile.v1;
+
+import "post/v1/genesis.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/rollchains/tlock/x/profile/types";
+
+enum IdVerificationStatus {
+  ID_VERIFICATION_UNSPECIFIED = 0;
+  ID_VERIFICATION_PERSONAL = 1;
+  ID_VERIFICATION_ENTERPRISE = 2;
+}
+
+// Profile defines the structure of a profile
+message Profile {
+  string wallet_address = 1;
+  string user_handle = 2;
+  string nickname = 3;
+  string avatar = 4;
+  string bio = 5;
+  uint32 level = 6;
+  uint32 admin_level = 7;
+  uint32 following = 8;
+  uint32 followers = 9;
+  int64 creation_time = 10;
+  string location = 11;
+  string website = 12;
+  IdVerificationStatus idVerification_status = 13;
+  float score = 14;
+}
+

@@ -21,7 +21,7 @@ service Query {
 
   // QueryPost allows querying a specific post by its ID
   rpc QueryPost(QueryPostRequest) returns (QueryPostResponse) {
-    option (google.api.http).get = "/post/v1/post/{post_id}";
+    option (google.api.http).get = "/post/v1/get/{post_id}";
   }
 }
 

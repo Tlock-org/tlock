@@ -106,7 +106,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "CreateFreePostImagePayable",
 					Use:       "create-free-post-image-payable [creator] [content] [imagesBase64] [imagesUrl] [videosUrl]",
-					Short:     "create free post",
+					Short:     "create free post image payable",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",

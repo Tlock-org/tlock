@@ -129,6 +129,9 @@ import (
 	post "github.com/rollchains/tlock/x/post"
 	postkeeper "github.com/rollchains/tlock/x/post/keeper"
 	posttypes "github.com/rollchains/tlock/x/post/types"
+	profile "github.com/rollchains/tlock/x/profile"
+	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
+	profiletypes "github.com/rollchains/tlock/x/profile/types"
 	"github.com/spf13/cast"
 	tokenfactory "github.com/strangelove-ventures/tokenfactory/x/tokenfactory"
 	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
@@ -250,6 +253,7 @@ type ChainApp struct {
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
 	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
 	PostKeeper                postkeeper.Keeper
+	ProfileKeeper             profilekeeper.Keeper
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -362,6 +366,7 @@ func NewChainApp(
 		tokenfactorytypes.StoreKey,
 		packetforwardtypes.StoreKey,
 		posttypes.StoreKey,
+		profiletypes.StoreKey,
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -609,6 +614,15 @@ func NewChainApp(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
+	// Create the profile Keeper
+	app.ProfileKeeper = profilekeeper.NewKeeper(
+		appCodec,
+		keys[profiletypes.StoreKey], // storeKey
+		runtime.NewKVStoreService(keys[profiletypes.StoreKey]),
+		logger,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	// Create the post Keeper
 	app.PostKeeper = postkeeper.NewKeeper(
 		appCodec,
@@ -788,6 +802,7 @@ func NewChainApp(
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(tokenfactorytypes.ModuleName)),
 		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
 		post.NewAppModule(appCodec, app.PostKeeper),
+		profile.NewAppModule(appCodec, app.ProfileKeeper),
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -828,6 +843,7 @@ func NewChainApp(
 		tokenfactorytypes.ModuleName,
 		packetforwardtypes.ModuleName,
 		posttypes.ModuleName,
+		profiletypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -846,6 +862,7 @@ func NewChainApp(
 		tokenfactorytypes.ModuleName,
 		packetforwardtypes.ModuleName,
 		posttypes.ModuleName,
+		profiletypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -886,6 +903,7 @@ func NewChainApp(
 		tokenfactorytypes.ModuleName,
 		packetforwardtypes.ModuleName,
 		posttypes.ModuleName,
+		profiletypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -1293,6 +1311,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
 	paramsKeeper.Subspace(packetforwardtypes.ModuleName).WithKeyTable(packetforwardtypes.ParamKeyTable())
 	paramsKeeper.Subspace(posttypes.ModuleName)
+	paramsKeeper.Subspace(profiletypes.ModuleName)
 
 	return paramsKeeper
 }

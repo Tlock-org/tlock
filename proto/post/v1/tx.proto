@@ -95,7 +95,6 @@ message MsgCreateFreePostWithTitle {
   string title = 3;
   string content = 4;
   string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-//  uint64 timestamp = 6;
   repeated bytes imagesBase64 = 6;
   repeated string imagesUrl = 7;
   repeated string videosUrl = 8;
@@ -113,7 +112,6 @@ message MsgCreateFreePost {
   string title = 3;
   string content = 4;
   string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-//  uint64 timestamp = 6;
   repeated bytes imagesBase64 = 7;
   repeated string imagesUrl = 8;
   repeated string videosUrl = 9;
@@ -148,7 +146,6 @@ message MsgCreatePaidPost {
   string title = 3;
   string content = 4;
   string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-//  uint64 timestamp = 6;
   repeated bytes imagesBase64 = 7;
   repeated string imagesUrl = 8;
   repeated string videosUrl = 9;
@@ -164,7 +161,6 @@ message MsgQuotePostRequest {
   string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string quote = 2;
   string comment = 3;
-  //  uint64 timestamp = 5;
 }
 
 message MsgQuotePostResponse {
