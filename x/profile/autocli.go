@@ -16,6 +16,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Use:       "params",
 					Short:     "Query the current consensus parameters",
 				},
+				{
+					RpcMethod: "QueryProfile",
+					Use:       "get [walletAddress]",
+					Short:     "get the profile by walletAddress",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "walletAddress"},
+					},
+				},
 			},
 		},
 		Tx: &autocliv1.ServiceCommandDescriptor{

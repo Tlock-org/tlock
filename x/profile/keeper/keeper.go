@@ -117,3 +117,16 @@ func (k Keeper) SetProfile(ctx sdk.Context, profile types.Profile) {
 	store.Set([]byte(profile.WalletAddress), bz)
 
 }
+
+// GetProfile
+func (k Keeper) GetProfile(ctx sdk.Context, walletAddress string) (types.Profile, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostKeyPrefix))
+	bz := store.Get([]byte(walletAddress))
+	if bz == nil {
+		return types.Profile{}, false
+	}
+
+	var profile types.Profile
+	k.cdc.MustUnmarshal(bz, &profile)
+	return profile, true
+}

@@ -31,7 +31,16 @@ func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*type
 
 // QueryProfile implements types.QueryServer.
 func (k Querier) QueryProfile(goCtx context.Context, req *types.QueryProfileRequest) (*types.QueryProfileResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(goCtx)
-	panic("QueryProfile is unimplemented")
-	return &types.QueryProfileResponse{}, nil
+	//ctx := sdk.UnwrapSDKContext(goCtx)
+	//if req == nil {
+	//	return nil, types.ErrInvalidRequest
+	//}
+
+	// Retrieve the post from the state
+	profile, _ := k.Keeper.GetProfile(sdk.UnwrapSDKContext(goCtx), req.WalletAddress)
+	//if !found {
+	//	return nil, types.ErrPostNotFound
+	//}
+
+	return &types.QueryProfileResponse{Profile: &profile}, nil
 }
