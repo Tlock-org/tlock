@@ -45,13 +45,13 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 					FlagOptions: map[string]*autocliv1.FlagOptions{
 						"nickname": {
-							Shorthand: "nn",
+							Shorthand: "n",
 						},
 						"user_handle": {
-							Shorthand: "uh",
+							Shorthand: "u",
 						},
 						"avatar": {
-							Shorthand: "av",
+							Shorthand: "a",
 						},
 					},
 				},
