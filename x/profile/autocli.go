@@ -46,6 +46,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 							ProtoField: "nickname",
 							Optional:   true,
 						},
+						{
+							ProtoField: "user_handle",
+							Optional:   true,
+						},
+						{
+							ProtoField: "avatar",
+							Optional:   true,
+						},
 					},
 				},
 			},
