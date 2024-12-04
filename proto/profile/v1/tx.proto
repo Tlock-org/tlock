@@ -41,12 +41,19 @@ message MsgUpdateParams {
 // Since: cosmos-sdk 0.47
 message MsgUpdateParamsResponse {}
 
+message ProfileOptions {
+  string nickname = 1;
+  string user_handle = 2;
+  string avatar = 3;
+}
+
 message MsgAddProfileRequest {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  string nickname = 2;
-  string user_handle = 3;
-  string avatar = 4;
+  ProfileOptions profile_json = 2;
+//  string nickname = 2;
+//  string user_handle = 3;
+//  string avatar = 4;
 }
 
 message MsgAddProfileResponse {

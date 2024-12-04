@@ -35,25 +35,28 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "AddProfile",
-					Use:       "add-profile [creator]",
-					Short:     "add profile",
+					Use:       "add-profile [creator] [profile_json]",
+					Short:     "Add a new profile with optional JSON-formatted options",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
 							Optional:   false,
 						},
-					},
-					FlagOptions: map[string]*autocliv1.FlagOptions{
-						"nickname": {
-							Shorthand: "n",
-						},
-						"user_handle": {
-							Shorthand: "u",
-						},
-						"avatar": {
-							Shorthand: "t",
+						{
+							ProtoField: "profile_json",
 						},
 					},
+					//FlagOptions: map[string]*autocliv1.FlagOptions{
+					//	"nickname": {
+					//		Shorthand: "n",
+					//	},
+					//	"user_handle": {
+					//		Shorthand: "u",
+					//	},
+					//	"avatar": {
+					//		Shorthand: "t",
+					//	},
+					//},
 				},
 			},
 		},

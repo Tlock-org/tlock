@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -33,51 +34,36 @@ func (ms msgServer) UpdateParams(ctx context.Context, msg *types.MsgUpdateParams
 func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRequest) (*types.MsgAddProfileResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Validate the message
-	//if len(msg.WalletAddress) == 0 {
-	//	return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
-	//}
-
-	// Validate sender address
-	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	//_, err := sdk.AccAddressFromBech32(msg.Creator)
-	//if err != nil {
-	//	return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
-	//}
-
-	//if len(msg.Image) > MaxImageSize {
-	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
-	//}
+	// Validate creator address
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid creator address: %s", err)
+	}
 
 	blockTime := ctx.BlockTime().Unix()
-	//data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Nickname, blockTime)
-	//postID := ms.k.generatePostID(data)
 
-	// Create the post
+	profileJson := msg.ProfileJson
+	// Create the profile
 	profile := types.Profile{
 		WalletAddress: msg.Creator,
-		Nickname:      msg.Nickname,
-		UserHandle:    msg.UserHandle,
-		Avatar:        msg.Avatar,
+		Nickname:      profileJson.Nickname,
+		UserHandle:    profileJson.UserHandle,
+		Avatar:        profileJson.Avatar,
 		CreationTime:  blockTime,
 	}
 
-	// post payment
 	ms.k.SetProfile(ctx, profile)
 
-	// Store the post in the state
-	//ms.k.SetPost(ctx, post)
-
 	//Emit an event for the creation
-	//ctx.EventManager().EmitEvents(sdk.Events{
-	//	sdk.NewEvent(
-	//		types.EventTypeCreatePaidPost,
-	//		sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
-	//		sdk.NewAttribute(types.AttributeKeyPostID, postID),
-	//		sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
-	//		sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
-	//	),
-	//})
-
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeAddProfile,
+			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+			sdk.NewAttribute(types.AttributeKeyNickname, profileJson.Nickname),
+			sdk.NewAttribute(types.AttributeKeyUserHandle, profileJson.UserHandle),
+			sdk.NewAttribute(types.AttributeKeyAvatar, profileJson.Avatar),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
+		),
+	})
 	return &types.MsgAddProfileResponse{}, nil
 }
