@@ -21,6 +21,12 @@ const (
 	DenomBase = "uTOK"
 
 	PostKeyPrefix = "Post/value/"
+
+	LikesIMadePrefix = "Post/likes/i/made/"
+
+	SavesIMadePrefix = "Post/saves/i/made/"
+
+	LikesReceivedPrefix = "Post/likes/received/"
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{

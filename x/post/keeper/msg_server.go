@@ -347,6 +347,21 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	// update post
 	ms.k.SetPost(ctx, post)
 
+	// set likes I made
+	likesIMade := types.LikesIMade{
+		PostId:    post.Id,
+		Timestamp: ctx.BlockTime().Unix(),
+	}
+	ms.k.SetSavesIMade(ctx, likesIMade, msg.Sender)
+
+	// set likes received
+	likesReceived := types.LikesReceived{
+		LikerAddress: msg.Sender,
+		PostId:       post.Id,
+		LikeType:     types.LikeType_LIKE,
+	}
+	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
+
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeLikePost,
@@ -384,6 +399,66 @@ func (ms msgServer) Unlike(goCtx context.Context, msg *types.MsgUnlikeRequest) (
 	})
 
 	return &types.MsgUnlikeResponse{Status: true}, nil
+}
+
+// SavePost implements types.MsgServer.
+func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (*types.MsgSaveResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	// Retrieve the post by ID
+	post, found := ms.k.GetPost(ctx, msg.Id)
+	if !found {
+		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
+	}
+
+	// Check if the post type is COMMENT
+	if post.PostType == types.PostType_COMMENT {
+		return nil, errors.Wrap(types.ErrInvalidPostType, "cannot save a comment type post")
+	}
+
+	// set saves I made
+	likesIMade := types.LikesIMade{
+		PostId:    post.Id,
+		Timestamp: ctx.BlockTime().Unix(),
+	}
+	ms.k.SetSavesIMade(ctx, likesIMade, msg.Sender)
+
+	// set likes received
+	likesReceived := types.LikesReceived{
+		LikerAddress: msg.Sender,
+		PostId:       post.Id,
+		LikeType:     types.LikeType_SAVE,
+	}
+	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeSavePost,
+			sdk.NewAttribute(types.AttributeKeyPostID, msg.Id),
+			sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
+		),
+	})
+
+	return &types.MsgSaveResponse{Status: true}, nil
+}
+
+// UnSavePost implements types.MsgServer.
+func (ms msgServer) UnSavePost(goCtx context.Context, msg *types.MsgUnSaveRequest) (*types.MsgUnSaveResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	_, found := ms.k.GetPost(ctx, msg.Id)
+	if !found {
+		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeUnSavePost,
+			sdk.NewAttribute(types.AttributeKeyPostID, msg.Id),
+			sdk.NewAttribute(types.AttributeKeySender, msg.Sender),
+		),
+	})
+
+	return &types.MsgUnSaveResponse{Status: true}, nil
 }
 
 // Comment implements types.MsgServer.

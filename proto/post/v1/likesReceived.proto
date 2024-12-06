@@ -1,0 +1,20 @@
+syntax = "proto3";
+package post.v1;
+
+import "post/v1/genesis.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/rollchains/tlock/x/post/types";
+
+enum LikeType {
+  LIKE = 0;
+  SAVE = 1;
+}
+
+// LikeReceived defines the structure of a LikeReceived
+message LikesReceived {
+  string liker_address = 1;
+  string post_id = 2;
+  LikeType like_type = 3;
+}
+

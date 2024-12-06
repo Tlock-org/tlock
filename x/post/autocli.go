@@ -64,7 +64,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "CreateFreePostWithTitle",
-					Use:       "create-free-post-with-title [creator] [title] [content] [imagesUrl] [videosUrl]",
+					Use:       "create-free-post-with-title [creator] [title] [content]",
 					Short:     "create free post with title",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
@@ -76,17 +76,19 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{
 							ProtoField: "content",
 						},
-						{
-							ProtoField: "imagesUrl",
+					},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"imagesUrl": {
+							//Shorthand: "i",
 						},
-						{
-							ProtoField: "videosUrl",
+						"videosUrl": {
+							//Shorthand: "v",
 						},
 					},
 				},
 				{
 					RpcMethod: "CreateFreePost",
-					Use:       "create-free-post [creator] [content] [imagesUrl] [videosUrl]",
+					Use:       "create-free-post [creator] [content]",
 					Short:     "create free post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
@@ -95,17 +97,19 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{
 							ProtoField: "content",
 						},
-						{
-							ProtoField: "imagesUrl",
+					},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"imagesUrl": {
+							//Shorthand: "i",
 						},
-						{
-							ProtoField: "videosUrl",
+						"videosUrl": {
+							//Shorthand: "v",
 						},
 					},
 				},
 				{
 					RpcMethod: "CreateFreePostImagePayable",
-					Use:       "create-free-post-image-payable [creator] [content] [imagesBase64] [imagesUrl] [videosUrl]",
+					Use:       "create-free-post-image-payable [creator] [content] [imagesBase64]",
 					Short:     "create free post image payable",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
@@ -117,17 +121,19 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{
 							ProtoField: "imagesBase64",
 						},
-						{
-							ProtoField: "imagesUrl",
+					},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"imagesUrl": {
+							//Shorthand: "i",
 						},
-						{
-							ProtoField: "videosUrl",
+						"videosUrl": {
+							//Shorthand: "v",
 						},
 					},
 				},
 				{
 					RpcMethod: "CreatePaidPost",
-					Use:       "create-paid-post [creator] [content] [imagesBase64] [imagesUrl] [videosUrl]",
+					Use:       "create-paid-post [creator] [content] [imagesBase64]",
 					Short:     "create paid post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
@@ -139,11 +145,13 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{
 							ProtoField: "imagesBase64",
 						},
-						{
-							ProtoField: "imagesUrl",
+					},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"imagesUrl": {
+							//Shorthand: "i",
 						},
-						{
-							ProtoField: "videosUrl",
+						"videosUrl": {
+							//Shorthand: "v",
 						},
 					},
 				},
@@ -180,6 +188,32 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					RpcMethod: "Unlike",
 					Use:       "unlike [sender] [id]",
 					Short:     "unlike",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "sender",
+						},
+						{
+							ProtoField: "id",
+						},
+					},
+				},
+				{
+					RpcMethod: "SavePost",
+					Use:       "save-post [sender] [id]",
+					Short:     "save post",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "sender",
+						},
+						{
+							ProtoField: "id",
+						},
+					},
+				},
+				{
+					RpcMethod: "UnSavePost",
+					Use:       "un-save-post [sender] [id]",
+					Short:     "un save post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "sender",

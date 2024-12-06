@@ -13,5 +13,7 @@ const (
 
 	EventTypeLikePost   = "like_post"
 	EventTypeUnlikePost = "unlike_post"
+	EventTypeSavePost   = "save_post"
+	EventTypeUnSavePost = "un_save_post"
 	AttributeKeySender  = "sender"
 )

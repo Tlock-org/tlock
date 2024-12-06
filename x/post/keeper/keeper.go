@@ -141,6 +141,30 @@ func (k Keeper) SetPost(ctx sdk.Context, post types.Post) {
 
 }
 
+func (k Keeper) SetLikesIMade(ctx sdk.Context, likesIMade types.LikesIMade, sender string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix))
+	blockTime := ctx.BlockTime().Unix()
+	key := fmt.Sprintf("%s%s/%d%s", types.LikesIMadePrefix, sender, blockTime, likesIMade.PostId)
+	bz := k.cdc.MustMarshal(&likesIMade)
+	store.Set([]byte(key), bz)
+}
+
+func (k Keeper) SetSavesIMade(ctx sdk.Context, likesIMade types.LikesIMade, sender string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SavesIMadePrefix))
+	blockTime := ctx.BlockTime().Unix()
+	key := fmt.Sprintf("%s%s/%d%s", types.SavesIMadePrefix, sender, blockTime, likesIMade.PostId)
+	bz := k.cdc.MustMarshal(&likesIMade)
+	store.Set([]byte(key), bz)
+}
+
+func (k Keeper) SetLikesReceived(ctx sdk.Context, likesReceived types.LikesReceived, creator string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesReceivedPrefix))
+	blockTime := ctx.BlockTime().Unix()
+	key := fmt.Sprintf("%s%s/%d", types.LikesReceivedPrefix, creator, blockTime)
+	bz := k.cdc.MustMarshal(&likesReceived)
+	store.Set([]byte(key), bz)
+}
+
 func (k Keeper) PostReward(ctx sdk.Context, post types.Post) {
 	// send post reward
 	amount := sdk.NewCoins(sdk.NewCoin(types.DenomBase, sdkmath.NewInt(10)))
