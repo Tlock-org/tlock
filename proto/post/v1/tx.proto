@@ -28,7 +28,10 @@ service Msg {
   rpc CreateFreePostWithTitle(MsgCreateFreePostWithTitle) returns (MsgCreateFreePostWithTitleResponse);
 
   // CreateFreePost allows user to create a free post without title
-  rpc CreateFreePost(MsgCreateFreePost) returns (MsgCreateFreePostResponse);
+  rpc CreateFreePost(MsgCreateFreePost) returns (MsgCreateFreePostResponse) {
+    option (google.api.http).post = "/post/v1/createFreePost";
+    option (google.api.http).body = "*";
+  };
 
   rpc CreateFreePostImagePayable(MsgCreateFreePostImagePayable) returns (MsgCreateFreePostImagePayableResponse);
 
