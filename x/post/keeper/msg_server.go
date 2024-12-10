@@ -352,13 +352,14 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		PostId:    post.Id,
 		Timestamp: ctx.BlockTime().Unix(),
 	}
-	ms.k.SetSavesIMade(ctx, likesIMade, msg.Sender)
+	ms.k.SetLikesIMade(ctx, likesIMade, msg.Sender)
 
 	// set likes received
 	likesReceived := types.LikesReceived{
 		LikerAddress: msg.Sender,
 		PostId:       post.Id,
 		LikeType:     types.LikeType_LIKE,
+		Timestamp:    ctx.BlockTime().Unix(),
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
 
@@ -389,6 +390,17 @@ func (ms msgServer) Unlike(goCtx context.Context, msg *types.MsgUnlikeRequest) (
 	}
 
 	ms.k.SetPost(ctx, post)
+
+	// remove from likes I made
+	err := ms.k.RemoveLikesIMade(ctx, msg.Sender, msg.Id)
+	if err != nil {
+		return nil, errors.Wrap(types.ErrLikesIMadeRemove, msg.Id)
+	}
+
+	err2 := ms.k.RemoveLikesReceived(ctx, post.Creator, msg.Sender, msg.Id)
+	if err2 != nil {
+		return nil, errors.Wrap(types.ErrLikesReceivedRemove, msg.Id)
+	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -427,6 +439,7 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 		LikerAddress: msg.Sender,
 		PostId:       post.Id,
 		LikeType:     types.LikeType_SAVE,
+		Timestamp:    ctx.BlockTime().Unix(),
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
 
@@ -442,12 +455,23 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 }
 
 // UnSavePost implements types.MsgServer.
-func (ms msgServer) UnSavePost(goCtx context.Context, msg *types.MsgUnSaveRequest) (*types.MsgUnSaveResponse, error) {
+func (ms msgServer) UnsavePost(goCtx context.Context, msg *types.MsgUnsaveRequest) (*types.MsgUnsaveResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	_, found := ms.k.GetPost(ctx, msg.Id)
+	post, found := ms.k.GetPost(ctx, msg.Id)
 	if !found {
 		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
+	}
+
+	// remove from saves I made
+	err := ms.k.RemoveSavesIMade(ctx, msg.Sender, msg.Id)
+	if err != nil {
+		return nil, errors.Wrap(types.ErrSavesIMadeRemove, msg.Id)
+	}
+
+	err2 := ms.k.RemoveLikesReceived(ctx, post.Creator, msg.Sender, msg.Id)
+	if err2 != nil {
+		return nil, errors.Wrap(types.ErrLikesReceivedRemove, msg.Id)
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -458,7 +482,7 @@ func (ms msgServer) UnSavePost(goCtx context.Context, msg *types.MsgUnSaveReques
 		),
 	})
 
-	return &types.MsgUnSaveResponse{Status: true}, nil
+	return &types.MsgUnsaveResponse{Status: true}, nil
 }
 
 // Comment implements types.MsgServer.

@@ -46,7 +46,7 @@ service Msg {
 
   rpc SavePost(MsgSaveRequest) returns (MsgSaveResponse);
 
-  rpc UnSavePost(MsgUnSaveRequest) returns (MsgUnSaveResponse);
+  rpc UnsavePost(MsgUnsaveRequest) returns (MsgUnsaveResponse);
 
   rpc Comment(MsgCommentRequest) returns (MsgCommentResponse);
 
@@ -204,13 +204,13 @@ message MsgSaveResponse {
   bool status = 1;
 }
 
-message MsgUnSaveRequest {
+message MsgUnsaveRequest {
   option (cosmos.msg.v1.signer) = "sender";
   string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string id = 2;
 }
 
-message MsgUnSaveResponse {
+message MsgUnsaveResponse {
   bool status = 1;
 }
 

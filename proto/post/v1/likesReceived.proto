@@ -16,5 +16,6 @@ message LikesReceived {
   string liker_address = 1;
   string post_id = 2;
   LikeType like_type = 3;
+  int64 timestamp = 4;
 }
 

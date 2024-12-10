@@ -132,9 +132,6 @@ func (k *Keeper) ExportGenesis(ctx context.Context) *types.GenesisState {
 
 // SetPost stores a post in the state.
 func (k Keeper) SetPost(ctx sdk.Context, post types.Post) {
-
-	fmt.Printf("==============k.storeKey %s", k.storeKey.Name())
-
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostKeyPrefix))
 	bz := k.cdc.MustMarshal(&post)
 	store.Set([]byte(post.Id), bz)
@@ -142,11 +139,83 @@ func (k Keeper) SetPost(ctx sdk.Context, post types.Post) {
 }
 
 func (k Keeper) SetLikesIMade(ctx sdk.Context, likesIMade types.LikesIMade, sender string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix+sender+"/"))
 	blockTime := ctx.BlockTime().Unix()
-	key := fmt.Sprintf("%s%s/%d%s", types.LikesIMadePrefix, sender, blockTime, likesIMade.PostId)
+	//key := fmt.Sprintf("%s%s/%d%s", types.LikesIMadePrefix, sender, blockTime, likesIMade.PostId)
+	key := fmt.Sprintf("%d-%s", blockTime, likesIMade.PostId)
 	bz := k.cdc.MustMarshal(&likesIMade)
 	store.Set([]byte(key), bz)
+	k.Logger().Warn("=============SetLikesIMade called", "sender", sender, "post_id", likesIMade.PostId, "block_time", blockTime)
+}
+
+// GetLikesIMade retrieves the list of likes made by a specific sender, ordered by blockTime in descending order.
+func (k Keeper) GetLikesIMade(ctx sdk.Context, sender string) ([]*types.LikesIMade, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix+sender+"/"))
+
+	iterator := store.ReverseIterator(nil, nil)
+	defer iterator.Close()
+
+	var likesList []*types.LikesIMade
+
+	for ; iterator.Valid(); iterator.Next() {
+		var like types.LikesIMade
+		err := k.cdc.Unmarshal(iterator.Value(), &like)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal LikesIMade: %w", err)
+		}
+		likeCopy := like
+		likesList = append(likesList, &likeCopy)
+	}
+	k.Logger().Warn("===========GetLikesIMade retrieved likes", "count", len(likesList))
+	return likesList, nil
+}
+
+func (k Keeper) GetLikesIMadePaginated(ctx sdk.Context, sender string, offset, limit int) ([]types.LikesIMade, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix+sender+"/"))
+	iterator := store.ReverseIterator(nil, nil)
+	defer iterator.Close()
+
+	var likesList []types.LikesIMade
+	currentIndex := 0
+
+	for ; iterator.Valid() && len(likesList) < limit; iterator.Next() {
+		if currentIndex < offset {
+			currentIndex++
+			continue
+		}
+
+		var like types.LikesIMade
+		err := k.cdc.Unmarshal(iterator.Value(), &like)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal LikesIMade: %w", err)
+		}
+		likesList = append(likesList, like)
+		currentIndex++
+	}
+
+	return likesList, nil
+}
+
+func (k Keeper) RemoveLikesIMade(ctx sdk.Context, sender string, postId string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix+sender+"/"))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var like types.LikesIMade
+		err := k.cdc.Unmarshal(iterator.Value(), &like)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal LikesImade: %w", err)
+		}
+
+		if like.PostId == postId {
+			key := iterator.Key()
+			store.Delete(key)
+			k.Logger().Warn("UnlikePost removed like", "sender", sender, "post_id", postId, "block_time", like.Timestamp)
+			return nil
+		}
+	}
+	return fmt.Errorf("like not found for sender %s and postId %s", sender, postId)
 }
 
 func (k Keeper) SetSavesIMade(ctx sdk.Context, likesIMade types.LikesIMade, sender string) {
@@ -157,12 +226,98 @@ func (k Keeper) SetSavesIMade(ctx sdk.Context, likesIMade types.LikesIMade, send
 	store.Set([]byte(key), bz)
 }
 
+func (k Keeper) RemoveSavesIMade(ctx sdk.Context, sender string, postId string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SavesIMadePrefix+sender+"/"))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var like types.LikesIMade
+		err := k.cdc.Unmarshal(iterator.Value(), &like)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal LikesImade: %w", err)
+		}
+
+		if like.PostId == postId {
+			key := iterator.Key()
+			store.Delete(key)
+			k.Logger().Warn("UnlikePost removed like", "sender", sender, "post_id", postId, "block_time", like.Timestamp)
+			return nil
+		}
+	}
+	return fmt.Errorf("like not found for sender %s and postId %s", sender, postId)
+}
+
+func (k Keeper) GetSavesIMade(ctx sdk.Context, sender string) ([]*types.LikesIMade, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SavesIMadePrefix+sender+"/"))
+
+	iterator := store.ReverseIterator(nil, nil)
+	defer iterator.Close()
+
+	var savesList []*types.LikesIMade
+
+	for ; iterator.Valid(); iterator.Next() {
+		var save types.LikesIMade
+		err := k.cdc.Unmarshal(iterator.Value(), &save)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal SavesIMade: %w", err)
+		}
+		saveCopy := save
+		savesList = append(savesList, &saveCopy)
+	}
+	k.Logger().Warn("===========GetLikesIMade retrieved saves", "count", len(savesList))
+	return savesList, nil
+}
+
 func (k Keeper) SetLikesReceived(ctx sdk.Context, likesReceived types.LikesReceived, creator string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesReceivedPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesReceivedPrefix+creator+"/"))
 	blockTime := ctx.BlockTime().Unix()
-	key := fmt.Sprintf("%s%s/%d", types.LikesReceivedPrefix, creator, blockTime)
+	key := fmt.Sprintf("%d", blockTime)
 	bz := k.cdc.MustMarshal(&likesReceived)
 	store.Set([]byte(key), bz)
+}
+
+func (k Keeper) GetLikesReceived(ctx sdk.Context, creator string) ([]*types.LikesReceived, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesReceivedPrefix+creator+"/"))
+
+	iterator := store.ReverseIterator(nil, nil)
+	defer iterator.Close()
+
+	var list []*types.LikesReceived
+
+	for ; iterator.Valid(); iterator.Next() {
+		var received types.LikesReceived
+		err := k.cdc.Unmarshal(iterator.Value(), &received)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal LikesReceived: %w", err)
+		}
+		receivedCopy := received
+		list = append(list, &receivedCopy)
+	}
+	k.Logger().Warn("===========Get LikesReceived retrieved likes", "count", len(list))
+	return list, nil
+}
+
+func (k Keeper) RemoveLikesReceived(ctx sdk.Context, creator string, sender string, postId string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesReceivedPrefix+creator+"/"))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var received types.LikesReceived
+		err := k.cdc.Unmarshal(iterator.Value(), &received)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal LikesReceived: %w", err)
+		}
+
+		if received.PostId == postId && received.LikerAddress == sender {
+			key := iterator.Key()
+			store.Delete(key)
+			k.Logger().Warn("UnlikePost removed LikesReceived", "creator", creator, "sender", sender, "post_id", postId, "block_time", received.Timestamp)
+			return nil
+		}
+	}
+	return fmt.Errorf("like not found for creator %s sender %s and postId %s", creator, sender, postId)
 }
 
 func (k Keeper) PostReward(ctx sdk.Context, post types.Post) {

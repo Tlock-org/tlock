@@ -28,6 +28,58 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
+					RpcMethod: "LikesIMade",
+					Use:       "likes-i-made [wallet]",
+					Short:     "Query the list of likes made by a specific wallet",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "wallet",
+						},
+					},
+					//FlagOptions: map[string]*autocliv1.FlagOptions{
+					//	"limit": {
+					//		Name:         "limit",
+					//		Usage:        "Limit the number of results returned",
+					//		DefaultValue: "10",
+					//	},
+					//	"offset": {
+					//		Name:         "offset",
+					//		Usage:        "Skip the first N results",
+					//		DefaultValue: "0",
+					//	},
+					//	"count-total": {
+					//		Name:         "count-total",
+					//		Usage:        "Include the total count of likes made",
+					//		DefaultValue: "false",
+					//	},
+					//	"reverse": {
+					//		Name:         "reverse",
+					//		Usage:        "Reverse the order of the results",
+					//		DefaultValue: "false",
+					//	},
+					//},
+				},
+				{
+					RpcMethod: "SavesIMade",
+					Use:       "saves-i-made [wallet]",
+					Short:     "Query the list of save made by a specific wallet",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "wallet",
+						},
+					},
+				},
+				{
+					RpcMethod: "LikesReceived",
+					Use:       "likes-received [wallet]",
+					Short:     "Query the list of likes received by a specific wallet",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "wallet",
+						},
+					},
+				},
+				{
 					RpcMethod: "Params",
 					Use:       "params",
 					Short:     "Query the current consensus parameters",
@@ -211,9 +263,9 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-					RpcMethod: "UnSavePost",
-					Use:       "un-save-post [sender] [id]",
-					Short:     "un save post",
+					RpcMethod: "UnsavePost",
+					Use:       "unsave-post [sender] [id]",
+					Short:     "unsave post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "sender",

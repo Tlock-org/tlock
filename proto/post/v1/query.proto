@@ -4,6 +4,9 @@ package post.v1;
 import "post/v1/genesis.proto";
 import "google/api/annotations.proto";
 import "post/v1/post.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "post/v1/likesIMade.proto";
+import "post/v1/likesReceived.proto";
 
 option go_package = "github.com/rollchains/tlock/x/post/types";
 
@@ -22,6 +25,18 @@ service Query {
   // QueryPost allows querying a specific post by its ID
   rpc QueryPost(QueryPostRequest) returns (QueryPostResponse) {
     option (google.api.http).get = "/post/v1/get/{post_id}";
+  }
+
+  rpc LikesIMade(LikesIMadeRequest) returns (LikesIMadeResponse) {
+    option (google.api.http).get = "/post/v1/likes/i/made/{wallet}";
+  }
+
+  rpc SavesIMade(SavesIMadeRequest) returns (SavesIMadeResponse) {
+    option (google.api.http).get = "/post/v1/saves/i/made/{wallet}";
+  }
+
+  rpc LikesReceived(LikesReceivedRequest) returns (LikesReceivedResponse) {
+    option (google.api.http).get = "/post/v1/likes/received/{wallet}";
   }
 }
 
@@ -43,6 +58,32 @@ message QueryPostRequest {
 // QueryPostResponse defines the response for querying a post
 message QueryPostResponse {
   Post post = 1;
+}
+
+message LikesIMadeRequest {
+  string wallet = 1;
+//  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+message LikesIMadeResponse {
+  repeated LikesIMade likes_made = 1;
+//  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message SavesIMadeRequest {
+  string wallet = 1;
+}
+
+message SavesIMadeResponse {
+  repeated LikesIMade saves_made = 1;
+}
+
+message LikesReceivedRequest {
+  string wallet = 1;
+}
+
+message LikesReceivedResponse {
+  repeated LikesReceived likes_received = 1;
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
