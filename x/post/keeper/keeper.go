@@ -219,9 +219,9 @@ func (k Keeper) RemoveLikesIMade(ctx sdk.Context, sender string, postId string) 
 }
 
 func (k Keeper) SetSavesIMade(ctx sdk.Context, likesIMade types.LikesIMade, sender string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SavesIMadePrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SavesIMadePrefix+sender+"/"))
 	blockTime := ctx.BlockTime().Unix()
-	key := fmt.Sprintf("%s%s/%d%s", types.SavesIMadePrefix, sender, blockTime, likesIMade.PostId)
+	key := fmt.Sprintf("%d-%s", blockTime, likesIMade.PostId)
 	bz := k.cdc.MustMarshal(&likesIMade)
 	store.Set([]byte(key), bz)
 }
@@ -265,7 +265,7 @@ func (k Keeper) GetSavesIMade(ctx sdk.Context, sender string) ([]*types.LikesIMa
 		saveCopy := save
 		savesList = append(savesList, &saveCopy)
 	}
-	k.Logger().Warn("===========GetLikesIMade retrieved saves", "count", len(savesList))
+	k.Logger().Warn("===========GetSavesIMade retrieved saves", "count", len(savesList))
 	return savesList, nil
 }
 
