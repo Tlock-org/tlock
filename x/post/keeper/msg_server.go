@@ -123,6 +123,7 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 
 // CreateFreePost implements types.MsgServer.
 func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFreePost) (*types.MsgCreateFreePostResponse, error) {
+	ms.k.Logger().Warn("============= to create free post ==============")
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Validate the message
@@ -171,7 +172,7 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})
-
+	ms.k.Logger().Warn("============= create free post end ==============")
 	return &types.MsgCreateFreePostResponse{PostId: postID}, nil
 }
 
