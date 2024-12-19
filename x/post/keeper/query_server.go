@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	"google.golang.org/grpc/codes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -44,6 +45,29 @@ func (k Querier) ResolveName(goCtx context.Context, req *types.QueryResolveNameR
 
 	return &types.QueryResolveNameResponse{
 		Name: v,
+	}, nil
+}
+
+// QueryHomePosts implements types.QueryServer.
+func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePostsRequest) (*types.QueryHomePostsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	postIDs, _, err := k.Keeper.GetHomePosts(ctx, nil)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	var posts []*types.Post
+	for _, postID := range postIDs {
+		post, success := k.GetPost(ctx, postID)
+		if !success {
+			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
+		}
+		postCopy := post
+		posts = append(posts, &postCopy)
+	}
+
+	return &types.QueryHomePostsResponse{
+		Posts: posts,
 	}, nil
 }
 

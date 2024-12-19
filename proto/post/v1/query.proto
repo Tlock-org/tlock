@@ -22,6 +22,10 @@ service Query {
     option (google.api.http).get = "/post/v1/name/{wallet}";
   }
 
+  rpc QueryHomePosts(QueryHomePostsRequest) returns (QueryHomePostsResponse) {
+    option (google.api.http).get = "/post/v1/homePosts";
+  }
+
   // QueryPost allows querying a specific post by its ID
   rpc QueryPost(QueryPostRequest) returns (QueryPostResponse) {
     option (google.api.http).get = "/post/v1/get/{post_id}";
@@ -48,6 +52,14 @@ message QueryResolveNameRequest {
 // QueryResolveNameResponse grabs the wallet linked to a name.
 message QueryResolveNameResponse {
   string name = 1;
+}
+
+message QueryHomePostsRequest {
+//  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryHomePostsResponse {
+  repeated Post posts = 1;
 }
 
 // QueryPostRequest defines the request for querying a post

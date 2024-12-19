@@ -20,6 +20,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
+					RpcMethod: "QueryHomePosts",
+					Use:       "home-posts",
+					Short:     "query home posts",
+				},
+				{
 					RpcMethod: "QueryPost",
 					Use:       "get [post_id]",
 					Short:     "get the post by post_id",

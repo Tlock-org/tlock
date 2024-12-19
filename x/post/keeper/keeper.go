@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"time"
@@ -28,6 +29,7 @@ import (
 	"github.com/rollchains/tlock/x/post/types"
 
 	sdkmath "cosmossdk.io/math"
+	"encoding/binary"
 )
 
 type Keeper struct {
@@ -138,6 +140,83 @@ func (k Keeper) SetPost(ctx sdk.Context, post types.Post) {
 
 }
 
+func (k Keeper) SetHomePosts(ctx sdk.Context, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostKeyPrefix))
+
+	blockTime := ctx.BlockTime().UnixNano()
+	bzBlockTime := make([]byte, 8)
+	binary.BigEndian.PutUint64(bzBlockTime, uint64(blockTime))
+
+	key := append(bzBlockTime, []byte(postId)...)
+	store.Set([]byte(key), []byte(postId))
+
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	var count int
+	var keysToDelete [][]byte
+	for ; iterator.Valid(); iterator.Next() {
+		count++
+		if count > 100 {
+			keysToDelete = append(keysToDelete, iterator.Key())
+		}
+	}
+
+	for _, keyToDelete := range keysToDelete {
+		store.Delete(keyToDelete)
+	}
+
+}
+
+func (k Keeper) GetHomePosts(ctx sdk.Context, pagination *query.PageRequest) ([]string, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostKeyPrefix))
+
+	//var postIDs []string
+	//
+	//pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
+	//	postIDs = append(postIDs, string(value))
+	//	return nil
+	//})
+	//
+	//if err != nil {
+	//	return nil, nil, err
+	//}
+	//return postIDs, pageRes, nil
+
+	iterator := store.ReverseIterator(nil, nil)
+	defer iterator.Close()
+	var postIDs []string
+	for ; iterator.Valid(); iterator.Next() {
+		postID := string(iterator.Value())
+		postIDs = append(postIDs, postID)
+	}
+	return postIDs, nil, nil
+}
+
+func (k Keeper) SetCategoryPosts(ctx sdk.Context, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostKeyPrefix))
+	blockTime := ctx.BlockTime().UnixNano()
+	bzBlockTime := make([]byte, 8)
+	binary.BigEndian.PutUint64(bzBlockTime, uint64(blockTime))
+
+	key := append(bzBlockTime, []byte(postId)...)
+	store.Set([]byte(key), []byte(postId))
+}
+func (k Keeper) GetCategoryPosts(ctx sdk.Context, pagination *query.PageRequest) ([]string, *query.PageResponse, error) {
+	return nil, nil, nil
+}
+func (k Keeper) SetFollowedPosts(ctx sdk.Context, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowedPostKeyPrefix))
+	blockTime := ctx.BlockTime().UnixNano()
+	bzBlockTime := make([]byte, 8)
+	binary.BigEndian.PutUint64(bzBlockTime, uint64(blockTime))
+
+	key := append(bzBlockTime, []byte(postId)...)
+	store.Set([]byte(key), []byte(postId))
+}
+func (k Keeper) GetFollowedPosts(ctx sdk.Context, pagination *query.PageRequest) ([]string, *query.PageResponse, error) {
+	return nil, nil, nil
+}
 func (k Keeper) SetLikesIMade(ctx sdk.Context, likesIMade types.LikesIMade, sender string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix+sender+"/"))
 	blockTime := ctx.BlockTime().Unix()
