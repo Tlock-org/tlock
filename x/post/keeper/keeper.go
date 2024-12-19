@@ -148,7 +148,7 @@ func (k Keeper) SetHomePosts(ctx sdk.Context, postId string) {
 	binary.BigEndian.PutUint64(bzBlockTime, uint64(blockTime))
 
 	key := append(bzBlockTime, []byte(postId)...)
-	store.Set([]byte(key), []byte(postId))
+	//store.Set([]byte(key), []byte(postId))
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
@@ -156,6 +156,12 @@ func (k Keeper) SetHomePosts(ctx sdk.Context, postId string) {
 	var count int
 	var keysToDelete [][]byte
 	for ; iterator.Valid(); iterator.Next() {
+
+		existingPostID := string(iterator.Value())
+		if existingPostID == postId {
+			return
+		}
+
 		count++
 		if count > 100 {
 			keysToDelete = append(keysToDelete, iterator.Key())
@@ -165,6 +171,8 @@ func (k Keeper) SetHomePosts(ctx sdk.Context, postId string) {
 	for _, keyToDelete := range keysToDelete {
 		store.Delete(keyToDelete)
 	}
+
+	store.Set([]byte(key), []byte(postId))
 
 }
 
