@@ -23,61 +23,61 @@ service Msg {
   rpc SetServiceName(MsgSetServiceName) returns (MsgSetServiceNameResponse);
 
   rpc GrantAllowanceFromModule(MsgGrantAllowanceFromModuleRequest) returns (MsgGrantAllowanceFromModuleResponse) {
-    option (google.api.http).post = "/post/v1/grantAllowanceFromModule";
-    option (google.api.http).body = "*";
+//    option (google.api.http).post = "/post/v1/grantAllowanceFromModule";
+//    option (google.api.http).body = "*";
   };
 
   // CreateFreePostWithTitle allows user to create a free post with title
   rpc CreateFreePostWithTitle(MsgCreateFreePostWithTitle) returns (MsgCreateFreePostWithTitleResponse) {
-    option (google.api.http).post = "/post/v1/createFreePostWithTitle";
-    option (google.api.http).body = "*";
+//    option (google.api.http).post = "/post/v1/createFreePostWithTitle";
+//    option (google.api.http).body = "*";
   };
 
   // CreateFreePost allows user to create a free post without title
   rpc CreateFreePost(MsgCreateFreePost) returns (MsgCreateFreePostResponse) {
-    option (google.api.http).post = "/post/v1/createFreePost";
-    option (google.api.http).body = "*";
+//    option (google.api.http).post = "/post/v1/createFreePost";
+//    option (google.api.http).body = "*";
   };
 
   rpc CreateFreePostImagePayable(MsgCreateFreePostImagePayable) returns (MsgCreateFreePostImagePayableResponse) {
-    option (google.api.http).post = "/post/v1/createFreePostImagePayable";
-    option (google.api.http).body = "*";
+//    option (google.api.http).post = "/post/v1/createFreePostImagePayable";
+//    option (google.api.http).body = "*";
   };
 
   // CreatePaidPost allows user to create a paid post without title
   rpc CreatePaidPost(MsgCreatePaidPost) returns (MsgCreatePaidPostResponse) {
-    option (google.api.http).post = "/post/v1/createPaidPost";
-    option (google.api.http).body = "*";
+//    option (google.api.http).post = "/post/v1/createPaidPost";
+//    option (google.api.http).body = "*";
   };
 
   rpc QuotePost(MsgQuotePostRequest) returns (MsgQuotePostResponse) {
-    option (google.api.http).post = "/post/v1/quotePost";
-    option (google.api.http).body = "*";
+//    option (google.api.http).post = "/post/v1/quotePost";
+//    option (google.api.http).body = "*";
   };
 
   rpc Like(MsgLikeRequest) returns (MsgLikeResponse) {
-    option (google.api.http).post = "/post/v1/like";
-    option (google.api.http).body = "*";
+//    option (google.api.http).post = "/post/v1/like";
+//    option (google.api.http).body = "*";
   };
 
   rpc Unlike(MsgUnlikeRequest) returns (MsgUnlikeResponse) {
-    option (google.api.http).post = "/post/v1/unlike";
-    option (google.api.http).body = "*";
+//    option (google.api.http).post = "/post/v1/unlike";
+//    option (google.api.http).body = "*";
   };
 
   rpc SavePost(MsgSaveRequest) returns (MsgSaveResponse) {
-    option (google.api.http).post = "/post/v1/savePost";
-    option (google.api.http).body = "*";
+//    option (google.api.http).post = "/post/v1/savePost";
+//    option (google.api.http).body = "*";
   };
 
   rpc UnsavePost(MsgUnsaveRequest) returns (MsgUnsaveResponse) {
-    option (google.api.http).post = "/post/v1/unsavePost";
-    option (google.api.http).body = "*";
+//    option (google.api.http).post = "/post/v1/unsavePost";
+//    option (google.api.http).body = "*";
   };
 
   rpc Comment(MsgCommentRequest) returns (MsgCommentResponse) {
-    option (google.api.http).post = "/post/v1/comment";
-    option (google.api.http).body = "*";
+//    option (google.api.http).post = "/post/v1/comment";
+//    option (google.api.http).body = "*";
   };
 
 }

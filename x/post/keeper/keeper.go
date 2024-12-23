@@ -160,7 +160,7 @@ func (k Keeper) GetHomePostsCount(ctx sdk.Context) (int64, bool) {
 
 	bz := store.Get([]byte("count"))
 	if bz == nil {
-		return 0, false
+		return 0, true
 	}
 
 	count := int64(binary.BigEndian.Uint64(bz))
