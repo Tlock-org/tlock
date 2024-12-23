@@ -22,9 +22,10 @@ const (
 
 	PostKeyPrefix = "Post/content/"
 
-	HomePostKeyPrefix     = "Post/home/"
-	CategoryPostKeyPrefix = "Post/category/"
-	FollowedPostKeyPrefix = "Post/followed/"
+	HomePostsKeyPrefix      = "Post/posts/home/"
+	CategoryPostsKeyPrefix  = "Post/posts/category/"
+	FollowedPostsKeyPrefix  = "Post/posts/followed/"
+	HomePostsCountKeyPrefix = "home_posts_count"
 
 	LikesIMadePrefix = "Post/likes/i/made/"
 

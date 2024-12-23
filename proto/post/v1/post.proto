@@ -32,5 +32,6 @@ message Post {
   uint64 comment_count = 13;
   uint64 report_count = 14;
   float score = 15;
+  int64 homePostsUpdate = 16;
 }
 

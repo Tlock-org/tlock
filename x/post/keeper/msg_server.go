@@ -93,22 +93,23 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 
 	// Create the post
 	post := types.Post{
-		Id:        postID,
-		PostType:  types.PostType_ARTICLE,
-		Title:     msg.Title,
-		Content:   msg.Content,
-		Creator:   msg.Creator,
-		Timestamp: blockTime,
-		ImagesUrl: msg.ImagesUrl,
-		VideosUrl: msg.VideosUrl,
+		Id:              postID,
+		PostType:        types.PostType_ARTICLE,
+		Title:           msg.Title,
+		Content:         msg.Content,
+		Creator:         msg.Creator,
+		Timestamp:       blockTime,
+		ImagesUrl:       msg.ImagesUrl,
+		VideosUrl:       msg.VideosUrl,
+		HomePostsUpdate: blockTime,
 	}
 
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
 	// post reward
 	ms.k.PostReward(ctx, post)
-	// set home posts
-	ms.k.SetHomePosts(ctx, postID)
+	// add home posts
+	ms.addHomePosts(ctx, post)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -134,6 +135,10 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	ms.k.Logger().Warn("============= to create free post ==============")
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	//bytes := ctx.TxBytes()
+	//hash := sha256.Sum256(bytes)
+	//fmt.Printf("=======================hash: %s\n", hash)
+
 	// Validate the message
 	if len(msg.Content) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
@@ -157,21 +162,22 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 
 	// Create the post
 	post := types.Post{
-		Id:        postID,
-		PostType:  types.PostType_ORIGINAL,
-		Content:   msg.Content,
-		Creator:   msg.Creator,
-		Timestamp: blockTime,
-		ImagesUrl: msg.ImagesUrl,
-		VideosUrl: msg.VideosUrl,
+		Id:              postID,
+		PostType:        types.PostType_ORIGINAL,
+		Content:         msg.Content,
+		Creator:         msg.Creator,
+		Timestamp:       blockTime,
+		ImagesUrl:       msg.ImagesUrl,
+		VideosUrl:       msg.VideosUrl,
+		HomePostsUpdate: blockTime,
 	}
 
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
 	// post reward
 	ms.k.PostReward(ctx, post)
-	// set home posts
-	ms.k.SetHomePosts(ctx, postID)
+	// add home posts
+	ms.addHomePosts(ctx, post)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -212,22 +218,23 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 
 	// Create the post
 	post := types.Post{
-		Id:           postID,
-		PostType:     types.PostType_ADVERTISEMENT,
-		Content:      msg.Content,
-		Creator:      msg.Creator,
-		Timestamp:    blockTime,
-		ImagesBase64: msg.ImagesBase64,
-		ImagesUrl:    msg.ImagesUrl,
-		VideosUrl:    msg.VideosUrl,
+		Id:              postID,
+		PostType:        types.PostType_ADVERTISEMENT,
+		Content:         msg.Content,
+		Creator:         msg.Creator,
+		Timestamp:       blockTime,
+		ImagesBase64:    msg.ImagesBase64,
+		ImagesUrl:       msg.ImagesUrl,
+		VideosUrl:       msg.VideosUrl,
+		HomePostsUpdate: blockTime,
 	}
 
 	// post payment
 	ms.k.postPayment(ctx, post)
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
-	// set home posts
-	ms.k.SetHomePosts(ctx, postID)
+	// add home posts
+	ms.addHomePosts(ctx, post)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -267,22 +274,23 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 
 	// Create the post
 	post := types.Post{
-		Id:           postID,
-		PostType:     types.PostType_ADVERTISEMENT,
-		Content:      msg.Content,
-		Creator:      msg.Creator,
-		Timestamp:    blockTime,
-		ImagesBase64: msg.ImagesBase64,
-		ImagesUrl:    msg.ImagesUrl,
-		VideosUrl:    msg.VideosUrl,
+		Id:              postID,
+		PostType:        types.PostType_ADVERTISEMENT,
+		Content:         msg.Content,
+		Creator:         msg.Creator,
+		Timestamp:       blockTime,
+		ImagesBase64:    msg.ImagesBase64,
+		ImagesUrl:       msg.ImagesUrl,
+		VideosUrl:       msg.VideosUrl,
+		HomePostsUpdate: blockTime,
 	}
 
 	// post payment
 	ms.k.postPayment(ctx, post)
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
-	// set home posts
-	ms.k.SetHomePosts(ctx, postID)
+	// add home posts
+	ms.addHomePosts(ctx, post)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -322,12 +330,13 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 
 	// Create the post
 	post := types.Post{
-		Id:        postID,
-		PostType:  types.PostType_QUOTE,
-		Content:   msg.Comment,
-		Creator:   msg.Creator,
-		Timestamp: blockTime,
-		Quote:     msg.Quote,
+		Id:              postID,
+		PostType:        types.PostType_QUOTE,
+		Content:         msg.Comment,
+		Creator:         msg.Creator,
+		Timestamp:       blockTime,
+		Quote:           msg.Quote,
+		HomePostsUpdate: blockTime,
 	}
 
 	// Store the post in the state
@@ -355,7 +364,9 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	if !found {
 		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
 	}
+	blockTime := ctx.BlockTime().Unix()
 	post.LikeCount += 1
+	post.HomePostsUpdate = blockTime
 
 	// update post
 	ms.k.SetPost(ctx, post)
@@ -363,7 +374,7 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	// set likes I made
 	likesIMade := types.LikesIMade{
 		PostId:    post.Id,
-		Timestamp: ctx.BlockTime().Unix(),
+		Timestamp: blockTime,
 	}
 	ms.k.SetLikesIMade(ctx, likesIMade, msg.Sender)
 
@@ -372,9 +383,19 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		LikerAddress: msg.Sender,
 		PostId:       post.Id,
 		LikeType:     types.LikeType_LIKE,
-		Timestamp:    ctx.BlockTime().Unix(),
+		Timestamp:    blockTime,
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
+
+	// add home posts
+	if post.PostType != types.PostType_COMMENT {
+		exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
+		if exist {
+			ms.addHomePostsExist(ctx, post)
+		} else {
+			ms.addHomePosts(ctx, post)
+		}
+	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -439,11 +460,14 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 	if post.PostType == types.PostType_COMMENT {
 		return nil, errors.Wrap(types.ErrInvalidPostType, "cannot save a comment type post")
 	}
+	blockTime := ctx.BlockTime().Unix()
+	post.HomePostsUpdate = blockTime
+	ms.k.SetPost(ctx, post)
 
 	// set saves I made
 	likesIMade := types.LikesIMade{
 		PostId:    post.Id,
-		Timestamp: ctx.BlockTime().Unix(),
+		Timestamp: blockTime,
 	}
 	ms.k.SetSavesIMade(ctx, likesIMade, msg.Sender)
 
@@ -452,9 +476,16 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 		LikerAddress: msg.Sender,
 		PostId:       post.Id,
 		LikeType:     types.LikeType_SAVE,
-		Timestamp:    ctx.BlockTime().Unix(),
+		Timestamp:    blockTime,
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
+
+	exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
+	if exist {
+		ms.addHomePostsExist(ctx, post)
+	} else {
+		ms.addHomePosts(ctx, post)
+	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -540,9 +571,19 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 		return nil, errors.Wrap(types.ErrPostNotFound, msg.ParentId)
 	}
 	post.CommentCount += 1
+	post.HomePostsUpdate = blockTime
 
 	// update post
 	ms.k.SetPost(ctx, post)
+
+	if post.PostType != types.PostType_COMMENT {
+		exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
+		if exist {
+			ms.addHomePostsExist(ctx, post)
+		} else {
+			ms.addHomePosts(ctx, post)
+		}
+	}
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -554,4 +595,32 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 		),
 	})
 	return &types.MsgCommentResponse{}, nil
+}
+
+func (ms msgServer) addHomePostsExist(ctx sdk.Context, post types.Post) {
+	ms.k.DeleteHomePostsByPostId(ctx, post.Id, post.HomePostsUpdate)
+	ms.k.SetHomePosts(ctx, post.Id)
+	count, b := ms.k.GetHomePostsCount(ctx)
+	if !b {
+		panic("GetHomePostsCount error")
+	}
+	if count > 1000 {
+		ms.k.DeleteFirstHomePosts(ctx)
+		count -= 1
+		ms.k.SetHomePostsCount(ctx, count)
+	}
+}
+
+func (ms msgServer) addHomePosts(ctx sdk.Context, post types.Post) {
+	ms.k.SetHomePosts(ctx, post.Id)
+	count, b := ms.k.GetHomePostsCount(ctx)
+	if !b {
+		panic("GetHomePostsCount error")
+	}
+	count += 1
+	if count > 1000 {
+		ms.k.DeleteFirstHomePosts(ctx)
+	} else {
+		ms.k.SetHomePostsCount(ctx, count)
+	}
 }

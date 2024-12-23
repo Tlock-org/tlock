@@ -132,6 +132,13 @@ func (k *Keeper) ExportGenesis(ctx context.Context) *types.GenesisState {
 	}
 }
 
+func (k Keeper) EncodeBlockTime(ctx sdk.Context) []byte {
+	blockTime := ctx.BlockTime().Unix()
+	bzBlockTime := make([]byte, 8)
+	binary.BigEndian.PutUint64(bzBlockTime, uint64(blockTime))
+	return bzBlockTime
+}
+
 // SetPost stores a post in the state.
 func (k Keeper) SetPost(ctx sdk.Context, post types.Post) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostKeyPrefix))
@@ -140,44 +147,60 @@ func (k Keeper) SetPost(ctx sdk.Context, post types.Post) {
 
 }
 
+func (k Keeper) SetHomePostsCount(ctx sdk.Context, count int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsCountKeyPrefix))
+
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, uint64(count))
+	store.Set([]byte("count"), bz)
+}
+
+func (k Keeper) GetHomePostsCount(ctx sdk.Context) (int64, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsCountKeyPrefix))
+
+	bz := store.Get([]byte("count"))
+	if bz == nil {
+		return 0, false
+	}
+
+	count := int64(binary.BigEndian.Uint64(bz))
+	return count, true
+}
+
 func (k Keeper) SetHomePosts(ctx sdk.Context, postId string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostKeyPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
 
-	blockTime := ctx.BlockTime().UnixNano()
-	bzBlockTime := make([]byte, 8)
-	binary.BigEndian.PutUint64(bzBlockTime, uint64(blockTime))
+	blockTime := k.EncodeBlockTime(ctx)
 
-	key := append(bzBlockTime, []byte(postId)...)
-	//store.Set([]byte(key), []byte(postId))
+	key := append(blockTime, []byte(postId)...)
+	fmt.Sprintf("===============key:%s", key)
 
-	iterator := store.Iterator(nil, nil)
-	defer iterator.Close()
-
-	var count int
-	var keysToDelete [][]byte
-	for ; iterator.Valid(); iterator.Next() {
-
-		existingPostID := string(iterator.Value())
-		if existingPostID == postId {
-			return
-		}
-
-		count++
-		if count > 100 {
-			keysToDelete = append(keysToDelete, iterator.Key())
-		}
-	}
-
-	for _, keyToDelete := range keysToDelete {
-		store.Delete(keyToDelete)
-	}
-
-	store.Set([]byte(key), []byte(postId))
-
+	//iterator := store.Iterator(nil, nil)
+	//defer iterator.Close()
+	//
+	//var count int
+	//var keysToDelete [][]byte
+	//for ; iterator.Valid(); iterator.Next() {
+	//
+	//	existingPostID := string(iterator.Value())
+	//	if existingPostID == postId {
+	//		return
+	//	}
+	//
+	//	count++
+	//	if count > 100 {
+	//		keysToDelete = append(keysToDelete, iterator.Key())
+	//	}
+	//}
+	//
+	//for _, keyToDelete := range keysToDelete {
+	//	store.Delete(keyToDelete)
+	//}
+	store.Set(key, []byte(postId))
 }
 
 func (k Keeper) GetHomePosts(ctx sdk.Context, pagination *query.PageRequest) ([]string, *query.PageResponse, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostKeyPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
 
 	//var postIDs []string
 	//
@@ -201,25 +224,83 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, pagination *query.PageRequest) ([]
 	return postIDs, nil, nil
 }
 
-func (k Keeper) SetCategoryPosts(ctx sdk.Context, postId string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostKeyPrefix))
-	blockTime := ctx.BlockTime().UnixNano()
+func (k Keeper) DeleteFirstHomePosts(ctx sdk.Context) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
+
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	if !iterator.Valid() {
+		panic("homePostsCount exceeds 1000 but no posts found")
+	}
+	earliestKey := iterator.Key()
+	earliestPostID := string(iterator.Value())
+
+	store.Delete(earliestKey)
+	k.Logger().Info("Deleted earliest home post", "post_id", earliestPostID)
+}
+
+func (k Keeper) DeleteHomePostsByPostId(ctx sdk.Context, postId string, homePostsUpdate int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
+
 	bzBlockTime := make([]byte, 8)
-	binary.BigEndian.PutUint64(bzBlockTime, uint64(blockTime))
+	binary.BigEndian.PutUint64(bzBlockTime, uint64(homePostsUpdate))
+	key := append(bzBlockTime, []byte(postId)...)
+	store.Delete(key)
+
+	//iterator := store.Iterator(nil, nil)
+	//defer iterator.Close()
+	//
+	//for ; iterator.Valid(); iterator.Next() {
+	//	currentPostId := string(iterator.Value())
+	//	if currentPostId == postId {
+	//		earliestKey := iterator.Key()
+	//		store.Delete(earliestKey)
+	//		return
+	//	}
+	//}
+}
+
+func (k Keeper) IsPostInHomePosts(ctx sdk.Context, postId string, homePostsUpdate int64) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
+
+	bzBlockTime := make([]byte, 8)
+	binary.BigEndian.PutUint64(bzBlockTime, uint64(homePostsUpdate))
 
 	key := append(bzBlockTime, []byte(postId)...)
+
+	get := store.Get(key)
+	if get != nil {
+		return true
+	} else {
+		return false
+	}
+	//iterator := store.Iterator(nil, nil)
+	//defer iterator.Close()
+	//
+	//for ; iterator.Valid(); iterator.Next() {
+	//	currentPostId := string(iterator.Value())
+	//	if currentPostId == postId {
+	//		return true
+	//	}
+	//}
+	//
+	//return false
+}
+
+func (k Keeper) SetCategoryPosts(ctx sdk.Context, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsKeyPrefix))
+	blockTime := k.EncodeBlockTime(ctx)
+	key := append(blockTime, []byte(postId)...)
 	store.Set([]byte(key), []byte(postId))
 }
 func (k Keeper) GetCategoryPosts(ctx sdk.Context, pagination *query.PageRequest) ([]string, *query.PageResponse, error) {
 	return nil, nil, nil
 }
 func (k Keeper) SetFollowedPosts(ctx sdk.Context, postId string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowedPostKeyPrefix))
-	blockTime := ctx.BlockTime().UnixNano()
-	bzBlockTime := make([]byte, 8)
-	binary.BigEndian.PutUint64(bzBlockTime, uint64(blockTime))
-
-	key := append(bzBlockTime, []byte(postId)...)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowedPostsKeyPrefix))
+	blockTime := k.EncodeBlockTime(ctx)
+	key := append(blockTime, []byte(postId)...)
 	store.Set([]byte(key), []byte(postId))
 }
 func (k Keeper) GetFollowedPosts(ctx sdk.Context, pagination *query.PageRequest) ([]string, *query.PageResponse, error) {
@@ -227,11 +308,12 @@ func (k Keeper) GetFollowedPosts(ctx sdk.Context, pagination *query.PageRequest)
 }
 func (k Keeper) SetLikesIMade(ctx sdk.Context, likesIMade types.LikesIMade, sender string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix+sender+"/"))
-	blockTime := ctx.BlockTime().Unix()
-	//key := fmt.Sprintf("%s%s/%d%s", types.LikesIMadePrefix, sender, blockTime, likesIMade.PostId)
-	key := fmt.Sprintf("%d-%s", blockTime, likesIMade.PostId)
+	//blockTime := ctx.BlockTime().Unix()
+	//key := fmt.Sprintf("%d-%s", blockTime, likesIMade.PostId)
+	blockTime := k.EncodeBlockTime(ctx)
+	key := append(blockTime, []byte(likesIMade.PostId)...)
 	bz := k.cdc.MustMarshal(&likesIMade)
-	store.Set([]byte(key), bz)
+	store.Set(key, bz)
 	k.Logger().Warn("=============SetLikesIMade called", "sender", sender, "post_id", likesIMade.PostId, "block_time", blockTime)
 }
 
@@ -307,10 +389,12 @@ func (k Keeper) RemoveLikesIMade(ctx sdk.Context, sender string, postId string) 
 
 func (k Keeper) SetSavesIMade(ctx sdk.Context, likesIMade types.LikesIMade, sender string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SavesIMadePrefix+sender+"/"))
-	blockTime := ctx.BlockTime().Unix()
-	key := fmt.Sprintf("%d-%s", blockTime, likesIMade.PostId)
+	//blockTime := ctx.BlockTime().Unix()
+	//key := fmt.Sprintf("%d-%s", blockTime, likesIMade.PostId)
+	blockTime := k.EncodeBlockTime(ctx)
+	key := append(blockTime, []byte(likesIMade.PostId)...)
 	bz := k.cdc.MustMarshal(&likesIMade)
-	store.Set([]byte(key), bz)
+	store.Set(key, bz)
 }
 
 func (k Keeper) RemoveSavesIMade(ctx sdk.Context, sender string, postId string) error {
@@ -358,10 +442,12 @@ func (k Keeper) GetSavesIMade(ctx sdk.Context, sender string) ([]*types.LikesIMa
 
 func (k Keeper) SetLikesReceived(ctx sdk.Context, likesReceived types.LikesReceived, creator string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesReceivedPrefix+creator+"/"))
-	blockTime := ctx.BlockTime().Unix()
-	key := fmt.Sprintf("%d", blockTime)
+	//blockTime := ctx.BlockTime().Unix()
+	//key := fmt.Sprintf("%d", blockTime)
+	blockTime := k.EncodeBlockTime(ctx)
+	key := append(blockTime)
 	bz := k.cdc.MustMarshal(&likesReceived)
-	store.Set([]byte(key), bz)
+	store.Set(key, bz)
 }
 
 func (k Keeper) GetLikesReceived(ctx sdk.Context, creator string) ([]*types.LikesReceived, error) {
