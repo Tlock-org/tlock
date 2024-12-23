@@ -622,7 +622,7 @@ func (ms msgServer) addHomePosts(ctx sdk.Context, post types.Post) {
 		panic("GetHomePostsCount error")
 	}
 	count += 1
-	if count > 1000 {
+	if count > 5 {
 		ms.k.DeleteFirstHomePosts(ctx)
 	} else {
 		ms.k.SetHomePostsCount(ctx, count)
