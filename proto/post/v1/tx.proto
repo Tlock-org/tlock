@@ -149,10 +149,10 @@ message MsgCreateFreePost {
   string title = 3;
   string content = 4;
   string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  repeated bytes imagesBase64 = 7;
-  repeated string imagesUrl = 8;
-  repeated string videosUrl = 9;
-  string quote = 10;
+  repeated bytes imagesBase64 = 6;
+  repeated string imagesUrl = 7;
+  repeated string videosUrl = 8;
+  string quote = 9;
 }
 
 message MsgCreateFreePostResponse {
@@ -166,10 +166,10 @@ message MsgCreateFreePostImagePayable {
   string title = 3;
   string content = 4;
   string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  repeated bytes imagesBase64 = 7;
-  repeated string imagesUrl = 8;
-  repeated string videosUrl = 9;
-  string quote = 10;
+  repeated bytes imagesBase64 = 6;
+  repeated string imagesUrl = 7;
+  repeated string videosUrl = 8;
+  string quote = 9;
 }
 
 message MsgCreateFreePostImagePayableResponse {
@@ -183,10 +183,10 @@ message MsgCreatePaidPost {
   string title = 3;
   string content = 4;
   string creator = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  repeated bytes imagesBase64 = 7;
-  repeated string imagesUrl = 8;
-  repeated string videosUrl = 9;
-  string quote = 10;
+  repeated bytes imagesBase64 = 6;
+  repeated string imagesUrl = 7;
+  repeated string videosUrl = 8;
+  string quote = 9;
 }
 
 message MsgCreatePaidPostResponse {
