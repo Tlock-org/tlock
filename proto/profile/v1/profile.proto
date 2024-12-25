@@ -1,7 +1,7 @@
 syntax = "proto3";
 package profile.v1;
 
-import "post/v1/genesis.proto";
+import "profile/v1/genesis.proto";
 import "google/api/annotations.proto";
 
 option go_package = "github.com/rollchains/tlock/x/profile/types";

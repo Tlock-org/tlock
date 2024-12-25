@@ -1,0 +1,17 @@
+syntax = "proto3";
+package profile.v1;
+
+import "profile/v1/genesis.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/rollchains/tlock/x/profile/types";
+
+// ProfileResponse defines the structure of a ProfileResponse
+message ProfileResponse {
+  string user_handle = 2;
+  string nickname = 3;
+  string avatar = 4;
+  uint32 level = 6;
+  uint32 admin_level = 7;
+}
+

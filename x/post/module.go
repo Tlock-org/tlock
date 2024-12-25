@@ -3,10 +3,9 @@ package module
 import (
 	"context"
 	"encoding/json"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-
-	abci "github.com/cometbft/cometbft/abci/types"
 
 	"cosmossdk.io/client/v2/autocli"
 	errorsmod "cosmossdk.io/errors"
@@ -133,7 +132,7 @@ func (a AppModule) QuerierRoute() string {
 
 func (a AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(a.keeper))
-	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQuerier(a.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQuerier(a.keeper, a.keeper.ProfileKeeper))
 }
 
 // ConsensusVersion is a sequence number for state-breaking change of the

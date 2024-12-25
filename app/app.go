@@ -633,6 +633,7 @@ func NewChainApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.FeeGrantKeeper,
+		app.ProfileKeeper,
 	)
 
 	// post module account permissions

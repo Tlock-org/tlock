@@ -18,6 +18,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
+	profileKeeper "github.com/rollchains/tlock/x/profile/keeper"
 
 	"cosmossdk.io/collections"
 	storetypes "cosmossdk.io/core/store"
@@ -47,6 +48,7 @@ type Keeper struct {
 	AccountKeeper  authkeeper.AccountKeeper
 	bankKeeper     bankkeeper.Keeper
 	FeeGrantKeeper feegrantkeeper.Keeper
+	ProfileKeeper  profileKeeper.Keeper
 
 	authority string
 }
@@ -61,6 +63,7 @@ func NewKeeper(
 	ak authkeeper.AccountKeeper,
 	bk bankkeeper.Keeper,
 	fk feegrantkeeper.Keeper,
+	pk profileKeeper.Keeper,
 ) Keeper {
 	logger = logger.With(log.ModuleKey, "x/"+types.ModuleName)
 
@@ -92,6 +95,7 @@ func NewKeeper(
 		AccountKeeper:  ak,
 		bankKeeper:     bk,
 		FeeGrantKeeper: fk,
+		ProfileKeeper:  pk,
 
 		authority: authority,
 	}

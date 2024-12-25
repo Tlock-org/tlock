@@ -1,0 +1,32 @@
+syntax = "proto3";
+package post.v1;
+
+import "post/v1/genesis.proto";
+import "post/v1/post.proto";
+import "google/api/annotations.proto";
+import "profile/v1/profileResponse.proto";
+
+option go_package = "github.com/rollchains/tlock/x/post/types";
+
+// PostResponse defines the structure of a PostResponse
+message PostResponse {
+//  string id = 1;
+//  PostType post_type = 2;
+//  string parent_id = 3;
+//  string title = 4;
+//  string content = 5;
+//  string creator = 6;
+//  int64 timestamp = 7;
+//  repeated bytes images_base64 = 8;
+//  repeated string images_url = 9;
+//  repeated string videos_url = 10;
+//  string quote = 11;
+//  uint64 like_count = 12;
+//  uint64 comment_count = 13;
+//  uint64 report_count = 14;
+//  float score = 15;
+//  int64 homePostsUpdate = 16;
+  Post post = 1;
+  profile.v1.ProfileResponse profile = 2;
+}
+

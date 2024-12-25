@@ -23,6 +23,7 @@ import (
 
 	modulev1 "github.com/rollchains/tlock/api/post/module/v1"
 	"github.com/rollchains/tlock/x/post/keeper"
+	profileKeeper "github.com/rollchains/tlock/x/profile/keeper"
 )
 
 var _ appmodule.AppModule = AppModule{}
@@ -54,6 +55,7 @@ type ModuleInputs struct {
 	AccountKeeper  authkeeper.AccountKeeper
 	BankKeeper     bankkeeper.Keeper
 	FeeGrantKeeper feegrantkeeper.Keeper
+	ProfileKeeper  profileKeeper.Keeper
 }
 
 type ModuleOutputs struct {
@@ -66,7 +68,7 @@ type ModuleOutputs struct {
 func ProvideModule(in ModuleInputs) ModuleOutputs {
 	govAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
-	k := keeper.NewKeeper(in.Cdc, in.storeKey, in.StoreService, log.NewLogger(os.Stderr), govAddr, in.AccountKeeper, in.BankKeeper, in.FeeGrantKeeper)
+	k := keeper.NewKeeper(in.Cdc, in.storeKey, in.StoreService, log.NewLogger(os.Stderr), govAddr, in.AccountKeeper, in.BankKeeper, in.FeeGrantKeeper, in.ProfileKeeper)
 	m := NewAppModule(in.Cdc, k)
 
 	return ModuleOutputs{Module: m, Keeper: k, Out: depinject.Out{}}

@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
 	"google.golang.org/grpc/codes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,16 +11,22 @@ import (
 	"github.com/rollchains/tlock/x/post/types"
 
 	"google.golang.org/grpc/status"
+
+	profileTypes "github.com/rollchains/tlock/x/profile/types"
 )
 
 var _ types.QueryServer = Querier{}
 
 type Querier struct {
 	Keeper
+	ProfileKeeper profilekeeper.Keeper
 }
 
-func NewQuerier(keeper Keeper) Querier {
-	return Querier{Keeper: keeper}
+func NewQuerier(keeper Keeper, pk profilekeeper.Keeper) Querier {
+	return Querier{
+		Keeper:        keeper,
+		ProfileKeeper: pk,
+	}
 }
 
 func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
@@ -56,18 +63,34 @@ func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePosts
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	var posts []*types.Post
+	var postResponses []*types.PostResponse
 	for _, postID := range postIDs {
 		post, success := k.GetPost(ctx, postID)
 		if !success {
 			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
 		}
 		postCopy := post
-		posts = append(posts, &postCopy)
+		//posts = append(posts, &postCopy)
+
+		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		profileResponse := profileTypes.ProfileResponse{
+			UserHandle: profile.UserHandle,
+			Nickname:   profile.Nickname,
+			Avatar:     profile.Avatar,
+			Level:      profile.Level,
+			AdminLevel: profile.AdminLevel,
+		}
+		profileResponseCopy := profileResponse
+		postResponse := types.PostResponse{
+			Post:    &postCopy,
+			Profile: &profileResponseCopy,
+		}
+
+		postResponses = append(postResponses, &postResponse)
 	}
 
 	return &types.QueryHomePostsResponse{
-		Posts: posts,
+		Posts: postResponses,
 	}, nil
 }
 
@@ -76,6 +99,7 @@ func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (
 	if req == nil {
 		return nil, types.ErrInvalidRequest
 	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Retrieve the post from the state
 	post, found := k.Keeper.GetPost(sdk.UnwrapSDKContext(goCtx), req.PostId)
@@ -83,7 +107,25 @@ func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (
 		return nil, types.ErrPostNotFound
 	}
 
-	return &types.QueryPostResponse{Post: &post}, nil
+	postCopy := post
+	//posts = append(posts, &postCopy)
+
+	profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+	k.Logger().Error("======nickName:{}", profile.Nickname)
+	profileResponse := profileTypes.ProfileResponse{
+		UserHandle: profile.UserHandle,
+		Nickname:   profile.Nickname,
+		Avatar:     profile.Avatar,
+		Level:      profile.Level,
+		AdminLevel: profile.AdminLevel,
+	}
+	profileResponseCopy := profileResponse
+	postResponse := types.PostResponse{
+		Post:    &postCopy,
+		Profile: &profileResponseCopy,
+	}
+
+	return &types.QueryPostResponse{Post: &postResponse}, nil
 }
 
 // likesIMade implements types.QueryServer.
@@ -97,6 +139,33 @@ func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeReques
 	likes, err := k.GetLikesIMade(sdkCtx, request.Wallet)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	var postResponses []*types.PostResponse
+	for _, likesIMade := range likes {
+		postID := likesIMade.PostId
+		post, success := k.GetPost(sdkCtx, postID)
+		if !success {
+			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
+		}
+		postCopy := post
+		//posts = append(posts, &postCopy)
+
+		profile, _ := k.ProfileKeeper.GetProfile(sdkCtx, post.Creator)
+		profileResponse := profileTypes.ProfileResponse{
+			UserHandle: profile.UserHandle,
+			Nickname:   profile.Nickname,
+			Avatar:     profile.Avatar,
+			Level:      profile.Level,
+			AdminLevel: profile.AdminLevel,
+		}
+		profileResponseCopy := profileResponse
+		postResponse := types.PostResponse{
+			Post:    &postCopy,
+			Profile: &profileResponseCopy,
+		}
+
+		postResponses = append(postResponses, &postResponse)
 	}
 
 	//var likesList []*types.LikesIMade
@@ -127,7 +196,7 @@ func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeReques
 	//likeCopy := like
 	//likesList = append(likesList, &likeCopy)
 	return &types.LikesIMadeResponse{
-		LikesMade: likes,
+		Posts: postResponses,
 	}, nil
 }
 
@@ -144,8 +213,35 @@ func (k Querier) SavesIMade(ctx context.Context, request *types.SavesIMadeReques
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	var postResponses []*types.PostResponse
+	for _, savesIMade := range saves {
+		postID := savesIMade.PostId
+		post, success := k.GetPost(sdkCtx, postID)
+		if !success {
+			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
+		}
+		postCopy := post
+		//posts = append(posts, &postCopy)
+
+		profile, _ := k.ProfileKeeper.GetProfile(sdkCtx, post.Creator)
+		profileResponse := profileTypes.ProfileResponse{
+			UserHandle: profile.UserHandle,
+			Nickname:   profile.Nickname,
+			Avatar:     profile.Avatar,
+			Level:      profile.Level,
+			AdminLevel: profile.AdminLevel,
+		}
+		profileResponseCopy := profileResponse
+		postResponse := types.PostResponse{
+			Post:    &postCopy,
+			Profile: &profileResponseCopy,
+		}
+
+		postResponses = append(postResponses, &postResponse)
+	}
+
 	return &types.SavesIMadeResponse{
-		SavesMade: saves,
+		Posts: postResponses,
 	}, nil
 }
 
