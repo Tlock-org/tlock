@@ -2,11 +2,10 @@ package keeper
 
 import (
 	"context"
+	"cosmossdk.io/errors"
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
-	"cosmossdk.io/errors"
 	"github.com/rollchains/tlock/x/profile/types"
 )
 
@@ -42,14 +41,65 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	blockTime := ctx.BlockTime().Unix()
 
 	profileJson := msg.ProfileJson
+
+	dbProfile, _ := ms.k.GetProfile(ctx, msg.GetCreator())
+	handle := dbProfile.UserHandle
+	if profileJson.UserHandle != "" {
+		handle = profileJson.UserHandle
+	}
+
 	// Create the profile
 	profile := types.Profile{
 		WalletAddress: msg.Creator,
 		Nickname:      profileJson.Nickname,
-		UserHandle:    profileJson.UserHandle,
+		UserHandle:    handle,
 		Avatar:        profileJson.Avatar,
+		Bio:           profileJson.Bio,
+		Location:      profileJson.Location,
+		Website:       profileJson.Website,
 		CreationTime:  blockTime,
 	}
+
+	//if exists {
+	//	nickname := profileJson.Nickname
+	//	fmt.Printf("========profileJson nickname: %s\n", nickname)
+	//	if &nickname != nil {
+	//		profile.Nickname = nickname
+	//	}
+	//	userHandle := profileJson.UserHandle
+	//	fmt.Printf("========profileJson userHandle: %s\n", userHandle)
+	//	if &userHandle != nil {
+	//		fmt.Printf("========here in?====: %s\n", userHandle)
+	//		profile.UserHandle = userHandle
+	//	}
+	//	avatar := profileJson.Avatar
+	//	fmt.Printf("========profileJson avatar: %s\n", avatar)
+	//	if &avatar != nil {
+	//		profile.Avatar = avatar
+	//	}
+	//	bio := profileJson.Bio
+	//	fmt.Printf("========profileJson bio: %s\n", bio)
+	//	if &bio != nil {
+	//		profile.Bio = bio
+	//	}
+	//	location := profileJson.Location
+	//	fmt.Printf("========profileJson location: %s\n", location)
+	//	if &location != nil {
+	//		profile.Location = location
+	//	}
+	//	website := profileJson.Website
+	//	fmt.Printf("========profileJson website: %s\n", website)
+	//	if &website != nil {
+	//		profile.Website = website
+	//	}
+	//} else {
+	//	profile.Nickname = profileJson.Nickname
+	//	profile.UserHandle = profileJson.UserHandle
+	//	profile.Avatar = profileJson.Avatar
+	//	profile.Bio = profileJson.Bio
+	//	profile.Location = profileJson.Location
+	//	profile.Website = profileJson.Website
+	//}
 
 	ms.k.SetProfile(ctx, profile)
 
@@ -64,5 +114,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})
-	return &types.MsgAddProfileResponse{}, nil
+	return &types.MsgAddProfileResponse{
+		Profile: &profile,
+	}, nil
 }

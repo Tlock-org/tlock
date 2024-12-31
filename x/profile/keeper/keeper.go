@@ -123,10 +123,34 @@ func (k Keeper) GetProfile(ctx sdk.Context, walletAddress string) (types.Profile
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostKeyPrefix))
 	bz := store.Get([]byte(walletAddress))
 	if bz == nil {
-		return types.Profile{}, false
+		return types.Profile{
+			WalletAddress: walletAddress,
+			UserHandle:    TruncateWalletAddressSuffix(walletAddress),
+		}, true
 	}
 
 	var profile types.Profile
 	k.cdc.MustUnmarshal(bz, &profile)
 	return profile, true
+}
+
+func TruncateWalletAddressSuffix(walletAddress string) string {
+	runes := []rune(walletAddress)
+	if len(runes) >= 10 {
+		return string(runes[len(runes)-10:])
+	}
+	return string(runes)
+}
+
+func (k Keeper) CheckAndCreateUserHandle(ctx sdk.Context, walletAddress string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostKeyPrefix))
+	bz := store.Get([]byte(walletAddress))
+	if bz == nil {
+		profile := types.Profile{
+			WalletAddress: walletAddress,
+			UserHandle:    TruncateWalletAddressSuffix(walletAddress),
+		}
+		k.SetProfile(ctx, profile)
+	}
+	return true
 }

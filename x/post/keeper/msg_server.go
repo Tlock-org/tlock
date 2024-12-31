@@ -179,6 +179,8 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	// add home posts
 	ms.addHomePosts(ctx, post)
 
+	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
+
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -236,6 +238,7 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 	// add home posts
 	ms.addHomePosts(ctx, post)
 
+	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -292,6 +295,8 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 	// add home posts
 	ms.addHomePosts(ctx, post)
 
+	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
+
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -343,6 +348,8 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 	ms.k.SetPost(ctx, post)
 	// post reward
 	ms.k.PostReward(ctx, post)
+
+	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -399,6 +406,8 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		Timestamp:    blockTime,
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
+
+	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Sender)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -490,6 +499,8 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 		Timestamp:    blockTime,
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
+
+	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Sender)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -589,6 +600,7 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	// update post
 	ms.k.SetPost(ctx, post)
 
+	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
