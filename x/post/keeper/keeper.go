@@ -206,26 +206,64 @@ func (k Keeper) SetHomePosts(ctx sdk.Context, postId string) {
 func (k Keeper) GetHomePosts(ctx sdk.Context, pagination *query.PageRequest) ([]string, *query.PageResponse, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
 
-	//var postIDs []string
-	//
-	//pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
-	//	postIDs = append(postIDs, string(value))
-	//	return nil
-	//})
-	//
-	//if err != nil {
-	//	return nil, nil, err
-	//}
-	//return postIDs, pageRes, nil
-
-	iterator := store.ReverseIterator(nil, nil)
-	defer iterator.Close()
-	var postIDs []string
-	for ; iterator.Valid(); iterator.Next() {
-		postID := string(iterator.Value())
-		postIDs = append(postIDs, postID)
+	homePostsCount, _ := k.GetHomePostsCount(ctx)
+	if homePostsCount == 0 {
+		return []string{}, &query.PageResponse{
+			NextKey: nil,
+			Total:   uint64(homePostsCount),
+		}, nil
 	}
-	return postIDs, nil, nil
+
+	const pageSize = 100
+	totalPages := homePostsCount / pageSize
+	if homePostsCount%pageSize != 0 {
+		totalPages += 1
+	}
+
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	currentTime := time.Now()
+	unixMilli := currentTime.UnixMilli()
+	lastTwoDigits := unixMilli % 100
+
+	pageIndex := lastTwoDigits % totalPages
+	// 00-99  10000 00:1-100 01:101-200 02:201-300
+	//first := lastTwoDigits * 100
+	first := pageIndex * pageSize
+
+	const totalPosts = 10000
+	if first >= totalPosts {
+		return nil, nil, fmt.Errorf("offset exceeds total number of home posts")
+	}
+
+	if pagination == nil {
+		pagination = &query.PageRequest{}
+	}
+	pagination.Limit = pageSize
+	pagination.Offset = uint64(first)
+
+	var postIDs []string
+
+	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
+		postIDs = append(postIDs, string(value))
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+	return postIDs, pageRes, nil
+
+	//iterator := store.ReverseIterator(nil, nil)
+	//defer iterator.Close()
+	//var postIDs []string
+	//for ; iterator.Valid(); iterator.Next() {
+	//	postID := string(iterator.Value())
+	//	postIDs = append(postIDs, postID)
+	//}
+	//return postIDs, nil, nil
 }
 
 func (k Keeper) DeleteFirstHomePosts(ctx sdk.Context) {

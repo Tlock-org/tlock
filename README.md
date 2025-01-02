@@ -11,3 +11,5 @@ Official Site (not ready): https://tlock.org
 GitHub: https://github.com/Tlock-org/tlock
 
 X.com(Twitter):  https://x.com/TlockTok
+
+GitBook: https://tlock.gitbook.io/tlock

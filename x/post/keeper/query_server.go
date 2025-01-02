@@ -3,10 +3,9 @@ package keeper
 import (
 	"context"
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
 	"google.golang.org/grpc/codes"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/rollchains/tlock/x/post/types"
 
@@ -58,6 +57,7 @@ func (k Querier) ResolveName(goCtx context.Context, req *types.QueryResolveNameR
 // QueryHomePosts implements types.QueryServer.
 func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePostsRequest) (*types.QueryHomePostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
 	postIDs, _, err := k.Keeper.GetHomePosts(ctx, nil)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
