@@ -32,6 +32,9 @@ const (
 	SavesIMadePrefix = "Post/saves/i/made/"
 
 	LikesReceivedPrefix = "Post/likes/received/"
+
+	HomePostsCount = 100
+	PageSize       = 10
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{

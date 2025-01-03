@@ -214,7 +214,7 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, pagination *query.PageRequest) ([]
 		}, nil
 	}
 
-	const pageSize = 100
+	const pageSize = types.PageSize
 	totalPages := homePostsCount / pageSize
 	if homePostsCount%pageSize != 0 {
 		totalPages += 1
@@ -226,14 +226,14 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, pagination *query.PageRequest) ([]
 
 	currentTime := time.Now()
 	unixMilli := currentTime.UnixMilli()
-	lastTwoDigits := unixMilli % 100
+	lastTwoDigits := unixMilli % 10
 
 	pageIndex := lastTwoDigits % totalPages
 	// 00-99  10000 00:1-100 01:101-200 02:201-300
 	//first := lastTwoDigits * 100
 	first := pageIndex * pageSize
 
-	const totalPosts = 10000
+	const totalPosts = types.HomePostsCount
 	if first >= totalPosts {
 		return nil, nil, fmt.Errorf("offset exceeds total number of home posts")
 	}
