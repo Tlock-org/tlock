@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/rollchains/tlock/x/post/types"
+	"math"
 )
 
 const MaxImageSize = 500 * 1024 // 500 KB
@@ -407,6 +408,9 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
 
+	// Score Accumulation
+	ms.ScoreAccumulation(ctx, msg.Sender, post, 3)
+
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Sender)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -600,6 +604,9 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	// update post
 	ms.k.SetPost(ctx, post)
 
+	// Score Accumulation
+	ms.ScoreAccumulation(ctx, msg.Creator, post, 1)
+
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -638,5 +645,34 @@ func (ms msgServer) addHomePosts(ctx sdk.Context, post types.Post) {
 		ms.k.DeleteFirstHomePosts(ctx)
 	} else {
 		ms.k.SetHomePostsCount(ctx, count)
+	}
+}
+
+func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num uint32) {
+	operatorProfile, b1 := ms.k.ProfileKeeper.GetProfile(ctx, operator)
+	creatorProfile, b2 := ms.k.ProfileKeeper.GetProfile(ctx, post.Creator)
+	// score
+	if b1 && b2 {
+		operatorLevel := operatorProfile.Level
+		creatorScore := creatorProfile.Score
+		postScore := post.Score
+		exponent := math.Pow(5, float64(operatorLevel-num))
+		if exponent >= 1 {
+			postScore += float32(exponent)
+			post.Score = postScore
+			ms.k.SetPost(ctx, post)
+
+			creatorScore += float32(exponent)
+			creatorProfile.Score = creatorScore
+
+			// user level
+			level := creatorProfile.Level
+			pow := math.Pow(5, float64(level-1))
+			if creatorScore >= float32(1000*pow) {
+				level += 1
+				creatorProfile.Level = level
+			}
+			ms.k.ProfileKeeper.SetProfile(ctx, creatorProfile)
+		}
 	}
 }

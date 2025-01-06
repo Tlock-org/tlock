@@ -225,8 +225,9 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, pagination *query.PageRequest) ([]
 	}
 
 	currentTime := time.Now()
-	unixMilli := currentTime.UnixMilli()
+	unixMilli := currentTime.Unix()
 	lastTwoDigits := unixMilli % 10
+	fmt.Sprintf("===============lastTwoDigits: %d", lastTwoDigits)
 
 	pageIndex := lastTwoDigits % totalPages
 	// 00-99  10000 00:1-100 01:101-200 02:201-300
