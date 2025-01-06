@@ -243,6 +243,7 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, pagination *query.PageRequest) ([]
 	}
 	pagination.Limit = pageSize
 	pagination.Offset = uint64(first)
+	pagination.Reverse = true
 
 	var postIDs []string
 

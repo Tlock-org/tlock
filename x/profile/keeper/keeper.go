@@ -111,7 +111,6 @@ func (k *Keeper) ExportGenesis(ctx context.Context) *types.GenesisState {
 func (k Keeper) SetProfile(ctx sdk.Context, profile types.Profile) {
 
 	fmt.Printf("==============k.storeKey %s", k.storeKey.Name())
-
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostKeyPrefix))
 	bz := k.cdc.MustMarshal(&profile)
 	store.Set([]byte(profile.WalletAddress), bz)
