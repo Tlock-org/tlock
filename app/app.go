@@ -141,6 +141,9 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	test "github.com/rollchains/tlock/x/test"
+	testkeeper "github.com/rollchains/tlock/x/test/keeper"
+	testtypes "github.com/rollchains/tlock/x/test/types"
 )
 
 const (
@@ -254,6 +257,7 @@ type ChainApp struct {
 	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
 	PostKeeper                postkeeper.Keeper
 	ProfileKeeper             profilekeeper.Keeper
+	TestKeeper testkeeper.Keeper
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -367,6 +371,7 @@ func NewChainApp(
 		packetforwardtypes.StoreKey,
 		posttypes.StoreKey,
 		profiletypes.StoreKey,
+		testtypes.StoreKey,
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -614,6 +619,14 @@ func NewChainApp(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
+	// Create the test Keeper
+	app.TestKeeper = testkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[testtypes.StoreKey]),
+		logger,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	// Create the profile Keeper
 	app.ProfileKeeper = profilekeeper.NewKeeper(
 		appCodec,
@@ -804,6 +817,8 @@ func NewChainApp(
 		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
 		post.NewAppModule(appCodec, app.PostKeeper),
 		profile.NewAppModule(appCodec, app.ProfileKeeper),
+		test.NewAppModule(appCodec, app.TestKeeper),
+
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -845,6 +860,7 @@ func NewChainApp(
 		packetforwardtypes.ModuleName,
 		posttypes.ModuleName,
 		profiletypes.ModuleName,
+		testtypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -864,6 +880,7 @@ func NewChainApp(
 		packetforwardtypes.ModuleName,
 		posttypes.ModuleName,
 		profiletypes.ModuleName,
+		testtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -905,6 +922,7 @@ func NewChainApp(
 		packetforwardtypes.ModuleName,
 		posttypes.ModuleName,
 		profiletypes.ModuleName,
+		testtypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -1313,6 +1331,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(packetforwardtypes.ModuleName).WithKeyTable(packetforwardtypes.ParamKeyTable())
 	paramsKeeper.Subspace(posttypes.ModuleName)
 	paramsKeeper.Subspace(profiletypes.ModuleName)
+	paramsKeeper.Subspace(testtypes.ModuleName)
 
 	return paramsKeeper
 }
