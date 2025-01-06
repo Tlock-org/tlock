@@ -358,7 +358,6 @@ func (k Keeper) SetLikesIMade(ctx sdk.Context, likesIMade types.LikesIMade, send
 	key := append(blockTime, []byte(likesIMade.PostId)...)
 	bz := k.cdc.MustMarshal(&likesIMade)
 	store.Set(key, bz)
-	k.Logger().Warn("=============SetLikesIMade called", "sender", sender, "post_id", likesIMade.PostId, "block_time", blockTime)
 }
 
 // GetLikesIMade retrieves the list of likes made by a specific sender, ordered by blockTime in descending order.
@@ -603,14 +602,14 @@ func (k Keeper) GetModuleAccountAddress() sdk.AccAddress {
 
 // transfer from module to user
 func (k Keeper) SendCoinsFromModuleToAccount(ctx sdk.Context, userAddr sdk.AccAddress, amount sdk.Coins) error {
-	moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
-	fmt.Printf("==============types.ModuleName: [%s], =moduleAddress: [%s]", types.ModuleName, moduleAddress)
+	//moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+	//fmt.Printf("==============types.ModuleName: [%s], =moduleAddress: [%s]", types.ModuleName, moduleAddress)
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userAddr, amount)
 }
 
 func (k Keeper) SendCoinsFromAccountToModule(ctx sdk.Context, userAddr sdk.AccAddress, amount sdk.Coins) error {
-	moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
-	fmt.Printf("==============types.ModuleName: [%s], =moduleAddress: [%s]", types.ModuleName, moduleAddress)
+	//moduleAddress := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+	//fmt.Printf("==============types.ModuleName: [%s], =moduleAddress: [%s]", types.ModuleName, moduleAddress)
 	return k.bankKeeper.SendCoinsFromAccountToModule(ctx, userAddr, types.ModuleName, amount)
 }
 

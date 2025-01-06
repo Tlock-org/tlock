@@ -111,7 +111,7 @@ func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (
 	//posts = append(posts, &postCopy)
 
 	profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-	k.Logger().Error("======nickName:{}", profile.Nickname)
+	//k.Logger().Error("======nickName:{}", profile.Nickname)
 	profileResponse := profileTypes.ProfileResponse{
 		UserHandle: profile.UserHandle,
 		Nickname:   profile.Nickname,

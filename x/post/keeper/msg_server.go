@@ -128,12 +128,10 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 
 // CreateFreePost implements types.MsgServer.
 func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFreePost) (*types.MsgCreateFreePostResponse, error) {
-	toString := base64.StdEncoding.EncodeToString([]byte("{\"body\":{\"messages\":[{\"@type\":\"/cosmos.bank.v1beta1.MsgSend\",\"from_address\":\"tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p\",\"to_address\":\"tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg\",\"amount\":[{\"denom\":\"uTOK\",\"amount\":\"10\"}]}],\"memo\":\"\",\"timeout_height\":\"0\",\"extension_options\":[],\"non_critical_extension_options\":[]},\"auth_info\":{\"signer_infos\":[{\"public_key\":{\"@type\":\"/cosmos.crypto.secp256k1.PubKey\",\"key\":\"ApZa31BR3NWLylRT6Qi5+f+zXtj2OpqtC76vgkUGLyww\"},\"mode_info\":{\"single\":{\"mode\":\"SIGN_MODE_DIRECT\"}},\"sequence\":\"1\"}],\"fee\":{\"amount\":[{\"denom\":\"uTOK\",\"amount\":\"77886\"}],\"gas_limit\":\"77886\",\"payer\":\"\",\"granter\":\"\"},\"tip\":null},\"signatures\":[\"RWGJJcQ8Ioul52d6HbBW6F1FJwuNPRSTTny6xpAZCfpYgHSIGuk0+uupaC5gx0FKur8qOA9tZlhKhAfLyf9hWg==\"]}"))
-	fmt.Printf("=======================toString: %s\n", toString)
+	base64.StdEncoding.EncodeToString([]byte("{\"body\":{\"messages\":[{\"@type\":\"/cosmos.bank.v1beta1.MsgSend\",\"from_address\":\"tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p\",\"to_address\":\"tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg\",\"amount\":[{\"denom\":\"uTOK\",\"amount\":\"10\"}]}],\"memo\":\"\",\"timeout_height\":\"0\",\"extension_options\":[],\"non_critical_extension_options\":[]},\"auth_info\":{\"signer_infos\":[{\"public_key\":{\"@type\":\"/cosmos.crypto.secp256k1.PubKey\",\"key\":\"ApZa31BR3NWLylRT6Qi5+f+zXtj2OpqtC76vgkUGLyww\"},\"mode_info\":{\"single\":{\"mode\":\"SIGN_MODE_DIRECT\"}},\"sequence\":\"1\"}],\"fee\":{\"amount\":[{\"denom\":\"uTOK\",\"amount\":\"77886\"}],\"gas_limit\":\"77886\",\"payer\":\"\",\"granter\":\"\"},\"tip\":null},\"signatures\":[\"RWGJJcQ8Ioul52d6HbBW6F1FJwuNPRSTTny6xpAZCfpYgHSIGuk0+uupaC5gx0FKur8qOA9tZlhKhAfLyf9hWg==\"]}"))
 
 	//ms.k.Logger().Error("===============toString: %s\n", toString)
-
-	ms.k.Logger().Warn("============= to create free post ==============")
+	//ms.k.Logger().Warn("============= to create free post ==============")
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	//bytes := ctx.TxBytes()
@@ -191,7 +189,7 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})
-	ms.k.Logger().Warn("============= create free post end ==============")
+	//ms.k.Logger().Warn("============= create free post end ==============")
 	return &types.MsgCreateFreePostResponse{PostId: postID}, nil
 }
 
@@ -648,27 +646,35 @@ func (ms msgServer) addHomePosts(ctx sdk.Context, post types.Post) {
 	}
 }
 
-func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num uint32) {
+func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num int64) {
 	operatorProfile, b1 := ms.k.ProfileKeeper.GetProfile(ctx, operator)
 	creatorProfile, b2 := ms.k.ProfileKeeper.GetProfile(ctx, post.Creator)
 	// score
 	if b1 && b2 {
 		operatorLevel := operatorProfile.Level
+		if operatorLevel == 0 {
+			operatorLevel = 1
+		}
+		operatorLevelSigned := int64(operatorLevel)
+
 		creatorScore := creatorProfile.Score
+		//creatorScoreSigned := int64(creatorScore)
 		postScore := post.Score
-		exponent := math.Pow(5, float64(operatorLevel-num))
+		exponent := math.Pow(5, float64(operatorLevelSigned-num))
+		ms.k.logger.Debug("=========================ScoreAccumulation:", "operatorLevelSigned", operatorLevelSigned, "creatorScore", creatorScore, "postScore", postScore, "exponent", exponent)
 		if exponent >= 1 {
-			postScore += float32(exponent)
+			postScore += uint64(exponent)
 			post.Score = postScore
 			ms.k.SetPost(ctx, post)
 
-			creatorScore += float32(exponent)
+			creatorScore += uint64(exponent)
 			creatorProfile.Score = creatorScore
 
 			// user level
 			level := creatorProfile.Level
-			pow := math.Pow(5, float64(level-1))
-			if creatorScore >= float32(1000*pow) {
+			levelSigned := int64(level)
+			pow := math.Pow(5, float64(levelSigned-1))
+			if creatorScore >= uint64(1000*pow) {
 				level += 1
 				creatorProfile.Level = level
 			}

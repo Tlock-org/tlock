@@ -31,7 +31,7 @@ message Post {
   uint64 like_count = 12;
   uint64 comment_count = 13;
   uint64 report_count = 14;
-  float score = 15;
+  uint64 score = 15;
   int64 homePostsUpdate = 16;
 }
 

