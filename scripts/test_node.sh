@@ -144,4 +144,3 @@ sed -i -e 's/timeout_commit = "5s"/timeout_commit = "'$BLOCK_TIME'"/g' $HOME_DIR
 #sed -i -e 's/timeout_precommit = "1s"/timeout_precommit = "1s"/g' $HOME_DIR/config/config.toml
 # Start the node with 0 gas fees
 BINARY start --pruning=nothing  --minimum-gas-prices=1$DENOM --rpc.laddr="tcp://0.0.0.0:$RPC"
-# check if CLEAN is no
