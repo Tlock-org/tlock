@@ -10,8 +10,6 @@ import (
 	"github.com/rollchains/tlock/x/post/types"
 
 	"google.golang.org/grpc/status"
-
-	profileTypes "github.com/rollchains/tlock/x/profile/types"
 )
 
 var _ types.QueryServer = Querier{}
@@ -58,7 +56,7 @@ func (k Querier) ResolveName(goCtx context.Context, req *types.QueryResolveNameR
 func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePostsRequest) (*types.QueryHomePostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	postIDs, _, err := k.Keeper.GetHomePosts(ctx, nil)
+	postIDs, _, err := k.Keeper.GetHomePosts(ctx, req)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -73,14 +71,14 @@ func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePosts
 		//posts = append(posts, &postCopy)
 
 		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-		profileResponse := profileTypes.ProfileResponse{
-			UserHandle: profile.UserHandle,
-			Nickname:   profile.Nickname,
-			Avatar:     profile.Avatar,
-			Level:      profile.Level,
-			AdminLevel: profile.AdminLevel,
-		}
-		profileResponseCopy := profileResponse
+		//profileResponse := profileTypes.ProfileResponse{
+		//	UserHandle: profile.UserHandle,
+		//	Nickname:   profile.Nickname,
+		//	Avatar:     profile.Avatar,
+		//	Level:      profile.Level,
+		//	AdminLevel: profile.AdminLevel,
+		//}
+		profileResponseCopy := profile
 		postResponse := types.PostResponse{
 			Post:    &postCopy,
 			Profile: &profileResponseCopy,
@@ -90,6 +88,38 @@ func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePosts
 	}
 
 	return &types.QueryHomePostsResponse{
+		Posts: postResponses,
+	}, nil
+}
+
+// QueryFirstHomePosts implements types.QueryServer.
+func (k Querier) QueryFirstHomePosts(goCtx context.Context, req *types.QueryFirstHomePostsRequest) (*types.QueryFirstHomePostsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	postIDs, _, err := k.Keeper.GetFirstPageHomePosts(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	var postResponses []*types.PostResponse
+	for _, postID := range postIDs {
+		post, success := k.GetPost(ctx, postID)
+		if !success {
+			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
+		}
+		postCopy := post
+
+		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		profileResponseCopy := profile
+		postResponse := types.PostResponse{
+			Post:    &postCopy,
+			Profile: &profileResponseCopy,
+		}
+
+		postResponses = append(postResponses, &postResponse)
+	}
+
+	return &types.QueryFirstHomePostsResponse{
 		Posts: postResponses,
 	}, nil
 }
@@ -112,14 +142,14 @@ func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (
 
 	profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
 	//k.Logger().Error("======nickName:{}", profile.Nickname)
-	profileResponse := profileTypes.ProfileResponse{
-		UserHandle: profile.UserHandle,
-		Nickname:   profile.Nickname,
-		Avatar:     profile.Avatar,
-		Level:      profile.Level,
-		AdminLevel: profile.AdminLevel,
-	}
-	profileResponseCopy := profileResponse
+	//profileResponse := profileTypes.ProfileResponse{
+	//	UserHandle: profile.UserHandle,
+	//	Nickname:   profile.Nickname,
+	//	Avatar:     profile.Avatar,
+	//	Level:      profile.Level,
+	//	AdminLevel: profile.AdminLevel,
+	//}
+	profileResponseCopy := profile
 	postResponse := types.PostResponse{
 		Post:    &postCopy,
 		Profile: &profileResponseCopy,
@@ -152,14 +182,14 @@ func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeReques
 		//posts = append(posts, &postCopy)
 
 		profile, _ := k.ProfileKeeper.GetProfile(sdkCtx, post.Creator)
-		profileResponse := profileTypes.ProfileResponse{
-			UserHandle: profile.UserHandle,
-			Nickname:   profile.Nickname,
-			Avatar:     profile.Avatar,
-			Level:      profile.Level,
-			AdminLevel: profile.AdminLevel,
-		}
-		profileResponseCopy := profileResponse
+		//profileResponse := profileTypes.ProfileResponse{
+		//	UserHandle: profile.UserHandle,
+		//	Nickname:   profile.Nickname,
+		//	Avatar:     profile.Avatar,
+		//	Level:      profile.Level,
+		//	AdminLevel: profile.AdminLevel,
+		//}
+		profileResponseCopy := profile
 		postResponse := types.PostResponse{
 			Post:    &postCopy,
 			Profile: &profileResponseCopy,
@@ -224,14 +254,14 @@ func (k Querier) SavesIMade(ctx context.Context, request *types.SavesIMadeReques
 		//posts = append(posts, &postCopy)
 
 		profile, _ := k.ProfileKeeper.GetProfile(sdkCtx, post.Creator)
-		profileResponse := profileTypes.ProfileResponse{
-			UserHandle: profile.UserHandle,
-			Nickname:   profile.Nickname,
-			Avatar:     profile.Avatar,
-			Level:      profile.Level,
-			AdminLevel: profile.AdminLevel,
-		}
-		profileResponseCopy := profileResponse
+		//profileResponse := profileTypes.ProfileResponse{
+		//	UserHandle: profile.UserHandle,
+		//	Nickname:   profile.Nickname,
+		//	Avatar:     profile.Avatar,
+		//	Level:      profile.Level,
+		//	AdminLevel: profile.AdminLevel,
+		//}
+		profileResponseCopy := profile
 		postResponse := types.PostResponse{
 			Post:    &postCopy,
 			Profile: &profileResponseCopy,
