@@ -383,11 +383,13 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		}
 	}
 
+	// Score Accumulation
+	ms.ScoreAccumulation(ctx, msg.Sender, post, 3)
+
+	// update post
 	blockTime := ctx.BlockTime().Unix()
 	post.LikeCount += 1
 	post.HomePostsUpdate = blockTime
-
-	// update post
 	ms.k.SetPost(ctx, post)
 
 	// set likes I made
@@ -405,9 +407,6 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		Timestamp:    blockTime,
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
-
-	// Score Accumulation
-	ms.ScoreAccumulation(ctx, msg.Sender, post, 3)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Sender)
 
@@ -596,14 +595,13 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	if !found {
 		return nil, errors.Wrap(types.ErrPostNotFound, msg.ParentId)
 	}
-	post.CommentCount += 1
-	post.HomePostsUpdate = blockTime
-
-	// update post
-	ms.k.SetPost(ctx, post)
-
 	// Score Accumulation
 	ms.ScoreAccumulation(ctx, msg.Creator, post, 1)
+
+	// update post
+	post.CommentCount += 1
+	post.HomePostsUpdate = blockTime
+	ms.k.SetPost(ctx, post)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 	//Emit an event for the creation
@@ -652,9 +650,6 @@ func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post typ
 	// score
 	if b1 && b2 {
 		operatorLevel := operatorProfile.Level
-		if operatorLevel == 0 {
-			operatorLevel = 1
-		}
 		operatorLevelSigned := int64(operatorLevel)
 
 		creatorScore := creatorProfile.Score
@@ -665,7 +660,7 @@ func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post typ
 		if exponent >= 1 {
 			postScore += uint64(exponent)
 			post.Score = postScore
-			ms.k.SetPost(ctx, post)
+			//ms.k.SetPost(ctx, post)
 
 			creatorScore += uint64(exponent)
 			creatorProfile.Score = creatorScore

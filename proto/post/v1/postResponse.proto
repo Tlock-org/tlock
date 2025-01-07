@@ -4,7 +4,8 @@ package post.v1;
 import "post/v1/genesis.proto";
 import "post/v1/post.proto";
 import "google/api/annotations.proto";
-import "profile/v1/profileResponse.proto";
+//import "profile/v1/profileResponse.proto";
+import "profile/v1/profile.proto";
 
 option go_package = "github.com/rollchains/tlock/x/post/types";
 
@@ -27,6 +28,6 @@ message PostResponse {
 //  float score = 15;
 //  int64 homePostsUpdate = 16;
   Post post = 1;
-  profile.v1.ProfileResponse profile = 2;
+  profile.v1.Profile profile = 2;
 }
 

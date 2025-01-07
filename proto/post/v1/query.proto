@@ -4,7 +4,7 @@ package post.v1;
 import "post/v1/genesis.proto";
 import "google/api/annotations.proto";
 import "post/v1/postResponse.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
+//import "cosmos/base/query/v1beta1/pagination.proto";
 import "post/v1/likesIMade.proto";
 import "post/v1/likesReceived.proto";
 
@@ -24,6 +24,10 @@ service Query {
 
   rpc QueryHomePosts(QueryHomePostsRequest) returns (QueryHomePostsResponse) {
     option (google.api.http).get = "/post/v1/homePosts";
+  }
+
+  rpc QueryFirstHomePosts(QueryFirstHomePostsRequest) returns (QueryFirstHomePostsResponse) {
+    option (google.api.http).get = "/post/v1/firstHomePosts";
   }
 
   // QueryPost allows querying a specific post by its ID
@@ -60,6 +64,13 @@ message QueryHomePostsRequest {
 
 message QueryHomePostsResponse {
 //  repeated Post posts = 1;
+  repeated PostResponse posts = 1;
+}
+
+message QueryFirstHomePostsRequest {
+}
+
+message QueryFirstHomePostsResponse {
   repeated PostResponse posts = 1;
 }
 
