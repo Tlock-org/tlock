@@ -385,7 +385,8 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	score := post.Score
 
 	// Score Accumulation
-	ms.ScoreAccumulation(ctx, msg.Sender, post, 3)
+	post = ms.ScoreAccumulation(ctx, msg.Sender, post, 3)
+	ms.k.logger.Warn("==========score", "score", score, "postScore", post.Score, "post", post)
 	// update commentList
 	if post.PostType == types.PostType_COMMENT {
 		ms.k.DeleteFromCommentList(ctx, post.ParentId, post.Id, score)
@@ -605,7 +606,8 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 		return nil, errors.Wrap(types.ErrPostNotFound, msg.ParentId)
 	}
 	// Score Accumulation
-	ms.ScoreAccumulation(ctx, msg.Creator, post, 1)
+	post = ms.ScoreAccumulation(ctx, msg.Creator, post, 1)
+	ms.k.logger.Warn("==========score", "score", score, "postScore", post.Score, "post", post)
 	// update commentList
 	if post.PostType == types.PostType_COMMENT {
 		ms.k.DeleteFromCommentList(ctx, post.ParentId, post.Id, score)
@@ -666,7 +668,7 @@ func (ms msgServer) addHomePosts(ctx sdk.Context, post types.Post) {
 //	ms.k.DeleteCommentList(ctx, post.Id, comment.Id, comment.Score)
 //}
 
-func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num int64) {
+func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num int64) types.Post {
 	operatorProfile, b1 := ms.k.ProfileKeeper.GetProfile(ctx, operator)
 	creatorProfile, b2 := ms.k.ProfileKeeper.GetProfile(ctx, post.Creator)
 	// score
@@ -698,4 +700,5 @@ func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post typ
 			ms.k.ProfileKeeper.SetProfile(ctx, creatorProfile)
 		}
 	}
+	return post
 }
