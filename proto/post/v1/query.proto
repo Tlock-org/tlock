@@ -48,7 +48,7 @@ service Query {
   }
 
   rpc QueryComments(QueryCommentsRequest) returns (QueryCommentsResponse) {
-    option (google.api.http).get = "/post/v1/comments";
+    option (google.api.http).get = "/post/v1/comments/{id}";
   }
 }
 
