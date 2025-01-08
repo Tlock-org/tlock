@@ -32,7 +32,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"encoding/binary"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 type Keeper struct {
@@ -53,8 +52,6 @@ type Keeper struct {
 	ProfileKeeper  profileKeeper.Keeper
 
 	authority string
-
-	paramSpace paramtypes.Subspace
 }
 
 // NewKeeper creates a new Keeper instance
@@ -68,7 +65,6 @@ func NewKeeper(
 	bk bankkeeper.Keeper,
 	fk feegrantkeeper.Keeper,
 	pk profileKeeper.Keeper,
-	paramSpace paramtypes.Subspace,
 ) Keeper {
 	logger = logger.With(log.ModuleKey, "x/"+types.ModuleName)
 
@@ -102,8 +98,7 @@ func NewKeeper(
 		FeeGrantKeeper: fk,
 		ProfileKeeper:  pk,
 
-		authority:  authority,
-		paramSpace: paramSpace,
+		authority: authority,
 	}
 
 	schema, err := sb.Build()
@@ -126,7 +121,7 @@ func (k *Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) erro
 	if err := data.Params.Validate(); err != nil {
 		return err
 	}
-	k.paramSpace.SetParamSet(sdk.UnwrapSDKContext(ctx), &data.Params)
+
 	return k.Params.Set(ctx, data.Params)
 }
 

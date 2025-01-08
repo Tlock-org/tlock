@@ -20,8 +20,6 @@ const (
 
 	DenomBase = "uTOK"
 
-	KeySomeValue = "SomeValue"
-
 	PostKeyPrefix = "Post/content/"
 
 	HomePostsKeyPrefix      = "Post/posts/home/"

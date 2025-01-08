@@ -647,7 +647,6 @@ func NewChainApp(
 		app.BankKeeper,
 		app.FeeGrantKeeper,
 		app.ProfileKeeper,
-		app.ParamsKeeper.Subspace(posttypes.ModuleName),
 	)
 
 	// post module account permissions
@@ -929,7 +928,6 @@ func NewChainApp(
 
 	// Uncomment if you want to set a custom migration order here.
 	// app.ModuleManager.SetOrderMigrations(custom order)
-	app.ParamsKeeper.Subspace(posttypes.ModuleName).WithKeyTable(posttypes.ParamKeyTable())
 
 	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
