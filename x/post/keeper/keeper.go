@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
 	"cosmossdk.io/store/prefix"
 	"cosmossdk.io/x/feegrant"
@@ -31,6 +32,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"encoding/binary"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 type Keeper struct {
@@ -51,6 +53,8 @@ type Keeper struct {
 	ProfileKeeper  profileKeeper.Keeper
 
 	authority string
+
+	paramSpace paramtypes.Subspace
 }
 
 // NewKeeper creates a new Keeper instance
@@ -64,6 +68,7 @@ func NewKeeper(
 	bk bankkeeper.Keeper,
 	fk feegrantkeeper.Keeper,
 	pk profileKeeper.Keeper,
+	paramSpace paramtypes.Subspace,
 ) Keeper {
 	logger = logger.With(log.ModuleKey, "x/"+types.ModuleName)
 
@@ -97,7 +102,8 @@ func NewKeeper(
 		FeeGrantKeeper: fk,
 		ProfileKeeper:  pk,
 
-		authority: authority,
+		authority:  authority,
+		paramSpace: paramSpace,
 	}
 
 	schema, err := sb.Build()
@@ -120,7 +126,7 @@ func (k *Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) erro
 	if err := data.Params.Validate(); err != nil {
 		return err
 	}
-
+	k.paramSpace.SetParamSet(sdk.UnwrapSDKContext(ctx), &data.Params)
 	return k.Params.Set(ctx, data.Params)
 }
 
@@ -141,6 +147,12 @@ func (k Keeper) EncodeBlockTime(ctx sdk.Context) []byte {
 	bzBlockTime := make([]byte, 8)
 	binary.BigEndian.PutUint64(bzBlockTime, uint64(blockTime))
 	return bzBlockTime
+}
+
+func (k Keeper) EncodeScore(score uint64) []byte {
+	bzScore := make([]byte, 8)
+	binary.BigEndian.PutUint64(bzScore, score)
+	return bzScore
 }
 
 // SetPost stores a post in the state.
@@ -371,6 +383,46 @@ func (k Keeper) IsPostInHomePosts(ctx sdk.Context, postId string, homePostsUpdat
 	//return false
 }
 
+func (k Keeper) AddToCommentList(ctx sdk.Context, postId string, commentId string, score uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CommentListKeyPrefix))
+	bzScore := k.EncodeScore(score)
+	//key := append(append([]byte(postId), bzScore...), []byte(commentId)...)
+	var buffer bytes.Buffer
+	buffer.WriteString(postId)
+	buffer.Write(bzScore)
+	buffer.WriteString(commentId)
+	key := buffer.Bytes()
+	store.Set(key, []byte(commentId))
+}
+
+func (k Keeper) GetCommentsByParentId(ctx sdk.Context, parentId string) []string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CommentListKeyPrefix))
+	commentStore := prefix.NewStore(store, []byte(parentId))
+	iterator := commentStore.ReverseIterator(nil, nil)
+	defer func(iterator kvtypes.Iterator) {
+		err := iterator.Close()
+		if err != nil {
+			k.logger.Error("GetCommentsByParentId iterator error")
+		}
+	}(iterator)
+	var ids []string
+	for ; iterator.Valid(); iterator.Next() {
+		id := string(iterator.Value())
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+func (k Keeper) DeleteFromCommentList(ctx sdk.Context, postId string, commentId string, score uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CommentListKeyPrefix))
+	bzScore := k.EncodeScore(score)
+	var buffer bytes.Buffer
+	buffer.WriteString(postId)
+	buffer.Write(bzScore)
+	buffer.WriteString(commentId)
+	key := buffer.Bytes()
+	store.Delete(key)
+}
 func (k Keeper) SetCategoryPosts(ctx sdk.Context, postId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsKeyPrefix))
 	blockTime := k.EncodeBlockTime(ctx)

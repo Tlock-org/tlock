@@ -382,9 +382,15 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 			ms.addHomePosts(ctx, post)
 		}
 	}
+	score := post.Score
 
 	// Score Accumulation
 	ms.ScoreAccumulation(ctx, msg.Sender, post, 3)
+	// update commentList
+	if post.PostType == types.PostType_COMMENT {
+		ms.k.DeleteFromCommentList(ctx, post.ParentId, post.Id, score)
+		ms.k.AddToCommentList(ctx, post.ParentId, post.Id, post.Score)
+	}
 
 	// update post
 	blockTime := ctx.BlockTime().Unix()
@@ -590,6 +596,9 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 			ms.addHomePosts(ctx, post)
 		}
 	}
+	//ms.addCommentList(ctx, post, commentID)
+	ms.k.AddToCommentList(ctx, post.Id, commentID, 0)
+	score := post.Score
 
 	// update post commentCount
 	if !found {
@@ -597,6 +606,11 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	}
 	// Score Accumulation
 	ms.ScoreAccumulation(ctx, msg.Creator, post, 1)
+	// update commentList
+	if post.PostType == types.PostType_COMMENT {
+		ms.k.DeleteFromCommentList(ctx, post.ParentId, post.Id, score)
+		ms.k.AddToCommentList(ctx, post.ParentId, post.Id, post.Score)
+	}
 
 	// update post
 	post.CommentCount += 1
@@ -643,6 +657,14 @@ func (ms msgServer) addHomePosts(ctx sdk.Context, post types.Post) {
 		ms.k.SetHomePostsCount(ctx, count)
 	}
 }
+
+//func (ms msgServer) addCommentList(ctx sdk.Context, post types.Post, commentId string) {
+//	ms.k.SetCommentList(ctx, post.Id, commentId, 0)
+//}
+
+//func (ms msgServer) addCommentListExist(ctx sdk.Context, post types.Post, comment types.Post) {
+//	ms.k.DeleteCommentList(ctx, post.Id, comment.Id, comment.Score)
+//}
 
 func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num int64) {
 	operatorProfile, b1 := ms.k.ProfileKeeper.GetProfile(ctx, operator)

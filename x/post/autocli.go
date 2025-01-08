@@ -12,6 +12,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 			Service: modulev1.Query_ServiceDesc.ServiceName,
 			RpcCommandOptions: []*autocliv1.RpcCommandOptions{
 				{
+					RpcMethod: "Params",
+					Use:       "params",
+					Short:     "Query the current consensus parameters",
+				},
+				{
 					RpcMethod: "ResolveName",
 					Use:       "resolve [wallet]",
 					Short:     "Resolve the name of a wallet address",
@@ -88,11 +93,6 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 							ProtoField: "wallet",
 						},
 					},
-				},
-				{
-					RpcMethod: "Params",
-					Use:       "params",
-					Short:     "Query the current consensus parameters",
 				},
 			},
 		},

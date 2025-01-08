@@ -291,3 +291,28 @@ func (k Querier) LikesReceived(ctx context.Context, request *types.LikesReceived
 		LikesReceived: likesReceived,
 	}, nil
 }
+
+// QueryComments implements types.QueryServer.
+func (k Querier) QueryComments(goCtx context.Context, req *types.QueryCommentsRequest) (*types.QueryCommentsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	ids := k.Keeper.GetCommentsByParentId(ctx, req.Id)
+
+	var postResponses []*types.PostResponse
+	for _, postID := range ids {
+		post, success := k.GetPost(ctx, postID)
+		if !success {
+			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
+		}
+		postCopy := post
+		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		profileResponseCopy := profile
+		postResponse := types.PostResponse{
+			Post:    &postCopy,
+			Profile: &profileResponseCopy,
+		}
+		postResponses = append(postResponses, &postResponse)
+	}
+	return &types.QueryCommentsResponse{
+		Posts: postResponses,
+	}, nil
+}

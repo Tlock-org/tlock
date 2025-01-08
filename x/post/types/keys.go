@@ -20,12 +20,16 @@ const (
 
 	DenomBase = "uTOK"
 
+	KeySomeValue = "some_value"
+
 	PostKeyPrefix = "Post/content/"
 
 	HomePostsKeyPrefix      = "Post/posts/home/"
 	CategoryPostsKeyPrefix  = "Post/posts/category/"
 	FollowedPostsKeyPrefix  = "Post/posts/followed/"
 	HomePostsCountKeyPrefix = "home_posts_count"
+
+	CommentListKeyPrefix = "Post/comment/list/"
 
 	LikesIMadePrefix = "Post/likes/i/made/"
 
