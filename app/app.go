@@ -132,6 +132,9 @@ import (
 	profile "github.com/rollchains/tlock/x/profile"
 	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
 	profiletypes "github.com/rollchains/tlock/x/profile/types"
+	test "github.com/rollchains/tlock/x/test"
+	testkeeper "github.com/rollchains/tlock/x/test/keeper"
+	testtypes "github.com/rollchains/tlock/x/test/types"
 	"github.com/spf13/cast"
 	tokenfactory "github.com/strangelove-ventures/tokenfactory/x/tokenfactory"
 	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
@@ -141,9 +144,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	test "github.com/rollchains/tlock/x/test"
-	testkeeper "github.com/rollchains/tlock/x/test/keeper"
-	testtypes "github.com/rollchains/tlock/x/test/types"
 )
 
 const (
@@ -257,7 +257,7 @@ type ChainApp struct {
 	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
 	PostKeeper                postkeeper.Keeper
 	ProfileKeeper             profilekeeper.Keeper
-	TestKeeper testkeeper.Keeper
+	TestKeeper                testkeeper.Keeper
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -647,6 +647,7 @@ func NewChainApp(
 		app.BankKeeper,
 		app.FeeGrantKeeper,
 		app.ProfileKeeper,
+		app.ParamsKeeper.Subspace(posttypes.ModuleName),
 	)
 
 	// post module account permissions
@@ -818,7 +819,6 @@ func NewChainApp(
 		post.NewAppModule(appCodec, app.PostKeeper),
 		profile.NewAppModule(appCodec, app.ProfileKeeper),
 		test.NewAppModule(appCodec, app.TestKeeper),
-
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -929,6 +929,7 @@ func NewChainApp(
 
 	// Uncomment if you want to set a custom migration order here.
 	// app.ModuleManager.SetOrderMigrations(custom order)
+	app.ParamsKeeper.Subspace(posttypes.ModuleName).WithKeyTable(posttypes.ParamKeyTable())
 
 	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
