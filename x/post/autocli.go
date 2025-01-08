@@ -43,6 +43,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
+					RpcMethod: "QueryComments",
+					Use:       "query-comments",
+					Short:     "query home posts",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "id"},
+					},
+				},
+				{
 					RpcMethod: "LikesIMade",
 					Use:       "likes-i-made [wallet]",
 					Short:     "Query the list of likes made by a specific wallet",
