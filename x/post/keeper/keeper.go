@@ -314,7 +314,7 @@ func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context) ([]string, *query.PageRes
 	return postIDs, pageRes, nil
 }
 
-func (k Keeper) DeleteFirstHomePosts(ctx sdk.Context) {
+func (k Keeper) DeleteLastPostFromHomePosts(ctx sdk.Context) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
 
 	iterator := store.Iterator(nil, nil)
@@ -330,7 +330,7 @@ func (k Keeper) DeleteFirstHomePosts(ctx sdk.Context) {
 	k.Logger().Info("Deleted earliest home post", "post_id", earliestPostID)
 }
 
-func (k Keeper) DeleteHomePostsByPostId(ctx sdk.Context, postId string, homePostsUpdate int64) {
+func (k Keeper) DeleteFromHomePostsByPostId(ctx sdk.Context, postId string, homePostsUpdate int64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
 
 	bzBlockTime := make([]byte, 8)
@@ -494,7 +494,7 @@ func (k Keeper) GetLikesIMadePaginated(ctx sdk.Context, sender string, offset, l
 	return likesList, nil
 }
 
-func (k Keeper) RemoveLikesIMade(ctx sdk.Context, sender string, postId string) error {
+func (k Keeper) RemoveFromLikesIMade(ctx sdk.Context, sender string, postId string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix+sender+"/"))
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
@@ -526,7 +526,7 @@ func (k Keeper) SetSavesIMade(ctx sdk.Context, likesIMade types.LikesIMade, send
 	store.Set(key, bz)
 }
 
-func (k Keeper) RemoveSavesIMade(ctx sdk.Context, sender string, postId string) error {
+func (k Keeper) RemoveFromSavesIMade(ctx sdk.Context, sender string, postId string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SavesIMadePrefix+sender+"/"))
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
@@ -600,7 +600,7 @@ func (k Keeper) GetLikesReceived(ctx sdk.Context, creator string) ([]*types.Like
 	return list, nil
 }
 
-func (k Keeper) RemoveLikesReceived(ctx sdk.Context, creator string, sender string, postId string) error {
+func (k Keeper) RemoveFromLikesReceived(ctx sdk.Context, creator string, sender string, postId string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesReceivedPrefix+creator+"/"))
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
@@ -675,7 +675,6 @@ func (k Keeper) generatePostID(data string) string {
 }
 
 //func GeneratePostID(data string) string {
-//	// 使用 RFC3339Nano 确保时间的高精度
 //	//data := userAddress + content + blockTime.Format(time.RFC3339Nano)
 //	hash := sha256.Sum256([]byte(data))
 //	return hex.EncodeToString(hash[:])

@@ -30,7 +30,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Short:     "query home posts",
 				},
 				{
-					RpcMethod: "QueryFirstHomePosts",
+					RpcMethod: "QueryFirstPageHomePosts",
 					Use:       "first-home-posts",
 					Short:     "query first home posts",
 				},

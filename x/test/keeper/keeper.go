@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
@@ -23,11 +25,11 @@ type Keeper struct {
 	logger log.Logger
 
 	// state management
-	Schema collections.Schema
-	Params collections.Item[types.Params]
-	OrmDB  apiv1.StateStore
-
-	authority string
+	Schema     collections.Schema
+	Params     collections.Item[types.Params]
+	OrmDB      apiv1.StateStore
+	authority  string
+	paramStore paramstypes.Subspace
 }
 
 // NewKeeper creates a new Keeper instance
@@ -36,9 +38,12 @@ func NewKeeper(
 	storeService storetypes.KVStoreService,
 	logger log.Logger,
 	authority string,
+	paramSpace paramstypes.Subspace,
 ) Keeper {
 	logger = logger.With(log.ModuleKey, "x/"+types.ModuleName)
-
+	if !paramSpace.HasKeyTable() {
+		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
+	}
 	sb := collections.NewSchemaBuilder(storeService)
 
 	if authority == "" {
@@ -62,7 +67,8 @@ func NewKeeper(
 		Params: collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		OrmDB:  store,
 
-		authority: authority,
+		authority:  authority,
+		paramStore: paramSpace,
 	}
 
 	schema, err := sb.Build()
@@ -99,4 +105,28 @@ func (k *Keeper) ExportGenesis(ctx context.Context) *types.GenesisState {
 	return &types.GenesisState{
 		Params: params,
 	}
+}
+
+// // keeper.go
+//
+//	func (k Keeper) SetParams(ctx context.Context, params types.Params) error {
+//		return k.Params.Set(ctx, params)
+//	}
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+	if err := params.Validate(); err != nil {
+		return err
+	}
+	k.paramStore.Set(ctx, []byte(types.ParamStoreKeySomeValue), params.SomeValue)
+	return nil
+}
+
+func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
+	var params types.Params
+	k.paramStore.Get(ctx, []byte(types.ParamStoreKeySomeValue), &params.SomeValue)
+
+	if err := params.Validate(); err != nil {
+		return params, err
+	}
+
+	return params, nil
 }

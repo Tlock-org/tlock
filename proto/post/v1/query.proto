@@ -26,8 +26,8 @@ service Query {
     option (google.api.http).get = "/post/v1/homePosts";
   }
 
-  rpc QueryFirstHomePosts(QueryFirstHomePostsRequest) returns (QueryFirstHomePostsResponse) {
-    option (google.api.http).get = "/post/v1/firstHomePosts";
+  rpc QueryFirstPageHomePosts(QueryFirstPageHomePostsRequest) returns (QueryFirstPageHomePostsResponse) {
+    option (google.api.http).get = "/post/v1/firstPageHomePosts";
   }
 
   // QueryPost allows querying a specific post by its ID
@@ -71,10 +71,10 @@ message QueryHomePostsResponse {
   repeated PostResponse posts = 1;
 }
 
-message QueryFirstHomePostsRequest {
+message QueryFirstPageHomePostsRequest {
 }
 
-message QueryFirstHomePostsResponse {
+message QueryFirstPageHomePostsResponse {
   repeated PostResponse posts = 1;
 }
 

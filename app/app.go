@@ -619,12 +619,14 @@ func NewChainApp(
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
 
+	testSubspace := app.GetSubspace(testtypes.ModuleName).WithKeyTable(testtypes.ParamKeyTable())
 	// Create the test Keeper
 	app.TestKeeper = testkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[testtypes.StoreKey]),
 		logger,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		testSubspace,
 	)
 
 	// Create the profile Keeper

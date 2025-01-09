@@ -92,8 +92,8 @@ func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePosts
 	}, nil
 }
 
-// QueryFirstHomePosts implements types.QueryServer.
-func (k Querier) QueryFirstHomePosts(goCtx context.Context, req *types.QueryFirstHomePostsRequest) (*types.QueryFirstHomePostsResponse, error) {
+// QueryFirstPageHomePosts implements types.QueryServer.
+func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.QueryFirstPageHomePostsRequest) (*types.QueryFirstPageHomePostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	postIDs, _, err := k.Keeper.GetFirstPageHomePosts(ctx)
@@ -118,8 +118,7 @@ func (k Querier) QueryFirstHomePosts(goCtx context.Context, req *types.QueryFirs
 
 		postResponses = append(postResponses, &postResponse)
 	}
-
-	return &types.QueryFirstHomePostsResponse{
+	return &types.QueryFirstPageHomePostsResponse{
 		Posts: postResponses,
 	}, nil
 }

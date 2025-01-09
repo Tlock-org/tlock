@@ -110,7 +110,7 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 	// post reward
 	ms.k.PostReward(ctx, post)
 	// add home posts
-	ms.addHomePosts(ctx, post)
+	ms.addToHomePosts(ctx, post)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -176,7 +176,7 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	// post reward
 	ms.k.PostReward(ctx, post)
 	// add home posts
-	ms.addHomePosts(ctx, post)
+	ms.addToHomePosts(ctx, post)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
@@ -235,7 +235,7 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
 	// add home posts
-	ms.addHomePosts(ctx, post)
+	ms.addToHomePosts(ctx, post)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 	//Emit an event for the creation
@@ -292,7 +292,7 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
 	// add home posts
-	ms.addHomePosts(ctx, post)
+	ms.addToHomePosts(ctx, post)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
@@ -377,9 +377,9 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		fmt.Sprintf("==========exist: %s\n", exist)
 
 		if exist {
-			ms.addHomePostsExist(ctx, post)
+			ms.updateHomePosts(ctx, post)
 		} else {
-			ms.addHomePosts(ctx, post)
+			ms.addToHomePosts(ctx, post)
 		}
 	}
 	score := post.Score
@@ -446,12 +446,12 @@ func (ms msgServer) Unlike(goCtx context.Context, msg *types.MsgUnlikeRequest) (
 	ms.k.SetPost(ctx, post)
 
 	// remove from likes I made
-	err := ms.k.RemoveLikesIMade(ctx, msg.Sender, msg.Id)
+	err := ms.k.RemoveFromLikesIMade(ctx, msg.Sender, msg.Id)
 	if err != nil {
 		return nil, errors.Wrap(types.ErrLikesIMadeRemove, msg.Id)
 	}
 
-	err2 := ms.k.RemoveLikesReceived(ctx, post.Creator, msg.Sender, msg.Id)
+	err2 := ms.k.RemoveFromLikesReceived(ctx, post.Creator, msg.Sender, msg.Id)
 	if err2 != nil {
 		return nil, errors.Wrap(types.ErrLikesReceivedRemove, msg.Id)
 	}
@@ -483,9 +483,9 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 
 	exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
 	if exist {
-		ms.addHomePostsExist(ctx, post)
+		ms.updateHomePosts(ctx, post)
 	} else {
-		ms.addHomePosts(ctx, post)
+		ms.addToHomePosts(ctx, post)
 	}
 
 	blockTime := ctx.BlockTime().Unix()
@@ -531,12 +531,12 @@ func (ms msgServer) UnsavePost(goCtx context.Context, msg *types.MsgUnsaveReques
 	}
 
 	// remove from saves I made
-	err := ms.k.RemoveSavesIMade(ctx, msg.Sender, msg.Id)
+	err := ms.k.RemoveFromSavesIMade(ctx, msg.Sender, msg.Id)
 	if err != nil {
 		return nil, errors.Wrap(types.ErrSavesIMadeRemove, msg.Id)
 	}
 
-	err2 := ms.k.RemoveLikesReceived(ctx, post.Creator, msg.Sender, msg.Id)
+	err2 := ms.k.RemoveFromLikesReceived(ctx, post.Creator, msg.Sender, msg.Id)
 	if err2 != nil {
 		return nil, errors.Wrap(types.ErrLikesReceivedRemove, msg.Id)
 	}
@@ -592,9 +592,9 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	if post.PostType != types.PostType_COMMENT {
 		exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
 		if exist {
-			ms.addHomePostsExist(ctx, post)
+			ms.updateHomePosts(ctx, post)
 		} else {
-			ms.addHomePosts(ctx, post)
+			ms.addToHomePosts(ctx, post)
 		}
 	}
 	//ms.addCommentList(ctx, post, commentID)
@@ -632,21 +632,21 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	return &types.MsgCommentResponse{}, nil
 }
 
-func (ms msgServer) addHomePostsExist(ctx sdk.Context, post types.Post) {
-	ms.k.DeleteHomePostsByPostId(ctx, post.Id, post.HomePostsUpdate)
+func (ms msgServer) updateHomePosts(ctx sdk.Context, post types.Post) {
+	ms.k.DeleteFromHomePostsByPostId(ctx, post.Id, post.HomePostsUpdate)
 	ms.k.SetHomePosts(ctx, post.Id)
 	count, b := ms.k.GetHomePostsCount(ctx)
 	if !b {
 		panic("GetHomePostsCount error")
 	}
 	if count > types.HomePostsCount {
-		ms.k.DeleteFirstHomePosts(ctx)
+		ms.k.DeleteLastPostFromHomePosts(ctx)
 		count -= 1
 		ms.k.SetHomePostsCount(ctx, count)
 	}
 }
 
-func (ms msgServer) addHomePosts(ctx sdk.Context, post types.Post) {
+func (ms msgServer) addToHomePosts(ctx sdk.Context, post types.Post) {
 	ms.k.SetHomePosts(ctx, post.Id)
 	count, b := ms.k.GetHomePostsCount(ctx)
 	if !b {
@@ -654,19 +654,11 @@ func (ms msgServer) addHomePosts(ctx sdk.Context, post types.Post) {
 	}
 	count += 1
 	if count > types.HomePostsCount {
-		ms.k.DeleteFirstHomePosts(ctx)
+		ms.k.DeleteLastPostFromHomePosts(ctx)
 	} else {
 		ms.k.SetHomePostsCount(ctx, count)
 	}
 }
-
-//func (ms msgServer) addCommentList(ctx sdk.Context, post types.Post, commentId string) {
-//	ms.k.SetCommentList(ctx, post.Id, commentId, 0)
-//}
-
-//func (ms msgServer) addCommentListExist(ctx sdk.Context, post types.Post, comment types.Post) {
-//	ms.k.DeleteCommentList(ctx, post.Id, comment.Id, comment.Score)
-//}
 
 func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num int64) types.Post {
 	operatorProfile, b1 := ms.k.ProfileKeeper.GetProfile(ctx, operator)
