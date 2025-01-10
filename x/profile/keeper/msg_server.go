@@ -125,9 +125,22 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 // Follow implements types.MsgServer.
 func (ms msgServer) Follow(ctx context.Context, msg *types.MsgFollowRequest) (*types.MsgFollowResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	creator := msg.Creator
+	follower := msg.Creator
 	targetAddr := msg.TargetAddr
-	ms.k.AddFollowing(sdkCtx, creator, targetAddr)
-	ms.k.AddFollower(sdkCtx, targetAddr, creator)
+	ms.k.AddFollowing(sdkCtx, follower, targetAddr)
+	ms.k.AddFollower(sdkCtx, targetAddr, follower)
+
+	profileFollower, _ := ms.k.GetProfile(sdkCtx, follower)
+	following := profileFollower.Following
+	following += 1
+	profileFollower.Following = following
+	ms.k.SetProfile(sdkCtx, profileFollower)
+
+	profileTarget, _ := ms.k.GetProfile(sdkCtx, targetAddr)
+	followers := profileTarget.Followers
+	followers += 1
+	profileTarget.Followers = followers
+	ms.k.SetProfile(sdkCtx, profileTarget)
+
 	return &types.MsgFollowResponse{}, nil
 }
