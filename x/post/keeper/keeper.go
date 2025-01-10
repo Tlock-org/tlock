@@ -418,6 +418,26 @@ func (k Keeper) DeleteFromCommentList(ctx sdk.Context, postId string, commentId 
 	key := buffer.Bytes()
 	store.Delete(key)
 }
+
+func (k Keeper) SetCommentsReceived(ctx sdk.Context, creator string, commentId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CommentsReceivedPrefix+creator+"/"))
+	blockTime := k.EncodeBlockTime(ctx)
+	key := append(blockTime, []byte(commentId)...)
+	store.Set(key, []byte(commentId))
+}
+
+func (k Keeper) GetCommentsReceived(ctx sdk.Context, creator string) ([]string, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CommentsReceivedPrefix+creator+"/"))
+	iterator := store.ReverseIterator(nil, nil)
+	defer iterator.Close()
+	var list []string
+	for ; iterator.Valid(); iterator.Next() {
+		id := string(iterator.Value())
+		list = append(list, id)
+	}
+	return list, nil
+}
+
 func (k Keeper) SetCategoryPosts(ctx sdk.Context, postId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsKeyPrefix))
 	blockTime := k.EncodeBlockTime(ctx)

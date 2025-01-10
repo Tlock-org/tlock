@@ -18,7 +18,10 @@ const (
 
 	QuerierRoute = ModuleName
 
-	PostKeyPrefix = "Profile/value/"
+	ProfileKeyPrefix = "Profile/value/"
+
+	ProfileFollowingPrefix = "Profile/following/"
+	ProfileFollowersPrefix = "Profile/followers/"
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{

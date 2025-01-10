@@ -33,7 +33,8 @@ const (
 
 	SavesIMadePrefix = "Post/saves/i/made/"
 
-	LikesReceivedPrefix = "Post/likes/received/"
+	LikesReceivedPrefix    = "Post/likes/received/"
+	CommentsReceivedPrefix = "Post/comments/received/"
 
 	HomePostsCount = 100
 	PageSize       = 10

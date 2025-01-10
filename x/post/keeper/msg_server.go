@@ -620,6 +620,8 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	ms.k.SetPost(ctx, post)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
+	ms.k.SetCommentsReceived(ctx, post.Creator, commentID)
+
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

@@ -45,9 +45,17 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryComments",
 					Use:       "query-comments",
-					Short:     "query home posts",
+					Short:     "query commends",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "id"},
+					},
+				},
+				{
+					RpcMethod: "QueryCommentsReceived",
+					Use:       "query-comments-received",
+					Short:     "query comments received",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "wallet"},
 					},
 				},
 				{

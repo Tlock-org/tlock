@@ -315,3 +315,31 @@ func (k Querier) QueryComments(goCtx context.Context, req *types.QueryCommentsRe
 		Posts: postResponses,
 	}, nil
 }
+
+// QueryCommentsReceived implements types.QueryServer.
+func (k Querier) QueryCommentsReceived(goCtx context.Context, req *types.QueryCommentsReceivedRequest) (*types.QueryCommentsReceivedResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	ids, err := k.Keeper.GetCommentsReceived(ctx, req.Wallet)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get comments received %s: %w", req.Wallet, err)
+	}
+
+	var commentReceivedResponses []*types.CommentReceivedResponse
+	for _, commentID := range ids {
+		comment, success := k.GetPost(ctx, commentID)
+		if !success {
+			return nil, fmt.Errorf("failed to get comments received %s: %w", commentID, success)
+		}
+		commentCopy := comment
+		postParent, _ := k.GetPost(ctx, comment.ParentId)
+		postParentCopy := postParent
+		CommentReceivedResponse := types.CommentReceivedResponse{
+			Comment: &commentCopy,
+			Parent:  &postParentCopy,
+		}
+		commentReceivedResponses = append(commentReceivedResponses, &CommentReceivedResponse)
+	}
+	return &types.QueryCommentsReceivedResponse{
+		Comments: commentReceivedResponses,
+	}, nil
+}

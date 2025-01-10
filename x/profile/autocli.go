@@ -24,6 +24,22 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "wallet_address"},
 					},
 				},
+				{
+					RpcMethod: "QueryFollowing",
+					Use:       "following [wallet_address]",
+					Short:     "get list of following",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "wallet_address"},
+					},
+				},
+				{
+					RpcMethod: "QueryFollowers",
+					Use:       "followers [wallet_address]",
+					Short:     "get list of followers",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "wallet_address"},
+					},
+				},
 			},
 		},
 		Tx: &autocliv1.ServiceCommandDescriptor{
@@ -57,6 +73,20 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					//		Shorthand: "t",
 					//	},
 					//},
+				},
+				{
+					RpcMethod: "Follow",
+					Use:       "follow [creator] [targetAddr]",
+					Short:     "follow someone",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+							Optional:   false,
+						},
+						{
+							ProtoField: "targetAddr",
+						},
+					},
 				},
 			},
 		},

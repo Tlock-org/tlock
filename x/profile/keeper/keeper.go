@@ -4,6 +4,7 @@ import (
 	"context"
 	"cosmossdk.io/store/prefix"
 	kvtypes "cosmossdk.io/store/types"
+	"encoding/binary"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -108,7 +109,7 @@ func (k *Keeper) ExportGenesis(ctx context.Context) *types.GenesisState {
 }
 
 func (k Keeper) SetProfile(ctx sdk.Context, profile types.Profile) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostKeyPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileKeyPrefix))
 	bz := k.cdc.MustMarshal(&profile)
 	store.Set([]byte(profile.WalletAddress), bz)
 
@@ -116,7 +117,7 @@ func (k Keeper) SetProfile(ctx sdk.Context, profile types.Profile) {
 
 // GetProfile
 func (k Keeper) GetProfile(ctx sdk.Context, walletAddress string) (types.Profile, bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostKeyPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileKeyPrefix))
 	bz := store.Get([]byte(walletAddress))
 	if bz == nil {
 		return types.Profile{
@@ -139,7 +140,7 @@ func TruncateWalletAddressSuffix(walletAddress string) string {
 }
 
 func (k Keeper) CheckAndCreateUserHandle(ctx sdk.Context, walletAddress string) bool {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostKeyPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileKeyPrefix))
 	bz := store.Get([]byte(walletAddress))
 	if bz == nil {
 		profile := types.Profile{
@@ -149,4 +150,55 @@ func (k Keeper) CheckAndCreateUserHandle(ctx sdk.Context, walletAddress string) 
 		k.SetProfile(ctx, profile)
 	}
 	return true
+}
+
+// Helper function to convert int64 to bytes
+func itob(v int64) []byte {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(v))
+	return b
+}
+
+// AddFollowing adds the target address to the follower's following list
+func (k Keeper) AddFollowing(ctx sdk.Context, followerAddr string, targetAddr string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowingPrefix+followerAddr+"/"))
+	blockTime := ctx.BlockTime().Unix()
+	key := append(itob(blockTime), []byte(targetAddr)...)
+	store.Set(key, []byte(targetAddr))
+}
+
+// GetFollowing returns all following addresses for a given address
+func (k Keeper) GetFollowing(ctx sdk.Context, address string) []string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowingPrefix+address+"/"))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	var followings []string
+	for ; iterator.Valid(); iterator.Next() {
+		val := iterator.Value()
+		followings = append(followings, string(val))
+	}
+	return followings
+}
+
+// AddFollower adds the follower address to the target's followers list
+func (k Keeper) AddFollower(ctx sdk.Context, targetAddr string, followerAddr string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowersPrefix+targetAddr+"/"))
+	blockTime := ctx.BlockTime().Unix()
+	key := append(itob(blockTime), []byte(followerAddr)...)
+	store.Set(key, []byte(followerAddr))
+}
+
+// GetFollowers returns all follower addresses for a given address
+func (k Keeper) GetFollowers(ctx sdk.Context, address string) []string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowersPrefix+address+"/"))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	var followers []string
+	for ; iterator.Valid(); iterator.Next() {
+		val := iterator.Value()
+		followers = append(followers, string(val))
+	}
+	return followers
 }

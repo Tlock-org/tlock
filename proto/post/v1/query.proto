@@ -4,7 +4,7 @@ package post.v1;
 import "post/v1/genesis.proto";
 import "google/api/annotations.proto";
 import "post/v1/postResponse.proto";
-//import "cosmos/base/query/v1beta1/pagination.proto";
+import "post/v1/CommentReceivedResponse.proto";
 import "post/v1/likesIMade.proto";
 import "post/v1/likesReceived.proto";
 
@@ -49,6 +49,10 @@ service Query {
 
   rpc QueryComments(QueryCommentsRequest) returns (QueryCommentsResponse) {
     option (google.api.http).get = "/post/v1/comments/{id}";
+  }
+
+  rpc QueryCommentsReceived(QueryCommentsReceivedRequest) returns (QueryCommentsReceivedResponse) {
+    option (google.api.http).get = "/post/v1/comments/received/{wallet}";
   }
 }
 
@@ -124,6 +128,14 @@ message QueryCommentsRequest {
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryCommentsResponse {
   repeated PostResponse posts = 1;
+}
+
+message QueryCommentsReceivedRequest {
+  string wallet = 1;
+}
+
+message QueryCommentsReceivedResponse {
+  repeated CommentReceivedResponse comments = 1;
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.

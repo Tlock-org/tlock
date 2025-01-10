@@ -17,6 +17,13 @@ service Query {
   rpc QueryProfile(QueryProfileRequest) returns (QueryProfileResponse) {
     option (google.api.http).get = "/profile/v1/get/{wallet_address}";
   }
+
+  rpc QueryFollowing(QueryFollowingRequest) returns (QueryFollowingResponse) {
+    option (google.api.http).get = "/profile/v1/flowing/{wallet_address}";
+  };
+  rpc QueryFollowers(QueryFollowersRequest) returns (QueryFollowersResponse) {
+    option (google.api.http).get = "/profile/v1/flowers/{wallet_address}";
+  };
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -34,4 +41,20 @@ message QueryProfileRequest {
 
 message QueryProfileResponse {
   Profile profile = 1;
+}
+
+message QueryFollowingRequest {
+  string wallet_address = 1;
+}
+
+message QueryFollowingResponse {
+  repeated Profile Profiles = 1;
+}
+
+message QueryFollowersRequest {
+  string wallet_address = 1;
+}
+
+message QueryFollowersResponse {
+  repeated Profile Profiles = 1;
 }
