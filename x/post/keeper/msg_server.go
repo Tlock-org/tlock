@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/rollchains/tlock/x/post/types"
+	profiletypes "github.com/rollchains/tlock/x/profile/types"
 	"math"
 )
 
@@ -415,6 +416,23 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
 
+	activitiesReceived := profiletypes.ActivitiesReceived{
+		Address:        msg.Sender,
+		PostId:         post.Id,
+		ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_LIKE,
+		Timestamp:      blockTime,
+	}
+	ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, post.Creator, msg.Sender)
+	count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, post.Creator)
+	if !b {
+		panic("GetActivitiesReceivedCount error")
+	}
+	count += 1
+	if count > profiletypes.ActivitiesReceivedCount {
+		ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, msg.Sender)
+	}
+	ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, post.Creator, count)
+
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Sender)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -507,6 +525,23 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 		Timestamp:    blockTime,
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
+
+	activitiesReceived := profiletypes.ActivitiesReceived{
+		Address:        msg.Sender,
+		PostId:         post.Id,
+		ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_SAVE,
+		Timestamp:      blockTime,
+	}
+	ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, post.Creator, msg.Sender)
+	count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, post.Creator)
+	if !b {
+		panic("GetActivitiesReceivedCount error")
+	}
+	count += 1
+	if count > profiletypes.ActivitiesReceivedCount {
+		ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, msg.Sender)
+	}
+	ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, post.Creator, count)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Sender)
 
@@ -621,6 +656,23 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 	ms.k.SetCommentsReceived(ctx, post.Creator, commentID)
+
+	activitiesReceived := profiletypes.ActivitiesReceived{
+		Address:        msg.Creator,
+		PostId:         post.Id,
+		ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_COMMENT,
+		Timestamp:      blockTime,
+	}
+	ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, post.Creator, msg.Creator)
+	count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, post.Creator)
+	if !b {
+		panic("GetActivitiesReceivedCount error")
+	}
+	count += 1
+	if count > profiletypes.ActivitiesReceivedCount {
+		ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, msg.Creator)
+	}
+	ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, post.Creator, count)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{

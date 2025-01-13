@@ -83,3 +83,22 @@ func (k Querier) QueryFollowers(goCtx context.Context, req *types.QueryFollowers
 		Profiles: profiles,
 	}, nil
 }
+
+// QueryActivitiesReceived implements types.QueryServer.
+func (k Querier) QueryActivitiesReceived(goCtx context.Context, req *types.QueryActivitiesReceivedRequest) (*types.QueryActivitiesReceivedResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	list := k.GetActivitiesReceived(ctx, req.WalletAddress)
+	return &types.QueryActivitiesReceivedResponse{
+		ActivitiesReceived: list,
+	}, nil
+}
+
+// QueryActivitiesReceivedCount implements types.QueryServer.
+func (k Querier) QueryActivitiesReceivedCount(goCtx context.Context, req *types.QueryActivitiesReceivedCountRequest) (*types.QueryActivitiesReceivedCountResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	count, _ := k.GetActivitiesReceivedCount(ctx, req.WalletAddress)
+	return &types.QueryActivitiesReceivedCountResponse{
+		Count: uint64(count),
+	}, nil
+}

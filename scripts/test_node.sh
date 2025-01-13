@@ -71,7 +71,7 @@ from_scratch () {
   # Gov
   update_test_genesis `printf '.app_state["gov"]["params"]["min_deposit"]=[{"denom":"%s","amount":"1000000"}]' $DENOM`
   update_test_genesis '.app_state["gov"]["params"]["voting_period"]="30s"'
-  update_test_genesis '.app_state["gov"]["params"]["max_deposit_period"]="30s"'
+  update_test_genesis '.app_state["gov"]["params"]["max_deposit_period"]="600s"'
   update_test_genesis '.app_state["gov"]["params"]["expedited_voting_period"]="15s"'
   # staking
   update_test_genesis `printf '.app_state["staking"]["params"]["bond_denom"]="%s"' $DENOM`

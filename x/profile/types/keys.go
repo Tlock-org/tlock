@@ -20,8 +20,14 @@ const (
 
 	ProfileKeyPrefix = "Profile/value/"
 
-	ProfileFollowingPrefix = "Profile/following/"
-	ProfileFollowersPrefix = "Profile/followers/"
+	ProfileFollowingPrefix  = "Profile/following/"
+	ProfileFollowersPrefix  = "Profile/followers/"
+	ProfileFollowTimePrefix = "Profile/follow/time/"
+
+	ActivitiesReceivedPrefix      = "Activities/received/"
+	ActivitiesReceivedCountPrefix = "Activities/received/count/"
+
+	ActivitiesReceivedCount = 100
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{

@@ -5,6 +5,7 @@ import (
 	"cosmossdk.io/store/prefix"
 	kvtypes "cosmossdk.io/store/types"
 	"encoding/binary"
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -112,7 +113,6 @@ func (k Keeper) SetProfile(ctx sdk.Context, profile types.Profile) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileKeyPrefix))
 	bz := k.cdc.MustMarshal(&profile)
 	store.Set([]byte(profile.WalletAddress), bz)
-
 }
 
 // GetProfile
@@ -158,9 +158,15 @@ func itob(v int64) []byte {
 	binary.BigEndian.PutUint64(b, uint64(v))
 	return b
 }
+func btoi(bz []byte) int64 {
+	if len(bz) != 8 {
+		return 0
+	}
+	return int64(binary.BigEndian.Uint64(bz))
+}
 
 // AddFollowing adds the target address to the follower's following list
-func (k Keeper) AddFollowing(ctx sdk.Context, followerAddr string, targetAddr string) {
+func (k Keeper) AddToFollowing(ctx sdk.Context, followerAddr string, targetAddr string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowingPrefix+followerAddr+"/"))
 	blockTime := ctx.BlockTime().Unix()
 	key := append(itob(blockTime), []byte(targetAddr)...)
@@ -170,7 +176,7 @@ func (k Keeper) AddFollowing(ctx sdk.Context, followerAddr string, targetAddr st
 // GetFollowing returns all following addresses for a given address
 func (k Keeper) GetFollowing(ctx sdk.Context, address string) []string {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowingPrefix+address+"/"))
-	iterator := store.Iterator(nil, nil)
+	iterator := store.ReverseIterator(nil, nil)
 	defer iterator.Close()
 
 	var followings []string
@@ -181,8 +187,18 @@ func (k Keeper) GetFollowing(ctx sdk.Context, address string) []string {
 	return followings
 }
 
+func (k Keeper) Unfollow(ctx sdk.Context, followerAddr string, time uint64, targetAddr string) {
+	storeFlowing := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowingPrefix+followerAddr+"/"))
+	keyFlowing := append(itob(int64(time)), []byte(targetAddr)...)
+	storeFlowing.Delete(keyFlowing)
+
+	storeFlower := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowersPrefix+targetAddr+"/"))
+	keyFlower := append(itob(int64(time)), []byte(followerAddr)...)
+	storeFlower.Delete(keyFlower)
+}
+
 // AddFollower adds the follower address to the target's followers list
-func (k Keeper) AddFollower(ctx sdk.Context, targetAddr string, followerAddr string) {
+func (k Keeper) AddToFollowers(ctx sdk.Context, targetAddr string, followerAddr string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowersPrefix+targetAddr+"/"))
 	blockTime := ctx.BlockTime().Unix()
 	key := append(itob(blockTime), []byte(followerAddr)...)
@@ -192,7 +208,7 @@ func (k Keeper) AddFollower(ctx sdk.Context, targetAddr string, followerAddr str
 // GetFollowers returns all follower addresses for a given address
 func (k Keeper) GetFollowers(ctx sdk.Context, address string) []string {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowersPrefix+address+"/"))
-	iterator := store.Iterator(nil, nil)
+	iterator := store.ReverseIterator(nil, nil)
 	defer iterator.Close()
 
 	var followers []string
@@ -201,4 +217,90 @@ func (k Keeper) GetFollowers(ctx sdk.Context, address string) []string {
 		followers = append(followers, string(val))
 	}
 	return followers
+}
+
+// AddFollowing adds the target address to the follower's following list
+func (k Keeper) SetFollowTime(ctx sdk.Context, followerAddr string, targetAddr string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowTimePrefix))
+	blockTime := ctx.BlockTime().Unix()
+	key := []byte(fmt.Sprintf("%s:%s", followerAddr, targetAddr))
+	store.Set(key, itob(blockTime))
+}
+
+// GetFollowTime
+func (k Keeper) GetFollowTime(ctx sdk.Context, followerAddr string, targetAddr string) (uint64, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowTimePrefix))
+	key := []byte(fmt.Sprintf("%s:%s", followerAddr, targetAddr))
+	bz := store.Get(key)
+	if bz == nil {
+		return 0, false
+	}
+	followTime := btoi(bz)
+	return uint64(followTime), true
+}
+func (k Keeper) DeleteFollowTime(ctx sdk.Context, followerAddr string, targetAddr string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowTimePrefix))
+	key := []byte(fmt.Sprintf("%s:%s", followerAddr, targetAddr))
+	store.Delete(key)
+}
+
+func (k Keeper) EncodeBlockTime(ctx sdk.Context) []byte {
+	blockTime := ctx.BlockTime().Unix()
+	bzBlockTime := make([]byte, 8)
+	binary.BigEndian.PutUint64(bzBlockTime, uint64(blockTime))
+	return bzBlockTime
+}
+
+func (k Keeper) SetActivitiesReceived(ctx sdk.Context, activitiesReceived types.ActivitiesReceived, targetAddr string, operator string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ActivitiesReceivedPrefix+targetAddr+"/"))
+	blockTime := k.EncodeBlockTime(ctx)
+	key := append(append(blockTime, []byte(activitiesReceived.ActivitiesType.String())...), []byte(operator)...)
+	bz := k.cdc.MustMarshal(&activitiesReceived)
+	store.Set(key, bz)
+}
+
+func (k Keeper) GetActivitiesReceived(ctx sdk.Context, wallet string) []*types.ActivitiesReceived {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ActivitiesReceivedPrefix+wallet+"/"))
+	iterator := store.ReverseIterator(nil, nil)
+	defer iterator.Close()
+
+	var list []*types.ActivitiesReceived
+
+	for ; iterator.Valid(); iterator.Next() {
+		var received types.ActivitiesReceived
+		err := k.cdc.Unmarshal(iterator.Value(), &received)
+		if err != nil {
+			return nil
+		}
+		receivedCopy := received
+		list = append(list, &receivedCopy)
+	}
+	return list
+}
+
+func (k Keeper) DeleteLastActivitiesReceived(ctx sdk.Context, wallet string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ActivitiesReceivedPrefix+wallet+"/"))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+	earliestKey := iterator.Key()
+	store.Delete(earliestKey)
+}
+
+func (k Keeper) SetActivitiesReceivedCount(ctx sdk.Context, walletAddr string, count int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ActivitiesReceivedCountPrefix))
+	key := append([]byte(walletAddr))
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, uint64(count))
+	store.Set(key, bz)
+}
+
+func (k Keeper) GetActivitiesReceivedCount(ctx sdk.Context, walletAddr string) (int64, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ActivitiesReceivedCountPrefix))
+	key := append([]byte(walletAddr))
+	bz := store.Get(key)
+	if bz == nil {
+		return 0, true
+	}
+	count := int64(binary.BigEndian.Uint64(bz))
+	return count, true
 }

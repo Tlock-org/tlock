@@ -4,6 +4,7 @@ package profile.v1;
 import "google/api/annotations.proto";
 import "profile/v1/genesis.proto";
 import "profile/v1/profile.proto";
+import "profile/v1/ActivitiesReceived.proto";
 
 option go_package = "github.com/rollchains/tlock/x/profile/types";
 
@@ -23,6 +24,12 @@ service Query {
   };
   rpc QueryFollowers(QueryFollowersRequest) returns (QueryFollowersResponse) {
     option (google.api.http).get = "/profile/v1/flowers/{wallet_address}";
+  };
+  rpc QueryActivitiesReceived(QueryActivitiesReceivedRequest) returns (QueryActivitiesReceivedResponse) {
+    option (google.api.http).get = "/profile/v1/activites/received/{wallet_address}";
+  };
+  rpc QueryActivitiesReceivedCount(QueryActivitiesReceivedCountRequest) returns (QueryActivitiesReceivedCountResponse) {
+    option (google.api.http).get = "/profile/v1/activites/received/count/{wallet_address}";
   };
 }
 
@@ -57,4 +64,20 @@ message QueryFollowersRequest {
 
 message QueryFollowersResponse {
   repeated Profile Profiles = 1;
+}
+
+message QueryActivitiesReceivedRequest {
+  string wallet_address = 1;
+}
+
+message QueryActivitiesReceivedResponse {
+  repeated ActivitiesReceived activitiesReceived = 1;
+}
+
+message QueryActivitiesReceivedCountRequest {
+  string wallet_address = 1;
+}
+
+message QueryActivitiesReceivedCountResponse {
+  uint64 count = 1;
 }
