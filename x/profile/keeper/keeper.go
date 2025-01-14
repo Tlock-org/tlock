@@ -122,7 +122,7 @@ func (k Keeper) GetProfile(ctx sdk.Context, walletAddress string) (types.Profile
 	if bz == nil {
 		return types.Profile{
 			WalletAddress: walletAddress,
-			UserHandle:    TruncateWalletAddressSuffix(walletAddress),
+			UserHandle:    k.TruncateWalletAddressSuffix(walletAddress),
 		}, true
 	}
 
@@ -130,8 +130,32 @@ func (k Keeper) GetProfile(ctx sdk.Context, walletAddress string) (types.Profile
 	k.cdc.MustUnmarshal(bz, &profile)
 	return profile, true
 }
-
-func TruncateWalletAddressSuffix(walletAddress string) string {
+func (k Keeper) SetProfileUserHandleList(ctx sdk.Context, userHandle string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleListKeyPrefix))
+	key := append([]byte(userHandle))
+	store.Set(key, []byte(userHandle))
+}
+func (k Keeper) IsProfileUserHandleExist(ctx sdk.Context, userHandle string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleListKeyPrefix))
+	key := append([]byte(userHandle))
+	get := store.Get(key)
+	if get != nil {
+		return true
+	} else {
+		return false
+	}
+}
+func (k Keeper) DeleteProfileUserHandle(ctx sdk.Context, userHandle string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleListKeyPrefix))
+	key := append([]byte(userHandle))
+	store.Delete(key)
+}
+func (k Keeper) SetProfileUserHandle(ctx sdk.Context, userHandle string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleListKeyPrefix))
+	key := append([]byte(userHandle))
+	store.Set(key, []byte(userHandle))
+}
+func (k Keeper) TruncateWalletAddressSuffix(walletAddress string) string {
 	runes := []rune(walletAddress)
 	if len(runes) >= 10 {
 		return string(runes[len(runes)-10:])
@@ -145,7 +169,7 @@ func (k Keeper) CheckAndCreateUserHandle(ctx sdk.Context, walletAddress string) 
 	if bz == nil {
 		profile := types.Profile{
 			WalletAddress: walletAddress,
-			UserHandle:    TruncateWalletAddressSuffix(walletAddress),
+			UserHandle:    k.TruncateWalletAddressSuffix(walletAddress),
 		}
 		k.SetProfile(ctx, profile)
 	}

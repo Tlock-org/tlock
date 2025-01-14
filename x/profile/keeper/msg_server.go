@@ -44,67 +44,54 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 
 	dbProfile, _ := ms.k.GetProfile(ctx, msg.GetCreator())
 	handle := dbProfile.UserHandle
-	if profileJson.UserHandle != "" {
-		handle = profileJson.UserHandle
-	}
-
-	// Create the profile
-	profile := types.Profile{
-		WalletAddress: msg.Creator,
-		Nickname:      profileJson.Nickname,
-		UserHandle:    handle,
-		Avatar:        profileJson.Avatar,
-		Bio:           profileJson.Bio,
-		Location:      profileJson.Location,
-		Website:       profileJson.Website,
-		CreationTime:  blockTime,
-	}
-	if msg.Creator == "tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg" {
-		profile.Level = 5
-	}
-
-	//if exists {
-	//	nickname := profileJson.Nickname
-	//	fmt.Printf("========profileJson nickname: %s\n", nickname)
-	//	if &nickname != nil {
-	//		profile.Nickname = nickname
-	//	}
-	//	userHandle := profileJson.UserHandle
-	//	fmt.Printf("========profileJson userHandle: %s\n", userHandle)
-	//	if &userHandle != nil {
-	//		fmt.Printf("========here in?====: %s\n", userHandle)
-	//		profile.UserHandle = userHandle
-	//	}
-	//	avatar := profileJson.Avatar
-	//	fmt.Printf("========profileJson avatar: %s\n", avatar)
-	//	if &avatar != nil {
-	//		profile.Avatar = avatar
-	//	}
-	//	bio := profileJson.Bio
-	//	fmt.Printf("========profileJson bio: %s\n", bio)
-	//	if &bio != nil {
-	//		profile.Bio = bio
-	//	}
-	//	location := profileJson.Location
-	//	fmt.Printf("========profileJson location: %s\n", location)
-	//	if &location != nil {
-	//		profile.Location = location
-	//	}
-	//	website := profileJson.Website
-	//	fmt.Printf("========profileJson website: %s\n", website)
-	//	if &website != nil {
-	//		profile.Website = website
-	//	}
-	//} else {
-	//	profile.Nickname = profileJson.Nickname
-	//	profile.UserHandle = profileJson.UserHandle
-	//	profile.Avatar = profileJson.Avatar
-	//	profile.Bio = profileJson.Bio
-	//	profile.Location = profileJson.Location
-	//	profile.Website = profileJson.Website
+	//if profileJson.UserHandle != "" {
+	//	handle = profileJson.UserHandle
 	//}
+	if handle != profileJson.UserHandle {
+		exist := ms.k.IsProfileUserHandleExist(ctx, profileJson.UserHandle)
+		if exist {
+			if handle == "" {
+				suffixHandle := ms.k.TruncateWalletAddressSuffix(dbProfile.WalletAddress)
+				suffixExist := ms.k.IsProfileUserHandleExist(ctx, suffixHandle)
+				if suffixExist {
+					return nil, errors.Wrapf(types.ErrInvalidUserHandle, "userHandle unavailable: %s", err)
+				} else {
+					ms.k.SetProfileUserHandle(ctx, suffixHandle)
+					dbProfile.UserHandle = suffixHandle
+				}
+			}
+		} else {
+			ms.k.DeleteProfileUserHandle(ctx, profileJson.UserHandle)
+			ms.k.SetProfileUserHandle(ctx, profileJson.UserHandle)
+			dbProfile.UserHandle = profileJson.UserHandle
+		}
 
-	ms.k.SetProfile(ctx, profile)
+	} else {
+
+	}
+	dbProfile.WalletAddress = msg.Creator
+	dbProfile.Nickname = profileJson.Nickname
+	dbProfile.Avatar = profileJson.Avatar
+	dbProfile.Bio = profileJson.Bio
+	dbProfile.Location = profileJson.Location
+	dbProfile.Website = profileJson.Website
+	dbProfile.CreationTime = blockTime
+	// Create the profile
+	//profile := types.Profile{
+	//	WalletAddress: msg.Creator,
+	//	Nickname:      profileJson.Nickname,
+	//	UserHandle:    handle,
+	//	Avatar:        profileJson.Avatar,
+	//	Bio:           profileJson.Bio,
+	//	Location:      profileJson.Location,
+	//	Website:       profileJson.Website,
+	//	CreationTime:  blockTime,
+	//}
+	if msg.Creator == "tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg" {
+		dbProfile.Level = 5
+	}
+
+	ms.k.SetProfile(ctx, dbProfile)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -118,7 +105,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 		),
 	})
 	return &types.MsgAddProfileResponse{
-		Profile: &profile,
+		Profile: &dbProfile,
 	}, nil
 }
 

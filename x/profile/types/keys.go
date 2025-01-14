@@ -18,7 +18,8 @@ const (
 
 	QuerierRoute = ModuleName
 
-	ProfileKeyPrefix = "Profile/value/"
+	ProfileKeyPrefix               = "Profile/value/"
+	ProfileUserHandleListKeyPrefix = "Profile/userHandle/list/"
 
 	ProfileFollowingPrefix  = "Profile/following/"
 	ProfileFollowersPrefix  = "Profile/followers/"

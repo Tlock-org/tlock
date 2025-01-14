@@ -181,6 +181,31 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
+	addressList := msg.Mentions
+	if len(addressList) > 0 {
+		if len(addressList) > 10 {
+			return nil, fmt.Errorf("cannot mention more than 10 users")
+		}
+		for _, address := range addressList {
+			activitiesReceived := profiletypes.ActivitiesReceived{
+				Address:        address,
+				PostId:         postID,
+				ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_MENTION,
+				Timestamp:      blockTime,
+			}
+			ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, address, msg.Creator)
+			count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, address)
+			if !b {
+				panic("GetActivitiesReceivedCount error")
+			}
+			count += 1
+			if count > profiletypes.ActivitiesReceivedCount {
+				ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, address)
+			}
+			ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, address, count)
+		}
+	}
+
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -747,4 +772,38 @@ func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post typ
 		}
 	}
 	return post
+}
+
+// Mention implements types.MsgServer.
+func (ms msgServer) Mention(ctx context.Context, msg *types.MsgMentionRequest) (*types.MsgMentionResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	json := msg.MentionJson
+	id := json.Id
+	addressList := json.MentionedAddress
+	if len(addressList) == 0 {
+		return nil, fmt.Errorf("no users to mention")
+	}
+	if len(addressList) > 10 {
+		return nil, fmt.Errorf("cannot mention more than 10 users")
+	}
+	blockTime := sdkCtx.BlockTime().Unix()
+	for _, address := range addressList {
+		activitiesReceived := profiletypes.ActivitiesReceived{
+			Address:        address,
+			PostId:         id,
+			ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_MENTION,
+			Timestamp:      blockTime,
+		}
+		ms.k.ProfileKeeper.SetActivitiesReceived(sdkCtx, activitiesReceived, address, msg.Creator)
+		count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(sdkCtx, address)
+		if !b {
+			panic("GetActivitiesReceivedCount error")
+		}
+		count += 1
+		if count > profiletypes.ActivitiesReceivedCount {
+			ms.k.ProfileKeeper.DeleteLastActivitiesReceived(sdkCtx, address)
+		}
+		ms.k.ProfileKeeper.SetActivitiesReceivedCount(sdkCtx, address, count)
+	}
+	return &types.MsgMentionResponse{}, nil
 }

@@ -22,63 +22,32 @@ service Msg {
   // SetServiceName allows a user to set their accounts name.
   rpc SetServiceName(MsgSetServiceName) returns (MsgSetServiceNameResponse);
 
-  rpc GrantAllowanceFromModule(MsgGrantAllowanceFromModuleRequest) returns (MsgGrantAllowanceFromModuleResponse) {
-//    option (google.api.http).post = "/post/v1/grantAllowanceFromModule";
-//    option (google.api.http).body = "*";
-  };
+  rpc GrantAllowanceFromModule(MsgGrantAllowanceFromModuleRequest) returns (MsgGrantAllowanceFromModuleResponse);
 
   // CreateFreePostWithTitle allows user to create a free post with title
-  rpc CreateFreePostWithTitle(MsgCreateFreePostWithTitle) returns (MsgCreateFreePostWithTitleResponse) {
-//    option (google.api.http).post = "/post/v1/createFreePostWithTitle";
-//    option (google.api.http).body = "*";
-  };
+  rpc CreateFreePostWithTitle(MsgCreateFreePostWithTitle) returns (MsgCreateFreePostWithTitleResponse);
 
   // CreateFreePost allows user to create a free post without title
-  rpc CreateFreePost(MsgCreateFreePost) returns (MsgCreateFreePostResponse) {
-//    option (google.api.http).post = "/post/v1/createFreePost";
-//    option (google.api.http).body = "*";
-  };
+  rpc CreateFreePost(MsgCreateFreePost) returns (MsgCreateFreePostResponse);
 
-  rpc CreateFreePostImagePayable(MsgCreateFreePostImagePayable) returns (MsgCreateFreePostImagePayableResponse) {
-//    option (google.api.http).post = "/post/v1/createFreePostImagePayable";
-//    option (google.api.http).body = "*";
-  };
+  rpc CreateFreePostImagePayable(MsgCreateFreePostImagePayable) returns (MsgCreateFreePostImagePayableResponse);
 
   // CreatePaidPost allows user to create a paid post without title
-  rpc CreatePaidPost(MsgCreatePaidPost) returns (MsgCreatePaidPostResponse) {
-//    option (google.api.http).post = "/post/v1/createPaidPost";
-//    option (google.api.http).body = "*";
-  };
+  rpc CreatePaidPost(MsgCreatePaidPost) returns (MsgCreatePaidPostResponse);
 
-  rpc QuotePost(MsgQuotePostRequest) returns (MsgQuotePostResponse) {
-//    option (google.api.http).post = "/post/v1/quotePost";
-//    option (google.api.http).body = "*";
-  };
+  rpc QuotePost(MsgQuotePostRequest) returns (MsgQuotePostResponse);
 
-  rpc Like(MsgLikeRequest) returns (MsgLikeResponse) {
-//    option (google.api.http).post = "/post/v1/like";
-//    option (google.api.http).body = "*";
-  };
+  rpc Like(MsgLikeRequest) returns (MsgLikeResponse);
 
-  rpc Unlike(MsgUnlikeRequest) returns (MsgUnlikeResponse) {
-//    option (google.api.http).post = "/post/v1/unlike";
-//    option (google.api.http).body = "*";
-  };
+  rpc Unlike(MsgUnlikeRequest) returns (MsgUnlikeResponse);
 
-  rpc SavePost(MsgSaveRequest) returns (MsgSaveResponse) {
-//    option (google.api.http).post = "/post/v1/savePost";
-//    option (google.api.http).body = "*";
-  };
+  rpc SavePost(MsgSaveRequest) returns (MsgSaveResponse);
 
-  rpc UnsavePost(MsgUnsaveRequest) returns (MsgUnsaveResponse) {
-//    option (google.api.http).post = "/post/v1/unsavePost";
-//    option (google.api.http).body = "*";
-  };
+  rpc UnsavePost(MsgUnsaveRequest) returns (MsgUnsaveResponse);
 
-  rpc Comment(MsgCommentRequest) returns (MsgCommentResponse) {
-//    option (google.api.http).post = "/post/v1/comment";
-//    option (google.api.http).body = "*";
-  };
+  rpc Comment(MsgCommentRequest) returns (MsgCommentResponse);
+
+  rpc Mention(MsgMentionRequest) returns (MsgMentionResponse);
 
 }
 
@@ -153,6 +122,7 @@ message MsgCreateFreePost {
   repeated string imagesUrl = 7;
   repeated string videosUrl = 8;
   string quote = 9;
+  repeated string mentions = 10;
 }
 
 message MsgCreateFreePostResponse {
@@ -253,4 +223,19 @@ message MsgCommentRequest {
 
 message MsgCommentResponse {
   bool status = 1;
+}
+
+message MentionJson {
+  string id = 1;
+  repeated string mentioned_address = 2;
+}
+
+message MsgMentionRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  MentionJson mention_json = 2;
+}
+
+message MsgMentionResponse {
+
 }

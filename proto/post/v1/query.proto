@@ -54,6 +54,7 @@ service Query {
   rpc QueryCommentsReceived(QueryCommentsReceivedRequest) returns (QueryCommentsReceivedResponse) {
     option (google.api.http).get = "/post/v1/comments/received/{wallet}";
   }
+
 }
 
 // QueryResolveNameRequest grabs the name of a wallet.

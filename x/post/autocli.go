@@ -183,6 +183,9 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						"videosUrl": {
 							//Shorthand: "v",
 						},
+						"mentions": {
+							//Shorthand: "v",
+						},
 					},
 				},
 				{
@@ -314,6 +317,20 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 						{
 							ProtoField: "comment",
+						},
+					},
+				},
+				{
+					RpcMethod: "Mention",
+					Use:       "mention [creator] [mention_json]",
+					Short:     "mention",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+							Optional:   false,
+						},
+						{
+							ProtoField: "mention_json",
 						},
 					},
 				},
