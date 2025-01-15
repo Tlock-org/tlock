@@ -181,7 +181,12 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
-	addressList := msg.Mentions
+	imageUrl := ""
+	if len(post.ImagesUrl) > 0 {
+		imageUrl = post.ImagesUrl[0]
+	}
+
+	addressList := msg.Mention
 	if len(addressList) > 0 {
 		if len(addressList) > 10 {
 			return nil, fmt.Errorf("cannot mention more than 10 users")
@@ -191,6 +196,7 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 				Address:        address,
 				PostId:         postID,
 				ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_MENTION,
+				ImageUrl:       imageUrl,
 				Timestamp:      blockTime,
 			}
 			ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, address, msg.Creator)
@@ -441,10 +447,15 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
 
+	imageUrl := ""
+	if len(post.ImagesUrl) > 0 {
+		imageUrl = post.ImagesUrl[0]
+	}
 	activitiesReceived := profiletypes.ActivitiesReceived{
 		Address:        msg.Sender,
 		PostId:         post.Id,
 		ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_LIKE,
+		ImageUrl:       imageUrl,
 		Timestamp:      blockTime,
 	}
 	ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, post.Creator, msg.Sender)
@@ -551,10 +562,15 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
 
+	imageUrl := ""
+	if len(post.ImagesUrl) > 0 {
+		imageUrl = post.ImagesUrl[0]
+	}
 	activitiesReceived := profiletypes.ActivitiesReceived{
 		Address:        msg.Sender,
 		PostId:         post.Id,
 		ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_SAVE,
+		ImageUrl:       imageUrl,
 		Timestamp:      blockTime,
 	}
 	ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, post.Creator, msg.Sender)
@@ -682,10 +698,16 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 	ms.k.SetCommentsReceived(ctx, post.Creator, commentID)
 
+	imageUrl := ""
+	if len(post.ImagesUrl) > 0 {
+		imageUrl = post.ImagesUrl[0]
+	}
 	activitiesReceived := profiletypes.ActivitiesReceived{
 		Address:        msg.Creator,
 		PostId:         post.Id,
 		ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_COMMENT,
+		Content:        msg.Comment,
+		ImageUrl:       imageUrl,
 		Timestamp:      blockTime,
 	}
 	ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, post.Creator, msg.Creator)
@@ -780,6 +802,9 @@ func (ms msgServer) Mention(ctx context.Context, msg *types.MsgMentionRequest) (
 	json := msg.MentionJson
 	id := json.Id
 	addressList := json.MentionedAddress
+	if id == "" {
+		return nil, fmt.Errorf("id cannot be empty")
+	}
 	if len(addressList) == 0 {
 		return nil, fmt.Errorf("no users to mention")
 	}
@@ -787,11 +812,18 @@ func (ms msgServer) Mention(ctx context.Context, msg *types.MsgMentionRequest) (
 		return nil, fmt.Errorf("cannot mention more than 10 users")
 	}
 	blockTime := sdkCtx.BlockTime().Unix()
+
+	post, _ := ms.k.GetPost(sdkCtx, id)
+	imageUrl := ""
+	if len(post.ImagesUrl) > 0 {
+		imageUrl = post.ImagesUrl[0]
+	}
 	for _, address := range addressList {
 		activitiesReceived := profiletypes.ActivitiesReceived{
 			Address:        address,
 			PostId:         id,
 			ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_MENTION,
+			ImageUrl:       imageUrl,
 			Timestamp:      blockTime,
 		}
 		ms.k.ProfileKeeper.SetActivitiesReceived(sdkCtx, activitiesReceived, address, msg.Creator)

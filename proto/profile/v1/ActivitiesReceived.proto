@@ -18,6 +18,8 @@ message ActivitiesReceived {
   string address = 1;
   string post_id = 2;
   ActivitiesType activities_type = 3;
-  int64 timestamp = 4;
+  string content = 4;
+  string image_url = 5;
+  int64 timestamp = 6;
 }
 

@@ -183,7 +183,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						"videosUrl": {
 							//Shorthand: "v",
 						},
-						"mentions": {
+						"mention": {
 							//Shorthand: "v",
 						},
 					},

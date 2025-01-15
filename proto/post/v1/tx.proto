@@ -122,7 +122,8 @@ message MsgCreateFreePost {
   repeated string imagesUrl = 7;
   repeated string videosUrl = 8;
   string quote = 9;
-  repeated string mentions = 10;
+  repeated string mention = 10;
+  repeated string topic = 11;
 }
 
 message MsgCreateFreePostResponse {
