@@ -6,6 +6,10 @@
 # CHAIN_ID="localchain-2" HOME_DIR="~/.tlock" CLEAN=true RPC=36657 REST=2317 PROFF=6061 P2P=36656 GRPC=8090 GRPC_WEB=8091 ROSETTA=8081 BLOCK_TIME="500ms" sh scripts/test_node.sh
 export KEY="node0"
 export KEY2="node1"
+export KEY3="node2"
+export KEY4="node3"
+export KEY5="node4"
+export KEY6="node5"
 export CHAIN_ID=${CHAIN_ID:-10889}
 export MONIKER="tlock"
 export KEYALGO="secp256k1"
@@ -59,6 +63,14 @@ from_scratch () {
   add_key $KEY "decorate bright ozone fork gallery riot bus exhaust worth way bone indoor calm squirrel merry zero scheme cotton until shop any excess stage laundry"
   # tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p
   add_key $KEY2 "wealth flavor believe regret funny network recall kiss grape useless pepper cram hint member few certain unveil rather brick bargain curious require crowd raise"
+
+  add_key $KEY3 "wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth wealth"
+
+  add_key $KEY4 "flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor flavor"
+
+  add_key $KEY5 "believe believe believe believe believe believe believe believe believe believe believe believe believe believe believe believe believe believe believe believe believe believe believe believe"
+
+  add_key $KEY6 "funny funny funny funny funny funny funny funny funny funny funny funny funny funny funny funny funny funny funny funny funny funny funny funny"
   # chain initial setup
   BINARY init $MONIKER --chain-id $CHAIN_ID --default-denom $DENOM
   update_test_genesis () {
@@ -103,6 +115,10 @@ from_scratch () {
   # Allocate genesis accounts
   BINARY genesis add-genesis-account $KEY 100000000000000000$DENOM --keyring-backend $KEYRING --append
   BINARY genesis add-genesis-account $KEY2 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY3 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY4 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY5 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY6 100000000000000000$DENOM --keyring-backend $KEYRING --append
 
   # Sign genesis transaction
   BINARY genesis gentx $KEY 1000000$DENOM --keyring-backend $KEYRING --chain-id $CHAIN_ID
