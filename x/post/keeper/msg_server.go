@@ -112,6 +112,8 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 	ms.k.PostReward(ctx, post)
 	// add home posts
 	ms.addToHomePosts(ctx, post)
+	// add to user created posts
+	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -176,8 +178,10 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	ms.k.SetPost(ctx, post)
 	// post reward
 	ms.k.PostReward(ctx, post)
-	// add home posts
+	// add to home posts
 	ms.addToHomePosts(ctx, post)
+	// add to user created posts
+	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
@@ -268,6 +272,8 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 	ms.k.SetPost(ctx, post)
 	// add home posts
 	ms.addToHomePosts(ctx, post)
+	// add to user created posts
+	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 	//Emit an event for the creation
@@ -325,6 +331,8 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 	ms.k.SetPost(ctx, post)
 	// add home posts
 	ms.addToHomePosts(ctx, post)
+	// add to user created posts
+	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
@@ -379,6 +387,10 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 	ms.k.SetPost(ctx, post)
 	// post reward
 	ms.k.PostReward(ctx, post)
+	// add home posts
+	ms.addToHomePosts(ctx, post)
+	// add to user created posts
+	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
@@ -761,6 +773,20 @@ func (ms msgServer) addToHomePosts(ctx sdk.Context, post types.Post) {
 	}
 }
 
+func (ms msgServer) addToUserCreatedPosts(ctx sdk.Context, creator string, post types.Post) {
+	ms.k.AddToUserCreatedPosts(ctx, creator, post.Id)
+	count, b := ms.k.GetUserCreatedPostsCount(ctx, creator)
+	if !b {
+		panic("GetUserCreatedPostsCount error")
+	}
+	count += 1
+	if count > types.UserCreatedPostsCount {
+		ms.k.DeleteLastPostFromUserCreated(ctx, creator)
+	} else {
+		ms.k.SetUserCreatedPostsCount(ctx, creator, count)
+	}
+}
+
 func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num int64) types.Post {
 	operatorProfile, b1 := ms.k.ProfileKeeper.GetProfile(ctx, operator)
 	creatorProfile, b2 := ms.k.ProfileKeeper.GetProfile(ctx, post.Creator)
@@ -773,7 +799,6 @@ func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post typ
 		//creatorScoreSigned := int64(creatorScore)
 		postScore := post.Score
 		exponent := math.Pow(5, float64(operatorLevelSigned-num))
-		ms.k.logger.Debug("=========================ScoreAccumulation:", "operatorLevelSigned", operatorLevelSigned, "creatorScore", creatorScore, "postScore", postScore, "exponent", exponent)
 		if exponent >= 1 {
 			postScore += uint64(exponent)
 			post.Score = postScore

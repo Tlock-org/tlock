@@ -221,7 +221,7 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) 
 		}, nil
 	}
 
-	const pageSize = types.PageSize
+	const pageSize = types.HomePostsPageSize
 	totalPages := homePostsCount / pageSize
 	if homePostsCount%pageSize != 0 {
 		totalPages += 1
@@ -263,15 +263,6 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) 
 		return nil, nil, err
 	}
 	return postIDs, pageRes, nil
-
-	//iterator := store.ReverseIterator(nil, nil)
-	//defer iterator.Close()
-	//var postIDs []string
-	//for ; iterator.Valid(); iterator.Next() {
-	//	postID := string(iterator.Value())
-	//	postIDs = append(postIDs, postID)
-	//}
-	//return postIDs, nil, nil
 }
 
 func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context) ([]string, *query.PageResponse, error) {
@@ -285,7 +276,7 @@ func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context) ([]string, *query.PageRes
 		}, nil
 	}
 
-	const pageSize = types.PageSize
+	const pageSize = types.HomePostsPageSize
 	totalPages := homePostsCount / pageSize
 	if homePostsCount%pageSize != 0 {
 		totalPages += 1
@@ -337,18 +328,6 @@ func (k Keeper) DeleteFromHomePostsByPostId(ctx sdk.Context, postId string, home
 	binary.BigEndian.PutUint64(bzBlockTime, uint64(homePostsUpdate))
 	key := append(bzBlockTime, []byte(postId)...)
 	store.Delete(key)
-
-	//iterator := store.Iterator(nil, nil)
-	//defer iterator.Close()
-	//
-	//for ; iterator.Valid(); iterator.Next() {
-	//	currentPostId := string(iterator.Value())
-	//	if currentPostId == postId {
-	//		earliestKey := iterator.Key()
-	//		store.Delete(earliestKey)
-	//		return
-	//	}
-	//}
 }
 
 func (k Keeper) IsPostInHomePosts(ctx sdk.Context, postId string, homePostsUpdate int64) bool {
@@ -359,23 +338,98 @@ func (k Keeper) IsPostInHomePosts(ctx sdk.Context, postId string, homePostsUpdat
 
 	key := append(bzBlockTime, []byte(postId)...)
 
-	get := store.Get(key)
-	if get != nil {
-		return true
-	} else {
-		return false
+	return store.Has(key)
+}
+
+func (k Keeper) SetUserCreatedPostsCount(ctx sdk.Context, creator string, count int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserCreatedPostsCountKeyPrefix))
+	key := append([]byte(creator))
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, uint64(count))
+	store.Set(key, bz)
+}
+
+func (k Keeper) GetUserCreatedPostsCount(ctx sdk.Context, creator string) (int64, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserCreatedPostsCountKeyPrefix))
+	key := append([]byte(creator))
+	bz := store.Get(key)
+	if bz == nil {
+		return 0, true
 	}
-	//iterator := store.Iterator(nil, nil)
-	//defer iterator.Close()
-	//
-	//for ; iterator.Valid(); iterator.Next() {
-	//	currentPostId := string(iterator.Value())
-	//	if currentPostId == postId {
-	//		return true
-	//	}
-	//}
-	//
-	//return false
+	count := int64(binary.BigEndian.Uint64(bz))
+	return count, true
+}
+
+func (k Keeper) AddToUserCreatedPosts(ctx sdk.Context, creator string, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserCreatedPostsKeyPrefix+creator))
+	blockTime := k.EncodeBlockTime(ctx)
+	key := append(blockTime, []byte(postId)...)
+	store.Set(key, []byte(postId))
+}
+
+func (k Keeper) DeleteLastPostFromUserCreated(ctx sdk.Context, creator string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserCreatedPostsKeyPrefix+creator))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+	if !iterator.Valid() {
+		panic("userCreatedPostsCount exceeds 1000 but no posts found")
+	}
+	earliestKey := iterator.Key()
+	earliestPostID := string(iterator.Value())
+	store.Delete(earliestKey)
+	k.Logger().Info("Deleted earliest user created post", "post_id", earliestPostID)
+}
+
+func (k Keeper) GetUserCreatedPosts(ctx sdk.Context, creator string) ([]string, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserCreatedPostsKeyPrefix+creator))
+
+	userCreatedPostsCount, _ := k.GetUserCreatedPostsCount(ctx, creator)
+	if userCreatedPostsCount == 0 {
+		return []string{}, &query.PageResponse{
+			NextKey: nil,
+			Total:   uint64(userCreatedPostsCount),
+		}, nil
+	}
+
+	const pageSize = types.UserCreatedPostsPageSize
+	totalPages := userCreatedPostsCount / pageSize
+	if userCreatedPostsCount%pageSize != 0 {
+		totalPages += 1
+	}
+
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	currentTime := time.Now()
+	unixMilli := currentTime.Unix()
+	lastTwoDigits := unixMilli % 10
+
+	pageIndex := lastTwoDigits % totalPages
+	first := pageIndex * pageSize
+
+	const totalPosts = types.UserCreatedPostsCount
+	if first >= totalPosts {
+		return nil, nil, fmt.Errorf("offset exceeds total number of home posts")
+	}
+
+	pagination := &query.PageRequest{}
+
+	pagination.Limit = pageSize
+	pagination.Offset = uint64(first)
+	pagination.Reverse = true
+
+	var postIDs []string
+
+	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
+		postIDs = append(postIDs, string(value))
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+	return postIDs, pageRes, nil
 }
 
 func (k Keeper) AddToCommentList(ctx sdk.Context, postId string, commentId string, score uint64) {

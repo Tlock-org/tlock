@@ -123,6 +123,38 @@ func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.Query
 	}, nil
 }
 
+// QueryUserCreatedPosts implements types.QueryServer.
+func (k Querier) QueryUserCreatedPosts(goCtx context.Context, req *types.QueryUserCreatedPostsRequest) (*types.QueryUserCreatedPostsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	postIDs, _, err := k.Keeper.GetUserCreatedPosts(ctx, req.Wallet)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	var postResponses []*types.PostResponse
+	for _, postID := range postIDs {
+		post, success := k.GetPost(ctx, postID)
+		if !success {
+			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
+		}
+		postCopy := post
+		//posts = append(posts, &postCopy)
+
+		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		profileResponseCopy := profile
+		postResponse := types.PostResponse{
+			Post:    &postCopy,
+			Profile: &profileResponseCopy,
+		}
+
+		postResponses = append(postResponses, &postResponse)
+	}
+	return &types.QueryUserCreatedPostsResponse{
+		Posts: postResponses,
+	}, nil
+}
+
 // QueryPost implements types.QueryServer.
 func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (*types.QueryPostResponse, error) {
 	if req == nil {
@@ -296,23 +328,31 @@ func (k Querier) QueryComments(goCtx context.Context, req *types.QueryCommentsRe
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	ids := k.Keeper.GetCommentsByParentId(ctx, req.Id)
 
-	var postResponses []*types.PostResponse
-	for _, postID := range ids {
-		post, success := k.GetPost(ctx, postID)
+	var commentResponses []*types.CommentResponse
+	for _, commentId := range ids {
+		comment, success := k.GetPost(ctx, commentId)
 		if !success {
-			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
+			return nil, fmt.Errorf("failed to get post with ID %s: %w", commentId, success)
 		}
-		postCopy := post
-		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		commentCopy := comment
+		profile, _ := k.ProfileKeeper.GetProfile(ctx, comment.Creator)
+		pid := comment.ParentId
+		parent, b := k.GetPost(ctx, pid)
+		if !b {
+			return nil, fmt.Errorf("failed to get post with ID %s: %w", pid, b)
+		}
+		targetProfile, _ := k.ProfileKeeper.GetProfile(ctx, parent.Creator)
 		profileResponseCopy := profile
-		postResponse := types.PostResponse{
-			Post:    &postCopy,
-			Profile: &profileResponseCopy,
+		targetProfileCopy := targetProfile
+		commentResponse := types.CommentResponse{
+			Post:          &commentCopy,
+			Profile:       &profileResponseCopy,
+			TargetProfile: &targetProfileCopy,
 		}
-		postResponses = append(postResponses, &postResponse)
+		commentResponses = append(commentResponses, &commentResponse)
 	}
 	return &types.QueryCommentsResponse{
-		Posts: postResponses,
+		Comments: commentResponses,
 	}, nil
 }
 

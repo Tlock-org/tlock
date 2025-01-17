@@ -4,6 +4,7 @@ package post.v1;
 import "post/v1/genesis.proto";
 import "google/api/annotations.proto";
 import "post/v1/postResponse.proto";
+import "post/v1/commentResponse.proto";
 import "post/v1/CommentReceivedResponse.proto";
 import "post/v1/likesIMade.proto";
 import "post/v1/likesReceived.proto";
@@ -33,6 +34,10 @@ service Query {
   // QueryPost allows querying a specific post by its ID
   rpc QueryPost(QueryPostRequest) returns (QueryPostResponse) {
     option (google.api.http).get = "/post/v1/get/{post_id}";
+  }
+
+  rpc QueryUserCreatedPosts(QueryUserCreatedPostsRequest) returns (QueryUserCreatedPostsResponse) {
+    option (google.api.http).get = "/post/v1/user/created/{wallet}";
   }
 
   rpc LikesIMade(LikesIMadeRequest) returns (LikesIMadeResponse) {
@@ -83,6 +88,14 @@ message QueryFirstPageHomePostsResponse {
   repeated PostResponse posts = 1;
 }
 
+message QueryUserCreatedPostsRequest {
+  string wallet = 1;
+}
+
+message QueryUserCreatedPostsResponse {
+  repeated PostResponse posts = 1;
+}
+
 // QueryPostRequest defines the request for querying a post
 message QueryPostRequest {
   string post_id = 1;
@@ -128,7 +141,7 @@ message QueryCommentsRequest {
 
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryCommentsResponse {
-  repeated PostResponse posts = 1;
+  repeated CommentResponse comments = 1;
 }
 
 message QueryCommentsReceivedRequest {

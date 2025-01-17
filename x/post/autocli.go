@@ -35,6 +35,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Short:     "query first home posts",
 				},
 				{
+					RpcMethod: "QueryUserCreatedPosts",
+					Use:       "user-created-posts",
+					Short:     "query user created posts",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "wallet"},
+					},
+				},
+				{
 					RpcMethod: "QueryPost",
 					Use:       "get [post_id]",
 					Short:     "get the post by post_id",

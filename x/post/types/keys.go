@@ -27,6 +27,11 @@ const (
 	FollowedPostsKeyPrefix  = "Post/posts/followed/"
 	HomePostsCountKeyPrefix = "home_posts_count"
 
+	UserCreatedPostsKeyPrefix      = "Post/posts/user/created/"
+	UserCreatedPostsCountKeyPrefix = "Post/posts/user/created/count/"
+	UserCreatedPostsCount          = 100
+	UserCreatedPostsPageSize       = 20
+
 	CommentListKeyPrefix = "Post/comment/list/"
 
 	LikesIMadePrefix = "Post/likes/i/made/"
@@ -36,8 +41,8 @@ const (
 	LikesReceivedPrefix    = "Post/likes/received/"
 	CommentsReceivedPrefix = "Post/comments/received/"
 
-	HomePostsCount = 100
-	PageSize       = 10
+	HomePostsCount    = 100
+	HomePostsPageSize = 10
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{
