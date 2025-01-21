@@ -37,6 +37,8 @@ service Msg {
 
   rpc QuotePost(MsgQuotePostRequest) returns (MsgQuotePostResponse);
 
+  rpc Repost(MsgRepostRequest) returns (MsgRepostResponse);
+
   rpc Like(MsgLikeRequest) returns (MsgLikeResponse);
 
   rpc Unlike(MsgUnlikeRequest) returns (MsgUnlikeResponse);
@@ -105,6 +107,8 @@ message MsgCreateFreePostWithTitle {
   repeated string imagesUrl = 7;
   repeated string videosUrl = 8;
   string quote = 9;
+  repeated string mention = 10;
+  repeated string topic = 11;
 }
 
 message MsgCreateFreePostWithTitleResponse {
@@ -141,6 +145,8 @@ message MsgCreateFreePostImagePayable {
   repeated string imagesUrl = 7;
   repeated string videosUrl = 8;
   string quote = 9;
+  repeated string mention = 10;
+  repeated string topic = 11;
 }
 
 message MsgCreateFreePostImagePayableResponse {
@@ -158,6 +164,8 @@ message MsgCreatePaidPost {
   repeated string imagesUrl = 7;
   repeated string videosUrl = 8;
   string quote = 9;
+  repeated string mention = 10;
+  repeated string topic = 11;
 }
 
 message MsgCreatePaidPostResponse {
@@ -169,9 +177,23 @@ message MsgQuotePostRequest {
   string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string quote = 2;
   string comment = 3;
+  repeated string mention = 10;
+  repeated string topic = 11;
 }
 
 message MsgQuotePostResponse {
+  bool status = 1;
+}
+
+message MsgRepostRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string quote = 2;
+  repeated string mention = 10;
+  repeated string topic = 11;
+}
+
+message MsgRepostResponse {
   bool status = 1;
 }
 

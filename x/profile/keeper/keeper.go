@@ -122,7 +122,7 @@ func (k Keeper) GetProfile(ctx sdk.Context, walletAddress string) (types.Profile
 	if bz == nil {
 		return types.Profile{
 			WalletAddress: walletAddress,
-			UserHandle:    k.TruncateWalletAddressSuffix(walletAddress),
+			UserHandle:    k.TruncateAddressSuffix(walletAddress),
 		}, true
 	}
 
@@ -130,33 +130,34 @@ func (k Keeper) GetProfile(ctx sdk.Context, walletAddress string) (types.Profile
 	k.cdc.MustUnmarshal(bz, &profile)
 	return profile, true
 }
-func (k Keeper) SetProfileUserHandleList(ctx sdk.Context, userHandle string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleListKeyPrefix))
+
+func (k Keeper) AddToUserHandleList(ctx sdk.Context, userHandle string, wallet string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleKeyPrefix))
 	key := append([]byte(userHandle))
-	store.Set(key, []byte(userHandle))
+	store.Set(key, []byte(wallet))
 }
-func (k Keeper) IsProfileUserHandleExist(ctx sdk.Context, userHandle string) bool {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleListKeyPrefix))
+func (k Keeper) HasUserHandle(ctx sdk.Context, userHandle string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleKeyPrefix))
 	key := append([]byte(userHandle))
-	get := store.Get(key)
-	if get != nil {
-		return true
-	} else {
-		return false
-	}
+	return store.Has(key)
 }
-func (k Keeper) DeleteProfileUserHandle(ctx sdk.Context, userHandle string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleListKeyPrefix))
+func (k Keeper) DeleteFromUserHandleList(ctx sdk.Context, userHandle string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleKeyPrefix))
 	key := append([]byte(userHandle))
 	store.Delete(key)
 }
-func (k Keeper) SetProfileUserHandle(ctx sdk.Context, userHandle string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleListKeyPrefix))
+func (k Keeper) GetAddressByUserHandle(ctx sdk.Context, userHandle string) string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleKeyPrefix))
 	key := append([]byte(userHandle))
-	store.Set(key, []byte(userHandle))
+	bz := store.Get(key)
+	if bz == nil {
+		return ""
+	}
+	return string(bz)
 }
-func (k Keeper) TruncateWalletAddressSuffix(walletAddress string) string {
-	runes := []rune(walletAddress)
+
+func (k Keeper) TruncateAddressSuffix(address string) string {
+	runes := []rune(address)
 	if len(runes) >= 10 {
 		return string(runes[len(runes)-10:])
 	}
@@ -169,7 +170,7 @@ func (k Keeper) CheckAndCreateUserHandle(ctx sdk.Context, walletAddress string) 
 	if bz == nil {
 		profile := types.Profile{
 			WalletAddress: walletAddress,
-			UserHandle:    k.TruncateWalletAddressSuffix(walletAddress),
+			UserHandle:    k.TruncateAddressSuffix(walletAddress),
 		}
 		k.SetProfile(ctx, profile)
 	}
@@ -209,6 +210,21 @@ func (k Keeper) GetFollowing(ctx sdk.Context, address string) []string {
 		followings = append(followings, string(val))
 	}
 	return followings
+}
+
+// IsFollowing
+func (k Keeper) IsFollowing(ctx sdk.Context, follower string, target string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowingPrefix+follower+"/"))
+	iterator := store.ReverseIterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		val := iterator.Value()
+		if string(val) == target {
+			return true
+		}
+	}
+	return false
 }
 
 func (k Keeper) Unfollow(ctx sdk.Context, followerAddr string, time uint64, targetAddr string) {

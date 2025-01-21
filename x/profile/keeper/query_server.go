@@ -46,6 +46,16 @@ func (k Querier) QueryProfile(goCtx context.Context, req *types.QueryProfileRequ
 	return &types.QueryProfileResponse{Profile: &profile}, nil
 }
 
+// QueryIsFollowing implements types.QueryServer.
+func (k Querier) QueryIsFollowing(goCtx context.Context, req *types.QueryIsFollowingRequest) (*types.QueryIsFollowingResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	isFollowing := k.Keeper.IsFollowing(ctx, req.User, req.Target)
+
+	return &types.QueryIsFollowingResponse{
+		isFollowing,
+	}, nil
+}
+
 // QueryFollowing implements types.QueryServer.
 func (k Querier) QueryFollowing(goCtx context.Context, req *types.QueryFollowingRequest) (*types.QueryFollowingResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

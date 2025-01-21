@@ -512,8 +512,6 @@ func (k Keeper) GetFollowedPosts(ctx sdk.Context, pagination *query.PageRequest)
 }
 func (k Keeper) SetLikesIMade(ctx sdk.Context, likesIMade types.LikesIMade, sender string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix+sender+"/"))
-	//blockTime := ctx.BlockTime().Unix()
-	//key := fmt.Sprintf("%d-%s", blockTime, likesIMade.PostId)
 	blockTime := k.EncodeBlockTime(ctx)
 	key := append(blockTime, []byte(likesIMade.PostId)...)
 	bz := k.cdc.MustMarshal(&likesIMade)

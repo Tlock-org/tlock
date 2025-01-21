@@ -170,6 +170,8 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						"videosUrl": {
 							//Shorthand: "v",
 						},
+						"mention": {},
+						"topic":   {},
 					},
 				},
 				{
@@ -185,15 +187,10 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 					},
 					FlagOptions: map[string]*autocliv1.FlagOptions{
-						"imagesUrl": {
-							//Shorthand: "i",
-						},
-						"videosUrl": {
-							//Shorthand: "v",
-						},
-						"mention": {
-							//Shorthand: "v",
-						},
+						"imagesUrl": {},
+						"videosUrl": {},
+						"mention":   {},
+						"topic":     {},
 					},
 				},
 				{
@@ -218,6 +215,8 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						"videosUrl": {
 							//Shorthand: "v",
 						},
+						"mention": {},
+						"topic":   {},
 					},
 				},
 				{
@@ -242,6 +241,8 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						"videosUrl": {
 							//Shorthand: "v",
 						},
+						"mention": {},
+						"topic":   {},
 					},
 				},
 				{
@@ -258,6 +259,27 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{
 							ProtoField: "comment",
 						},
+					},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"mention": {},
+						"topic":   {},
+					},
+				},
+				{
+					RpcMethod: "Repost",
+					Use:       "repost [creator] [quote]",
+					Short:     "repost",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+						},
+						{
+							ProtoField: "quote",
+						},
+					},
+					FlagOptions: map[string]*autocliv1.FlagOptions{
+						"mention": {},
+						"topic":   {},
 					},
 				},
 				{

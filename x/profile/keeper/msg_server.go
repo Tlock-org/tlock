@@ -47,28 +47,37 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	//if profileJson.UserHandle != "" {
 	//	handle = profileJson.UserHandle
 	//}
-	if handle != profileJson.UserHandle {
-		exist := ms.k.IsProfileUserHandleExist(ctx, profileJson.UserHandle)
-		if exist {
-			if handle == "" {
-				suffixHandle := ms.k.TruncateWalletAddressSuffix(dbProfile.WalletAddress)
-				suffixExist := ms.k.IsProfileUserHandleExist(ctx, suffixHandle)
-				if suffixExist {
-					return nil, errors.Wrapf(types.ErrInvalidUserHandle, "userHandle unavailable: %s", err)
+	userHandle := profileJson.UserHandle
+	if userHandle != "" {
+		validateUserHandle, err := types.ValidateUserHandle(userHandle)
+		if validateUserHandle {
+			if handle != profileJson.UserHandle {
+				exist := ms.k.HasUserHandle(ctx, profileJson.UserHandle)
+				if exist {
+					if handle == "" {
+						suffixHandle := ms.k.TruncateAddressSuffix(dbProfile.WalletAddress)
+						suffixExist := ms.k.HasUserHandle(ctx, suffixHandle)
+						if suffixExist {
+							return nil, errors.Wrapf(types.ErrInvalidUserHandle, "userHandle unavailable: %s", err)
+						} else {
+							ms.k.AddToUserHandleList(ctx, suffixHandle, msg.Creator)
+							dbProfile.UserHandle = suffixHandle
+						}
+					}
 				} else {
-					ms.k.SetProfileUserHandle(ctx, suffixHandle)
-					dbProfile.UserHandle = suffixHandle
+					ms.k.DeleteFromUserHandleList(ctx, profileJson.UserHandle)
+					ms.k.AddToUserHandleList(ctx, profileJson.UserHandle, msg.Creator)
+					dbProfile.UserHandle = profileJson.UserHandle
 				}
+
+			} else {
+
 			}
 		} else {
-			ms.k.DeleteProfileUserHandle(ctx, profileJson.UserHandle)
-			ms.k.SetProfileUserHandle(ctx, profileJson.UserHandle)
-			dbProfile.UserHandle = profileJson.UserHandle
+			return &types.MsgAddProfileResponse{}, err
 		}
-
-	} else {
-
 	}
+
 	dbProfile.WalletAddress = msg.Creator
 	dbProfile.Nickname = profileJson.Nickname
 	dbProfile.Avatar = profileJson.Avatar
@@ -76,19 +85,9 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	dbProfile.Location = profileJson.Location
 	dbProfile.Website = profileJson.Website
 	dbProfile.CreationTime = blockTime
-	// Create the profile
-	//profile := types.Profile{
-	//	WalletAddress: msg.Creator,
-	//	Nickname:      profileJson.Nickname,
-	//	UserHandle:    handle,
-	//	Avatar:        profileJson.Avatar,
-	//	Bio:           profileJson.Bio,
-	//	Location:      profileJson.Location,
-	//	Website:       profileJson.Website,
-	//	CreationTime:  blockTime,
-	//}
-	if msg.Creator == "tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg" {
-		dbProfile.Level = 5
+
+	if msg.Creator == "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p" {
+		dbProfile.Level = 6
 	}
 
 	ms.k.SetProfile(ctx, dbProfile)
