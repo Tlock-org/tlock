@@ -78,7 +78,6 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 	}
 
 	// Validate sender address
-	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
@@ -115,10 +114,6 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 	// add to user created posts
 	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
 
-	imageUrl := ""
-	if len(post.ImagesUrl) > 0 {
-		imageUrl = post.ImagesUrl[0]
-	}
 	userHandleList := msg.Mention
 	if len(userHandleList) > 0 {
 		if len(userHandleList) > 10 {
@@ -127,23 +122,7 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 		for _, userHandle := range userHandleList {
 			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
 			if address != "" {
-				activitiesReceived := profiletypes.ActivitiesReceived{
-					Address:        address,
-					PostId:         postID,
-					ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_MENTION,
-					ImageUrl:       imageUrl,
-					Timestamp:      blockTime,
-				}
-				ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, address, msg.Creator)
-				count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, address)
-				if !b {
-					panic("GetActivitiesReceivedCount error")
-				}
-				count += 1
-				if count > profiletypes.ActivitiesReceivedCount {
-					ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, address)
-				}
-				ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, address, count)
+				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
 			}
 		}
 	}
@@ -166,13 +145,7 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFreePost) (*types.MsgCreateFreePostResponse, error) {
 	base64.StdEncoding.EncodeToString([]byte("{\"body\":{\"messages\":[{\"@type\":\"/cosmos.bank.v1beta1.MsgSend\",\"from_address\":\"tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p\",\"to_address\":\"tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg\",\"amount\":[{\"denom\":\"uTOK\",\"amount\":\"10\"}]}],\"memo\":\"\",\"timeout_height\":\"0\",\"extension_options\":[],\"non_critical_extension_options\":[]},\"auth_info\":{\"signer_infos\":[{\"public_key\":{\"@type\":\"/cosmos.crypto.secp256k1.PubKey\",\"key\":\"ApZa31BR3NWLylRT6Qi5+f+zXtj2OpqtC76vgkUGLyww\"},\"mode_info\":{\"single\":{\"mode\":\"SIGN_MODE_DIRECT\"}},\"sequence\":\"1\"}],\"fee\":{\"amount\":[{\"denom\":\"uTOK\",\"amount\":\"77886\"}],\"gas_limit\":\"77886\",\"payer\":\"\",\"granter\":\"\"},\"tip\":null},\"signatures\":[\"RWGJJcQ8Ioul52d6HbBW6F1FJwuNPRSTTny6xpAZCfpYgHSIGuk0+uupaC5gx0FKur8qOA9tZlhKhAfLyf9hWg==\"]}"))
 
-	//ms.k.Logger().Error("===============toString: %s\n", toString)
-	//ms.k.Logger().Warn("============= to create free post ==============")
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	//bytes := ctx.TxBytes()
-	//hash := sha256.Sum256(bytes)
-	//fmt.Printf("=======================hash: %s\n", hash)
 
 	// Validate the message
 	if len(msg.Content) == 0 {
@@ -180,7 +153,6 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	}
 
 	// Validate sender address
-	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
@@ -218,36 +190,19 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
-	imageUrl := ""
-	if len(post.ImagesUrl) > 0 {
-		imageUrl = post.ImagesUrl[0]
-	}
-
+	// mentions add to activitiesReceived
 	userHandleList := msg.Mention
+	ms.k.logger.Error("========userHandleList:", "userHandleList", userHandleList)
 	if len(userHandleList) > 0 {
 		if len(userHandleList) > 10 {
 			return nil, fmt.Errorf("cannot mention more than 10 users")
 		}
 		for _, userHandle := range userHandleList {
+			ms.k.logger.Error("========userHandle:", "userHandle", userHandle)
 			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
+			ms.k.logger.Error("========address:", "address", address)
 			if address != "" {
-				activitiesReceived := profiletypes.ActivitiesReceived{
-					Address:        address,
-					PostId:         postID,
-					ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_MENTION,
-					ImageUrl:       imageUrl,
-					Timestamp:      blockTime,
-				}
-				ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, address, msg.Creator)
-				count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, address)
-				if !b {
-					panic("GetActivitiesReceivedCount error")
-				}
-				count += 1
-				if count > profiletypes.ActivitiesReceivedCount {
-					ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, address)
-				}
-				ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, address, count)
+				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
 			}
 		}
 	}
@@ -313,10 +268,7 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
-	imageUrl := ""
-	if len(post.ImagesUrl) > 0 {
-		imageUrl = post.ImagesUrl[0]
-	}
+	// mentions add to activitiesReceived
 	userHandleList := msg.Mention
 	if len(userHandleList) > 0 {
 		if len(userHandleList) > 10 {
@@ -325,26 +277,11 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 		for _, userHandle := range userHandleList {
 			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
 			if address != "" {
-				activitiesReceived := profiletypes.ActivitiesReceived{
-					Address:        address,
-					PostId:         postID,
-					ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_MENTION,
-					ImageUrl:       imageUrl,
-					Timestamp:      blockTime,
-				}
-				ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, address, msg.Creator)
-				count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, address)
-				if !b {
-					panic("GetActivitiesReceivedCount error")
-				}
-				count += 1
-				if count > profiletypes.ActivitiesReceivedCount {
-					ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, address)
-				}
-				ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, address, count)
+				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
 			}
 		}
 	}
+
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -405,10 +342,7 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
-	imageUrl := ""
-	if len(post.ImagesUrl) > 0 {
-		imageUrl = post.ImagesUrl[0]
-	}
+	// mentions add to activitiesReceived
 	userHandleList := msg.Mention
 	if len(userHandleList) > 0 {
 		if len(userHandleList) > 10 {
@@ -417,26 +351,11 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 		for _, userHandle := range userHandleList {
 			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
 			if address != "" {
-				activitiesReceived := profiletypes.ActivitiesReceived{
-					Address:        address,
-					PostId:         postID,
-					ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_MENTION,
-					ImageUrl:       imageUrl,
-					Timestamp:      blockTime,
-				}
-				ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, address, msg.Creator)
-				count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, address)
-				if !b {
-					panic("GetActivitiesReceivedCount error")
-				}
-				count += 1
-				if count > profiletypes.ActivitiesReceivedCount {
-					ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, address)
-				}
-				ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, address, count)
+				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
 			}
 		}
 	}
+
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -498,10 +417,7 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 	parentPost.LikeCount += 1
 	ms.k.SetPost(ctx, parentPost)
 
-	imageUrl := ""
-	if len(post.ImagesUrl) > 0 {
-		imageUrl = parentPost.ImagesUrl[0]
-	}
+	// mentions add to activitiesReceived
 	userHandleList := msg.Mention
 	if len(userHandleList) > 0 {
 		if len(userHandleList) > 10 {
@@ -510,26 +426,11 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 		for _, userHandle := range userHandleList {
 			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
 			if address != "" {
-				activitiesReceived := profiletypes.ActivitiesReceived{
-					Address:        address,
-					PostId:         postID,
-					ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_MENTION,
-					ImageUrl:       imageUrl,
-					Timestamp:      blockTime,
-				}
-				ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, address, msg.Creator)
-				count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, address)
-				if !b {
-					panic("GetActivitiesReceivedCount error")
-				}
-				count += 1
-				if count > profiletypes.ActivitiesReceivedCount {
-					ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, address)
-				}
-				ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, address, count)
+				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
 			}
 		}
 	}
+
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -558,66 +459,15 @@ func (ms msgServer) Repost(goCtx context.Context, msg *types.MsgRepostRequest) (
 		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
 	}
 
-	blockTime := ctx.BlockTime().Unix()
-	data := fmt.Sprintf("%s|%s|%s|%d", msg.Creator, msg.Quote, blockTime)
-	postID := ms.k.generatePostID(data)
-
-	// Create the post
-	post := types.Post{
-		Id:              postID,
-		PostType:        types.PostType_REPOST,
-		Creator:         msg.Creator,
-		Timestamp:       blockTime,
-		Quote:           msg.Quote,
-		HomePostsUpdate: blockTime,
-	}
-
-	// Store the post in the state
-	ms.k.SetPost(ctx, post)
-	// post reward
-	ms.k.PostReward(ctx, post)
+	parentPost, _ := ms.k.GetPost(ctx, msg.Quote)
 	// add home posts
-	ms.addToHomePosts(ctx, post)
+	ms.addToHomePosts(ctx, parentPost)
 	// add to user created posts
-	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
+	ms.addToUserCreatedPosts(ctx, msg.Creator, parentPost)
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
-	parentPost, _ := ms.k.GetPost(ctx, msg.Quote)
-	parentPost.LikeCount += 1
+	parentPost.RepostCount += 1
 	ms.k.SetPost(ctx, parentPost)
-
-	imageUrl := ""
-	if len(post.ImagesUrl) > 0 {
-		imageUrl = parentPost.ImagesUrl[0]
-	}
-	userHandleList := msg.Mention
-	if len(userHandleList) > 0 {
-		if len(userHandleList) > 10 {
-			return nil, fmt.Errorf("cannot mention more than 10 users")
-		}
-		for _, userHandle := range userHandleList {
-			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
-			if address != "" {
-				activitiesReceived := profiletypes.ActivitiesReceived{
-					Address:        address,
-					PostId:         postID,
-					ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_MENTION,
-					ImageUrl:       imageUrl,
-					Timestamp:      blockTime,
-				}
-				ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, address, msg.Creator)
-				count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, address)
-				if !b {
-					panic("GetActivitiesReceivedCount error")
-				}
-				count += 1
-				if count > profiletypes.ActivitiesReceivedCount {
-					ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, address)
-				}
-				ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, address, count)
-			}
-		}
-	}
 
 	return &types.MsgRepostResponse{}, nil
 }
@@ -674,27 +524,8 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
 
-	imageUrl := ""
-	if len(post.ImagesUrl) > 0 {
-		imageUrl = post.ImagesUrl[0]
-	}
-	activitiesReceived := profiletypes.ActivitiesReceived{
-		Address:        msg.Sender,
-		PostId:         post.Id,
-		ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_LIKE,
-		ImageUrl:       imageUrl,
-		Timestamp:      blockTime,
-	}
-	ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, post.Creator, msg.Sender)
-	count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, post.Creator)
-	if !b {
-		panic("GetActivitiesReceivedCount error")
-	}
-	count += 1
-	if count > profiletypes.ActivitiesReceivedCount {
-		ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, msg.Sender)
-	}
-	ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, post.Creator, count)
+	// like add to activitiesReceived
+	ms.addActivitiesReceived(ctx, post, "", "", msg.Sender, post.Creator, profiletypes.ActivitiesType_ACTIVITIES_LIKE)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Sender)
 
@@ -762,13 +593,6 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 		return nil, errors.Wrap(types.ErrInvalidPostType, "cannot save a comment type post")
 	}
 
-	exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
-	if exist {
-		ms.updateHomePosts(ctx, post)
-	} else {
-		ms.addToHomePosts(ctx, post)
-	}
-
 	blockTime := ctx.BlockTime().Unix()
 	post.HomePostsUpdate = blockTime
 	ms.k.SetPost(ctx, post)
@@ -789,27 +613,8 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 	}
 	ms.k.SetLikesReceived(ctx, likesReceived, post.Creator)
 
-	imageUrl := ""
-	if len(post.ImagesUrl) > 0 {
-		imageUrl = post.ImagesUrl[0]
-	}
-	activitiesReceived := profiletypes.ActivitiesReceived{
-		Address:        msg.Sender,
-		PostId:         post.Id,
-		ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_SAVE,
-		ImageUrl:       imageUrl,
-		Timestamp:      blockTime,
-	}
-	ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, post.Creator, msg.Sender)
-	count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, post.Creator)
-	if !b {
-		panic("GetActivitiesReceivedCount error")
-	}
-	count += 1
-	if count > profiletypes.ActivitiesReceivedCount {
-		ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, msg.Sender)
-	}
-	ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, post.Creator, count)
+	// save add to activitiesReceived
+	ms.addActivitiesReceived(ctx, post, "", "", msg.Sender, post.Creator, profiletypes.ActivitiesType_ACTIVITIES_SAVE)
 
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Sender)
 
@@ -925,28 +730,22 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 	ms.k.SetCommentsReceived(ctx, post.Creator, commentID)
 
-	imageUrl := ""
-	if len(post.ImagesUrl) > 0 {
-		imageUrl = post.ImagesUrl[0]
+	// comment add to activitiesReceived
+	ms.addActivitiesReceived(ctx, post, commentID, msg.Comment, msg.Creator, post.Creator, profiletypes.ActivitiesType_ACTIVITIES_COMMENT)
+
+	// mentions add to activitiesReceived
+	userHandleList := msg.Mention
+	if len(userHandleList) > 0 {
+		if len(userHandleList) > 10 {
+			return nil, fmt.Errorf("cannot mention more than 10 users")
+		}
+		for _, userHandle := range userHandleList {
+			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
+			if address != "" {
+				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
+			}
+		}
 	}
-	activitiesReceived := profiletypes.ActivitiesReceived{
-		Address:        msg.Creator,
-		PostId:         post.Id,
-		ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_COMMENT,
-		Content:        msg.Comment,
-		ImageUrl:       imageUrl,
-		Timestamp:      blockTime,
-	}
-	ms.k.ProfileKeeper.SetActivitiesReceived(ctx, activitiesReceived, post.Creator, msg.Creator)
-	count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(ctx, post.Creator)
-	if !b {
-		panic("GetActivitiesReceivedCount error")
-	}
-	count += 1
-	if count > profiletypes.ActivitiesReceivedCount {
-		ms.k.ProfileKeeper.DeleteLastActivitiesReceived(ctx, msg.Creator)
-	}
-	ms.k.ProfileKeeper.SetActivitiesReceivedCount(ctx, post.Creator, count)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -1037,45 +836,82 @@ func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post typ
 }
 
 // Mention implements types.MsgServer.
-func (ms msgServer) Mention(ctx context.Context, msg *types.MsgMentionRequest) (*types.MsgMentionResponse, error) {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	json := msg.MentionJson
-	id := json.Id
-	addressList := json.MentionedAddress
-	if id == "" {
-		return nil, fmt.Errorf("id cannot be empty")
-	}
-	if len(addressList) == 0 {
-		return nil, fmt.Errorf("no users to mention")
-	}
-	if len(addressList) > 10 {
-		return nil, fmt.Errorf("cannot mention more than 10 users")
-	}
-	blockTime := sdkCtx.BlockTime().Unix()
+//func (ms msgServer) Mention(ctx context.Context, msg *types.MsgMentionRequest) (*types.MsgMentionResponse, error) {
+//	sdkCtx := sdk.UnwrapSDKContext(ctx)
+//	json := msg.MentionJson
+//	id := json.Id
+//	addressList := json.MentionedAddress
+//	if id == "" {
+//		return nil, fmt.Errorf("id cannot be empty")
+//	}
+//	if len(addressList) == 0 {
+//		return nil, fmt.Errorf("no users to mention")
+//	}
+//	if len(addressList) > 10 {
+//		return nil, fmt.Errorf("cannot mention more than 10 users")
+//	}
+//	blockTime := sdkCtx.BlockTime().Unix()
+//
+//	post, _ := ms.k.GetPost(sdkCtx, id)
+//	imageUrl := ""
+//	if len(post.ImagesUrl) > 0 {
+//		imageUrl = post.ImagesUrl[0]
+//	}
+//	for _, address := range addressList {
+//		activitiesReceived := profiletypes.ActivitiesReceived{
+//			Address:        address,
+//			TargetAddress:  post.Creator,
+//			ParentId:       id,
+//			ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_MENTION,
+//			ParentImageUrl: imageUrl,
+//			Timestamp:      blockTime,
+//		}
+//		ms.k.ProfileKeeper.SetActivitiesReceived(sdkCtx, activitiesReceived, address, msg.Creator)
+//		count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(sdkCtx, address)
+//		if !b {
+//			panic("GetActivitiesReceivedCount error")
+//		}
+//		count += 1
+//		if count > profiletypes.ActivitiesReceivedCount {
+//			ms.k.ProfileKeeper.DeleteLastActivitiesReceived(sdkCtx, address)
+//		}
+//		ms.k.ProfileKeeper.SetActivitiesReceivedCount(sdkCtx, address, count)
+//	}
+//	return &types.MsgMentionResponse{}, nil
+//}
 
-	post, _ := ms.k.GetPost(sdkCtx, id)
+func (ms msgServer) addActivitiesReceived(sdkCtx sdk.Context, parentPost types.Post, commentId string, content string,
+	operator string, target string, activitiesType profiletypes.ActivitiesType) {
+	blockTime := sdkCtx.BlockTime().Unix()
 	imageUrl := ""
-	if len(post.ImagesUrl) > 0 {
-		imageUrl = post.ImagesUrl[0]
+	if len(parentPost.ImagesUrl) > 0 {
+		imageUrl = parentPost.ImagesUrl[0]
 	}
-	for _, address := range addressList {
-		activitiesReceived := profiletypes.ActivitiesReceived{
-			Address:        address,
-			PostId:         id,
-			ActivitiesType: profiletypes.ActivitiesType_ACTIVITIES_MENTION,
-			ImageUrl:       imageUrl,
-			Timestamp:      blockTime,
-		}
-		ms.k.ProfileKeeper.SetActivitiesReceived(sdkCtx, activitiesReceived, address, msg.Creator)
-		count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(sdkCtx, address)
-		if !b {
-			panic("GetActivitiesReceivedCount error")
-		}
-		count += 1
-		if count > profiletypes.ActivitiesReceivedCount {
-			ms.k.ProfileKeeper.DeleteLastActivitiesReceived(sdkCtx, address)
-		}
-		ms.k.ProfileKeeper.SetActivitiesReceivedCount(sdkCtx, address, count)
+	activitiesReceived := profiletypes.ActivitiesReceived{
+		Address:        operator,
+		TargetAddress:  target,
+		ActivitiesType: activitiesType,
+		ParentImageUrl: imageUrl,
+		Timestamp:      blockTime,
 	}
-	return &types.MsgMentionResponse{}, nil
+	if activitiesType == profiletypes.ActivitiesType_ACTIVITIES_LIKE || activitiesType == profiletypes.ActivitiesType_ACTIVITIES_SAVE {
+		activitiesReceived.ParentId = parentPost.Id
+	} else if activitiesType == profiletypes.ActivitiesType_ACTIVITIES_COMMENT {
+		activitiesReceived.CommentId = commentId
+		activitiesReceived.Content = content
+		activitiesReceived.ParentId = parentPost.Id
+	} else if activitiesType == profiletypes.ActivitiesType_ACTIVITIES_MENTION {
+		activitiesReceived.ParentId = parentPost.Id
+	}
+
+	ms.k.ProfileKeeper.SetActivitiesReceived(sdkCtx, activitiesReceived, target, operator)
+	count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(sdkCtx, target)
+	if !b {
+		panic("GetActivitiesReceivedCount error")
+	}
+	count += 1
+	if count > profiletypes.ActivitiesReceivedCount {
+		ms.k.ProfileKeeper.DeleteLastActivitiesReceived(sdkCtx, target)
+	}
+	ms.k.ProfileKeeper.SetActivitiesReceivedCount(sdkCtx, target, count)
 }

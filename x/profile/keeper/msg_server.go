@@ -130,7 +130,8 @@ func (ms msgServer) Follow(ctx context.Context, msg *types.MsgFollowRequest) (*t
 	ms.k.SetProfile(sdkCtx, profileTarget)
 
 	activitiesReceived := types.ActivitiesReceived{
-		Address:        msg.Creator,
+		Address:        follower,
+		TargetAddress:  targetAddr,
 		ActivitiesType: types.ActivitiesType_ACTIVITIES_FOLLOW,
 		Timestamp:      blockTime,
 	}

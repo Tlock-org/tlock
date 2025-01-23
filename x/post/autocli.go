@@ -350,20 +350,20 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 					},
 				},
-				{
-					RpcMethod: "Mention",
-					Use:       "mention [creator] [mention_json]",
-					Short:     "mention",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{
-							ProtoField: "creator",
-							Optional:   false,
-						},
-						{
-							ProtoField: "mention_json",
-						},
-					},
-				},
+				//{
+				//	RpcMethod: "Mention",
+				//	Use:       "mention [creator] [mention_json]",
+				//	Short:     "mention",
+				//	PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+				//		{
+				//			ProtoField: "creator",
+				//			Optional:   false,
+				//		},
+				//		{
+				//			ProtoField: "mention_json",
+				//		},
+				//	},
+				//},
 			},
 		},
 	}

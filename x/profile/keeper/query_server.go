@@ -99,8 +99,44 @@ func (k Querier) QueryActivitiesReceived(goCtx context.Context, req *types.Query
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	list := k.GetActivitiesReceived(ctx, req.WalletAddress)
+	var activitiesReceivedList []*types.ActivitiesReceivedResponse
+	for _, activitiesReceived := range list {
+		activitiesReceivedResponse := types.ActivitiesReceivedResponse{
+			Address:        activitiesReceived.Address,
+			TargetAddress:  activitiesReceived.TargetAddress,
+			CommentId:      activitiesReceived.CommentId,
+			ParentId:       activitiesReceived.ParentId,
+			ActivitiesType: activitiesReceived.ActivitiesType,
+			Content:        activitiesReceived.Content,
+			ParentImageUrl: activitiesReceived.ParentImageUrl,
+			Timestamp:      activitiesReceived.Timestamp,
+		}
+
+		address := activitiesReceived.Address
+		if address != "" {
+			profile, _ := k.GetProfile(ctx, address)
+			profileResponse := types.ProfileResponse{
+				UserHandle: profile.UserHandle,
+				Nickname:   profile.Nickname,
+				Avatar:     profile.Avatar,
+			}
+			activitiesReceivedResponse.Profile = &profileResponse
+		}
+		targetAddress := activitiesReceived.TargetAddress
+		if targetAddress != "" {
+			targetProfile, _ := k.GetProfile(ctx, targetAddress)
+			targetProfileResponse := types.ProfileResponse{
+				UserHandle: targetProfile.UserHandle,
+				Nickname:   targetProfile.Nickname,
+				Avatar:     targetProfile.Avatar,
+			}
+			activitiesReceivedResponse.TargetProfile = &targetProfileResponse
+		}
+
+		activitiesReceivedList = append(activitiesReceivedList, &activitiesReceivedResponse)
+	}
 	return &types.QueryActivitiesReceivedResponse{
-		ActivitiesReceived: list,
+		activitiesReceivedList,
 	}, nil
 }
 
@@ -110,5 +146,15 @@ func (k Querier) QueryActivitiesReceivedCount(goCtx context.Context, req *types.
 	count, _ := k.GetActivitiesReceivedCount(ctx, req.WalletAddress)
 	return &types.QueryActivitiesReceivedCountResponse{
 		Count: uint64(count),
+	}, nil
+}
+
+// QueryHasUserHandle implements types.QueryServer.
+func (k Querier) QueryHasUserHandle(goCtx context.Context, req *types.QueryHasUserHandleRequest) (*types.QueryHasUserHandleResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	//handle := k.HasUserHandle(ctx, req.UserHandle)
+	address := k.GetAddressByUserHandle(ctx, req.UserHandle)
+	return &types.QueryHasUserHandleResponse{
+		address,
 	}, nil
 }

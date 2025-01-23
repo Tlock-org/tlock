@@ -2,26 +2,23 @@ syntax = "proto3";
 package profile.v1;
 
 import "profile/v1/genesis.proto";
+import "profile/v1/profileResponse.proto";
+import "profile/v1/ActivitiesReceived.proto";
 
 option go_package = "github.com/rollchains/tlock/x/profile/types";
 
-enum ActivitiesType {
-  ACTIVITIES_LIKE = 0;
-  ACTIVITIES_SAVE = 1;
-  ACTIVITIES_COMMENT = 2;
-  ACTIVITIES_FOLLOW = 3;
-  ACTIVITIES_MENTION = 4;
-}
-
 // ActivitiesReceived defines the structure of a ActivitiesReceived
-message ActivitiesReceived {
+message ActivitiesReceivedResponse {
   string address = 1;
   string target_address = 2;
   string comment_id = 3;
   string parent_id = 4;
-  ActivitiesType activities_type = 5;
+  profile.v1.ActivitiesType activities_type = 5;
   string content = 6;
   string parent_image_url = 7;
   int64 timestamp = 8;
+
+  profile.v1.ProfileResponse profile = 9;
+  profile.v1.ProfileResponse targetProfile = 10;
 }
 

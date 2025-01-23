@@ -68,20 +68,20 @@ func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePosts
 			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
 		}
 		postCopy := post
-		//posts = append(posts, &postCopy)
 
 		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-		//profileResponse := profileTypes.ProfileResponse{
-		//	UserHandle: profile.UserHandle,
-		//	Nickname:   profile.Nickname,
-		//	Avatar:     profile.Avatar,
-		//	Level:      profile.Level,
-		//	AdminLevel: profile.AdminLevel,
-		//}
+
 		profileResponseCopy := profile
+
 		postResponse := types.PostResponse{
 			Post:    &postCopy,
 			Profile: &profileResponseCopy,
+		}
+		if post.Quote != "" {
+			quotePost, _ := k.GetPost(ctx, post.Quote)
+			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			postResponse.QuotePost = &quotePost
+			postResponse.QuoteProfile = &quoteProfile
 		}
 
 		postResponses = append(postResponses, &postResponse)
@@ -116,6 +116,12 @@ func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.Query
 			Profile: &profileResponseCopy,
 		}
 
+		if post.Quote != "" {
+			quotePost, _ := k.GetPost(ctx, post.Quote)
+			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			postResponse.QuotePost = &quotePost
+			postResponse.QuoteProfile = &quoteProfile
+		}
 		postResponses = append(postResponses, &postResponse)
 	}
 	return &types.QueryFirstPageHomePostsResponse{
@@ -148,6 +154,12 @@ func (k Querier) QueryUserCreatedPosts(goCtx context.Context, req *types.QueryUs
 			Profile: &profileResponseCopy,
 		}
 
+		if post.Quote != "" {
+			quotePost, _ := k.GetPost(ctx, post.Quote)
+			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			postResponse.QuotePost = &quotePost
+			postResponse.QuoteProfile = &quoteProfile
+		}
 		postResponses = append(postResponses, &postResponse)
 	}
 	return &types.QueryUserCreatedPostsResponse{

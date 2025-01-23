@@ -4,7 +4,7 @@ package profile.v1;
 import "google/api/annotations.proto";
 import "profile/v1/genesis.proto";
 import "profile/v1/profile.proto";
-import "profile/v1/ActivitiesReceived.proto";
+import "profile/v1/ActivitiesReceivedResponse.proto";
 
 option go_package = "github.com/rollchains/tlock/x/profile/types";
 
@@ -34,6 +34,10 @@ service Query {
   };
   rpc QueryActivitiesReceivedCount(QueryActivitiesReceivedCountRequest) returns (QueryActivitiesReceivedCountResponse) {
     option (google.api.http).get = "/profile/v1/activites/received/count/{wallet_address}";
+  };
+
+  rpc QueryHasUserHandle(QueryHasUserHandleRequest) returns (QueryHasUserHandleResponse) {
+    option (google.api.http).get = "/profile/v1/userHandle/has/{userHandle}";
   };
 }
 
@@ -84,7 +88,7 @@ message QueryActivitiesReceivedRequest {
 }
 
 message QueryActivitiesReceivedResponse {
-  repeated ActivitiesReceived activitiesReceived = 1;
+  repeated ActivitiesReceivedResponse activitiesReceived = 1;
 }
 
 message QueryActivitiesReceivedCountRequest {
@@ -93,4 +97,12 @@ message QueryActivitiesReceivedCountRequest {
 
 message QueryActivitiesReceivedCountResponse {
   uint64 count = 1;
+}
+
+message QueryHasUserHandleRequest {
+  string userHandle = 1;
+}
+
+message QueryHasUserHandleResponse {
+  string address = 1;
 }

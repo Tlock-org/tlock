@@ -49,7 +49,7 @@ service Msg {
 
   rpc Comment(MsgCommentRequest) returns (MsgCommentResponse);
 
-  rpc Mention(MsgMentionRequest) returns (MsgMentionResponse);
+//  rpc Mention(MsgMentionRequest) returns (MsgMentionResponse);
 
 }
 
@@ -177,8 +177,8 @@ message MsgQuotePostRequest {
   string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string quote = 2;
   string comment = 3;
-  repeated string mention = 10;
-  repeated string topic = 11;
+  repeated string mention = 4;
+  repeated string topic = 5;
 }
 
 message MsgQuotePostResponse {
@@ -189,8 +189,8 @@ message MsgRepostRequest {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string quote = 2;
-  repeated string mention = 10;
-  repeated string topic = 11;
+  repeated string mention = 4;
+  repeated string topic = 5;
 }
 
 message MsgRepostResponse {
@@ -242,6 +242,7 @@ message MsgCommentRequest {
   string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string parentId = 2;
   string comment = 3;
+  repeated string mention = 4;
 }
 
 message MsgCommentResponse {
