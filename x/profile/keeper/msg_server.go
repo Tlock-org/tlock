@@ -149,6 +149,9 @@ func (ms msgServer) Follow(ctx context.Context, msg *types.MsgFollowRequest) (*t
 	blockTime := sdkCtx.BlockTime().Unix()
 	follower := msg.Creator
 	targetAddr := msg.TargetAddr
+	if follower == targetAddr {
+		return nil, errors.Wrap(types.ErrCannotFollowSelf, "follower and targetAddr cannot be the same")
+	}
 	isFollowing := ms.k.IsFollowing(sdkCtx, follower, targetAddr)
 	if !isFollowing {
 		ms.k.AddToFollowing(sdkCtx, follower, targetAddr)
