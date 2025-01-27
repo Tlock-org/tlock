@@ -1,11 +1,12 @@
 syntax = "proto3";
-package profile.v1;
+package post.v1;
 
 import "profile/v1/genesis.proto";
 import "profile/v1/profileResponse.proto";
 import "profile/v1/ActivitiesReceived.proto";
+import "post/v1/post.proto";
 
-option go_package = "github.com/rollchains/tlock/x/profile/types";
+option go_package = "github.com/rollchains/tlock/x/post/types";
 
 // ActivitiesReceived defines the structure of a ActivitiesReceived
 message ActivitiesReceivedResponse {
@@ -18,7 +19,8 @@ message ActivitiesReceivedResponse {
   string parent_image_url = 7;
   int64 timestamp = 8;
 
-  profile.v1.ProfileResponse profile = 9;
-  profile.v1.ProfileResponse targetProfile = 10;
+  Post parentPost = 9;
+  profile.v1.ProfileResponse profile = 10;
+  profile.v1.ProfileResponse targetProfile = 11;
 }
 

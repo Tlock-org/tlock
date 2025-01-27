@@ -90,7 +90,7 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 	blockTime := ctx.BlockTime().Unix()
 	// Generate a unique post ID
 	data := fmt.Sprintf("%s|%s|%s|%d", msg.Creator, msg.Title, msg.Content, blockTime)
-	postID := ms.k.generatePostID(data)
+	postID := ms.k.sha256Generate(data)
 
 	// Create the post
 	post := types.Post{
@@ -126,6 +126,9 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 			}
 		}
 	}
+
+	topic := msg.Topic
+	ms.addToTopicPosts(ctx, topic, postID)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -165,7 +168,7 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	// Generate a unique post ID
 	blockTime := ctx.BlockTime().Unix()
 	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
-	postID := ms.k.generatePostID(data)
+	postID := ms.k.sha256Generate(data)
 
 	// Create the post
 	post := types.Post{
@@ -192,20 +195,20 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 
 	// mentions add to activitiesReceived
 	userHandleList := msg.Mention
-	ms.k.logger.Error("========userHandleList:", "userHandleList", userHandleList)
 	if len(userHandleList) > 0 {
 		if len(userHandleList) > 10 {
 			return nil, fmt.Errorf("cannot mention more than 10 users")
 		}
 		for _, userHandle := range userHandleList {
-			ms.k.logger.Error("========userHandle:", "userHandle", userHandle)
 			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
-			ms.k.logger.Error("========address:", "address", address)
 			if address != "" {
 				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
 			}
 		}
 	}
+
+	topic := msg.Topic
+	ms.addToTopicPosts(ctx, topic, postID)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -242,7 +245,7 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 
 	blockTime := ctx.BlockTime().Unix()
 	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
-	postID := ms.k.generatePostID(data)
+	postID := ms.k.sha256Generate(data)
 
 	// Create the post
 	post := types.Post{
@@ -281,6 +284,9 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 			}
 		}
 	}
+
+	topic := msg.Topic
+	ms.addToTopicPosts(ctx, topic, postID)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -316,7 +322,7 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 
 	blockTime := ctx.BlockTime().Unix()
 	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
-	postID := ms.k.generatePostID(data)
+	postID := ms.k.sha256Generate(data)
 
 	// Create the post
 	post := types.Post{
@@ -356,6 +362,9 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 		}
 	}
 
+	topic := msg.Topic
+	ms.addToTopicPosts(ctx, topic, postID)
+
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -390,7 +399,7 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 
 	blockTime := ctx.BlockTime().Unix()
 	data := fmt.Sprintf("%s|%s|%s|%d", msg.Creator, msg.Quote, msg.Comment, blockTime)
-	postID := ms.k.generatePostID(data)
+	postID := ms.k.sha256Generate(data)
 
 	// Create the post
 	post := types.Post{
@@ -431,6 +440,9 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 		}
 	}
 
+	topic := msg.Topic
+	ms.addToTopicPosts(ctx, topic, postID)
+
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -461,7 +473,7 @@ func (ms msgServer) Repost(goCtx context.Context, msg *types.MsgRepostRequest) (
 
 	parentPost, _ := ms.k.GetPost(ctx, msg.Quote)
 	// add home posts
-	ms.addToHomePosts(ctx, parentPost)
+	//ms.addToHomePosts(ctx, parentPost)
 	// add to user created posts
 	ms.addToUserCreatedPosts(ctx, msg.Creator, parentPost)
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
@@ -490,6 +502,12 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		} else {
 			ms.addToHomePosts(ctx, post)
 		}
+
+		topicExist := ms.k.IsPostInTopicPosts(ctx, post.Id)
+		if topicExist {
+			ms.updateTopicPosts(ctx, post)
+		}
+
 	}
 	score := post.Score
 
@@ -679,7 +697,7 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 
 	blockTime := ctx.BlockTime().Unix()
 	data := fmt.Sprintf("%s|%s|%s|%d", msg.Creator, msg.ParentId, msg.Comment, blockTime)
-	commentID := ms.k.generatePostID(data)
+	commentID := ms.k.sha256Generate(data)
 
 	// Create the post
 	comment := types.Post{
@@ -703,6 +721,11 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 			ms.updateHomePosts(ctx, post)
 		} else {
 			ms.addToHomePosts(ctx, post)
+		}
+
+		topicExist := ms.k.IsPostInTopicPosts(ctx, post.Id)
+		if topicExist {
+			ms.updateTopicPosts(ctx, post)
 		}
 	}
 	//ms.addCommentList(ctx, post, commentID)
@@ -798,6 +821,37 @@ func (ms msgServer) addToUserCreatedPosts(ctx sdk.Context, creator string, post 
 		ms.k.DeleteLastPostFromUserCreated(ctx, creator)
 	} else {
 		ms.k.SetUserCreatedPostsCount(ctx, creator, count)
+	}
+}
+
+func (ms msgServer) addToTopicPosts(ctx sdk.Context, topic string, postId string) {
+	generate := ms.k.sha256Generate(topic)
+	ms.k.SetTopicPosts(ctx, generate, postId)
+	ms.k.SetTopicPostsBelong(ctx, generate, postId)
+	count, b := ms.k.GetTopicPostsCount(ctx, generate)
+	if !b {
+		panic("GetHomePostsCount error")
+	}
+	count += 1
+	if count > types.TopicPostsCount {
+		ms.k.DeleteLastPostFromTopicPosts(ctx, generate)
+	} else {
+		ms.k.SetTopicPostsCount(ctx, generate, count)
+	}
+}
+
+func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post) {
+	topic := ms.k.GetTopicByPostId(ctx, post.Id)
+	ms.k.DeleteFromTopicPostsByTopicAndPostId(ctx, topic, post.Id, post.HomePostsUpdate)
+	ms.k.SetTopicPosts(ctx, topic, post.Id)
+	count, b := ms.k.GetTopicPostsCount(ctx, topic)
+	if !b {
+		panic("GetTopicPostsCount error")
+	}
+	if count > types.TopicPostsCount {
+		ms.k.DeleteLastPostFromTopicPosts(ctx, topic)
+		count -= 1
+		ms.k.SetTopicPostsCount(ctx, topic, count)
 	}
 }
 

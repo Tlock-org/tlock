@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/rollchains/tlock/x/profile/types"
@@ -95,50 +94,55 @@ func (k Querier) QueryFollowers(goCtx context.Context, req *types.QueryFollowers
 }
 
 // QueryActivitiesReceived implements types.QueryServer.
-func (k Querier) QueryActivitiesReceived(goCtx context.Context, req *types.QueryActivitiesReceivedRequest) (*types.QueryActivitiesReceivedResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	list := k.GetActivitiesReceived(ctx, req.WalletAddress)
-	var activitiesReceivedList []*types.ActivitiesReceivedResponse
-	for _, activitiesReceived := range list {
-		activitiesReceivedResponse := types.ActivitiesReceivedResponse{
-			Address:        activitiesReceived.Address,
-			TargetAddress:  activitiesReceived.TargetAddress,
-			CommentId:      activitiesReceived.CommentId,
-			ParentId:       activitiesReceived.ParentId,
-			ActivitiesType: activitiesReceived.ActivitiesType,
-			Content:        activitiesReceived.Content,
-			ParentImageUrl: activitiesReceived.ParentImageUrl,
-			Timestamp:      activitiesReceived.Timestamp,
-		}
-
-		address := activitiesReceived.Address
-		if address != "" {
-			profile, _ := k.GetProfile(ctx, address)
-			profileResponse := types.ProfileResponse{
-				UserHandle: profile.UserHandle,
-				Nickname:   profile.Nickname,
-				Avatar:     profile.Avatar,
-			}
-			activitiesReceivedResponse.Profile = &profileResponse
-		}
-		targetAddress := activitiesReceived.TargetAddress
-		if targetAddress != "" {
-			targetProfile, _ := k.GetProfile(ctx, targetAddress)
-			targetProfileResponse := types.ProfileResponse{
-				UserHandle: targetProfile.UserHandle,
-				Nickname:   targetProfile.Nickname,
-				Avatar:     targetProfile.Avatar,
-			}
-			activitiesReceivedResponse.TargetProfile = &targetProfileResponse
-		}
-
-		activitiesReceivedList = append(activitiesReceivedList, &activitiesReceivedResponse)
-	}
-	return &types.QueryActivitiesReceivedResponse{
-		activitiesReceivedList,
-	}, nil
-}
+//func (k Querier) QueryActivitiesReceived(goCtx context.Context, req *types.QueryActivitiesReceivedRequest) (*types.QueryActivitiesReceivedResponse, error) {
+//	ctx := sdk.UnwrapSDKContext(goCtx)
+//
+//	list := k.GetActivitiesReceived(ctx, req.WalletAddress)
+//	var activitiesReceivedList []*types.ActivitiesReceivedResponse
+//	for _, activitiesReceived := range list {
+//		activitiesReceivedResponse := types.ActivitiesReceivedResponse{
+//			Address:        activitiesReceived.Address,
+//			TargetAddress:  activitiesReceived.TargetAddress,
+//			CommentId:      activitiesReceived.CommentId,
+//			ParentId:       activitiesReceived.ParentId,
+//			ActivitiesType: activitiesReceived.ActivitiesType,
+//			Content:        activitiesReceived.Content,
+//			ParentImageUrl: activitiesReceived.ParentImageUrl,
+//			Timestamp:      activitiesReceived.Timestamp,
+//		}
+//
+//		//parentId := activitiesReceived.ParentId
+//		//if parentId != "" {
+//		//
+//		//}
+//
+//		address := activitiesReceived.Address
+//		if address != "" {
+//			profile, _ := k.GetProfile(ctx, address)
+//			profileResponse := types.ProfileResponse{
+//				UserHandle: profile.UserHandle,
+//				Nickname:   profile.Nickname,
+//				Avatar:     profile.Avatar,
+//			}
+//			activitiesReceivedResponse.Profile = &profileResponse
+//		}
+//		targetAddress := activitiesReceived.TargetAddress
+//		if targetAddress != "" {
+//			targetProfile, _ := k.GetProfile(ctx, targetAddress)
+//			targetProfileResponse := types.ProfileResponse{
+//				UserHandle: targetProfile.UserHandle,
+//				Nickname:   targetProfile.Nickname,
+//				Avatar:     targetProfile.Avatar,
+//			}
+//			activitiesReceivedResponse.TargetProfile = &targetProfileResponse
+//		}
+//
+//		activitiesReceivedList = append(activitiesReceivedList, &activitiesReceivedResponse)
+//	}
+//	return &types.QueryActivitiesReceivedResponse{
+//		activitiesReceivedList,
+//	}, nil
+//}
 
 // QueryActivitiesReceivedCount implements types.QueryServer.
 func (k Querier) QueryActivitiesReceivedCount(goCtx context.Context, req *types.QueryActivitiesReceivedCountRequest) (*types.QueryActivitiesReceivedCountResponse, error) {
@@ -150,11 +154,29 @@ func (k Querier) QueryActivitiesReceivedCount(goCtx context.Context, req *types.
 }
 
 // QueryHasUserHandle implements types.QueryServer.
-func (k Querier) QueryHasUserHandle(goCtx context.Context, req *types.QueryHasUserHandleRequest) (*types.QueryHasUserHandleResponse, error) {
+//func (k Querier) QueryHasUserHandle(goCtx context.Context, req *types.QueryHasUserHandleRequest) (*types.QueryHasUserHandleResponse, error) {
+//	ctx := sdk.UnwrapSDKContext(goCtx)
+//	//handle := k.HasUserHandle(ctx, req.UserHandle)
+//	address := k.GetAddressByUserHandle(ctx, req.UserHandle)
+//	return &types.QueryHasUserHandleResponse{
+//		address,
+//	}, nil
+//}
+
+// SearchUsers implements types.QueryServer.
+func (k Querier) SearchUsers(goCtx context.Context, req *types.SearchUsersRequest) (*types.SearchUsersResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	//handle := k.HasUserHandle(ctx, req.UserHandle)
-	address := k.GetAddressByUserHandle(ctx, req.UserHandle)
-	return &types.QueryHasUserHandleResponse{
-		address,
+	matching := req.Matching
+	if matching == "" {
+		return &types.SearchUsersResponse{}, nil
+	}
+	users, _ := k.SearchUsersByMatching(ctx, matching)
+	//users, _ := k.SearchUsersByMatching(ctx, strings.ToLower(matching))
+	var list []*types.UserSearch
+	for _, user := range users {
+		list = append(list, &user)
+	}
+	return &types.SearchUsersResponse{
+		Users: list,
 	}, nil
 }

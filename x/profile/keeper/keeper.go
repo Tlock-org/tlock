@@ -131,10 +131,10 @@ func (k Keeper) GetProfile(ctx sdk.Context, walletAddress string) (types.Profile
 	return profile, true
 }
 
-func (k Keeper) AddToUserHandleList(ctx sdk.Context, userHandle string, wallet string) {
+func (k Keeper) AddToUserHandleList(ctx sdk.Context, userHandle string, address string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleKeyPrefix))
 	key := append([]byte(userHandle))
-	store.Set(key, []byte(wallet))
+	store.Set(key, []byte(address))
 }
 func (k Keeper) HasUserHandle(ctx sdk.Context, userHandle string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleKeyPrefix))
@@ -154,6 +154,31 @@ func (k Keeper) GetAddressByUserHandle(ctx sdk.Context, userHandle string) strin
 		return ""
 	}
 	return string(bz)
+}
+
+func (k Keeper) AddToUserSearchList(ctx sdk.Context, uhnn string, userSearch types.UserSearch) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserSearchKeyPrefix))
+	key := append([]byte(uhnn), []byte(userSearch.WalletAddress)...)
+	bz := k.cdc.MustMarshal(&userSearch)
+	store.Set(key, bz)
+}
+func (k Keeper) DeleteFromUserSearchList(ctx sdk.Context, uhnn string, address string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserSearchKeyPrefix))
+	key := append([]byte(uhnn), []byte(address)...)
+	store.Delete(key)
+}
+func (k Keeper) SearchUsersByMatching(ctx sdk.Context, matching string) ([]types.UserSearch, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserSearchKeyPrefix+matching))
+	iterator := store.ReverseIterator(nil, nil)
+	defer iterator.Close()
+	var users []types.UserSearch
+	for ; iterator.Valid(); iterator.Next() {
+		val := iterator.Value()
+		var user types.UserSearch
+		k.cdc.MustUnmarshal(val, &user)
+		users = append(users, user)
+	}
+	return users, true
 }
 
 func (k Keeper) TruncateAddressSuffix(address string) string {

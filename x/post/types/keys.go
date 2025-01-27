@@ -41,8 +41,14 @@ const (
 	LikesReceivedPrefix    = "Post/likes/received/"
 	CommentsReceivedPrefix = "Post/comments/received/"
 
-	HomePostsCount    = 100
-	HomePostsPageSize = 10
+	HomePostsCount    = 1000
+	HomePostsPageSize = 100
+
+	TopicPostsKeyPrefix       = "Post/posts/topic/"
+	TopicPostsCountKeyPrefix  = "Post/posts/topic/count/"
+	TopicPostsCount           = 1000
+	TopicPostsPageSize        = 100
+	TopicPostsBelongKeyPrefix = "Post/posts/topic/belong/"
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{

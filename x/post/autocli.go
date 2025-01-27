@@ -35,6 +35,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Short:     "query first home posts",
 				},
 				{
+					RpcMethod: "QueryTopicPosts",
+					Use:       "topic-posts",
+					Short:     "query topic posts",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "topic"},
+					},
+				},
+				{
 					RpcMethod: "QueryUserCreatedPosts",
 					Use:       "user-created-posts",
 					Short:     "query user created posts",
@@ -116,6 +124,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{
 							ProtoField: "wallet",
 						},
+					},
+				},
+				{
+					RpcMethod: "QueryActivitiesReceived",
+					Use:       "activities-received [address]",
+					Short:     "get list of activitiesReceived",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "address"},
 					},
 				},
 			},

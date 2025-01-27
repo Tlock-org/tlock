@@ -233,7 +233,7 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) 
 
 	currentTime := time.Now()
 	unixMilli := currentTime.Unix()
-	lastTwoDigits := unixMilli % 10
+	lastTwoDigits := unixMilli % 100
 	fmt.Sprintf("===============lastTwoDigits: %d", lastTwoDigits)
 
 	pageIndex := lastTwoDigits % totalPages
@@ -339,6 +339,126 @@ func (k Keeper) IsPostInHomePosts(ctx sdk.Context, postId string, homePostsUpdat
 	key := append(bzBlockTime, []byte(postId)...)
 
 	return store.Has(key)
+}
+
+func (k Keeper) SetTopicPostsBelong(ctx sdk.Context, topic string, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix))
+	key := append([]byte(postId))
+	store.Set(key, []byte(topic))
+}
+
+func (k Keeper) GetTopicPosts(ctx sdk.Context, topic string) ([]string, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix+topic))
+
+	topicPostsCount, _ := k.GetTopicPostsCount(ctx, topic)
+	if topicPostsCount == 0 {
+		return []string{}, &query.PageResponse{
+			NextKey: nil,
+			Total:   uint64(topicPostsCount),
+		}, nil
+	}
+
+	const pageSize = types.TopicPostsPageSize
+	totalPages := topicPostsCount / pageSize
+	if topicPostsCount%pageSize != 0 {
+		totalPages += 1
+	}
+
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	currentTime := time.Now()
+	unixMilli := currentTime.Unix()
+	lastTwoDigits := unixMilli % 100
+
+	pageIndex := lastTwoDigits % totalPages
+	// 00-99  10000 00:1-100 01:101-200 02:201-300
+	//first := lastTwoDigits * 100
+	first := pageIndex * pageSize
+
+	const totalPosts = types.TopicPostsCount
+	if first >= totalPosts {
+		return nil, nil, fmt.Errorf("offset exceeds total number of topic posts")
+	}
+
+	pagination := &query.PageRequest{}
+
+	pagination.Limit = pageSize
+	pagination.Offset = uint64(first)
+	pagination.Reverse = true
+
+	var postIDs []string
+
+	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
+		postIDs = append(postIDs, string(value))
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+	return postIDs, pageRes, nil
+}
+
+func (k Keeper) SetTopicPosts(ctx sdk.Context, topic string, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix))
+	blockTime := k.EncodeBlockTime(ctx)
+	key := append(append([]byte(topic), blockTime...), []byte(postId)...)
+	store.Set(key, []byte(postId))
+}
+func (k Keeper) IsPostInTopicPosts(ctx sdk.Context, postId string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsBelongKeyPrefix))
+	//bzBlockTime := make([]byte, 8)
+	//binary.BigEndian.PutUint64(bzBlockTime, uint64(homePostsUpdate))
+	//key := append(append([]byte(topic), bzBlockTime...), []byte(postId)...)
+	key := append([]byte(postId))
+	return store.Has(key)
+}
+func (k Keeper) GetTopicByPostId(ctx sdk.Context, postId string) string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsBelongKeyPrefix))
+	key := append([]byte(postId))
+	return string(store.Get(key))
+}
+func (k Keeper) DeleteFromTopicPostsByTopicAndPostId(ctx sdk.Context, topic string, postId string, homePostsUpdate int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix+topic))
+	bzBlockTime := make([]byte, 8)
+	binary.BigEndian.PutUint64(bzBlockTime, uint64(homePostsUpdate))
+	key := append(bzBlockTime, []byte(postId)...)
+	store.Delete(key)
+}
+func (k Keeper) DeleteLastPostFromTopicPosts(ctx sdk.Context, topic string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix+topic))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	if !iterator.Valid() {
+		panic("topicPostsCount exceeds 1000 but no posts found")
+	}
+	earliestKey := iterator.Key()
+	earliestPostID := string(iterator.Value())
+
+	store.Delete(earliestKey)
+	k.Logger().Info("Deleted earliest home post", "post_id", earliestPostID)
+}
+func (k Keeper) SetTopicPostsCount(ctx sdk.Context, topic string, count int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsCountKeyPrefix))
+	key := append([]byte(topic))
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, uint64(count))
+	store.Set(key, bz)
+}
+
+func (k Keeper) GetTopicPostsCount(ctx sdk.Context, topic string) (int64, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsCountKeyPrefix))
+	key := append([]byte(topic))
+	bz := store.Get(key)
+	if bz == nil {
+		return 0, true
+	}
+
+	count := int64(binary.BigEndian.Uint64(bz))
+	return count, true
 }
 
 func (k Keeper) SetUserCreatedPostsCount(ctx sdk.Context, creator string, count int64) {
@@ -741,7 +861,7 @@ func (k Keeper) GetPost(ctx sdk.Context, id string) (types.Post, bool) {
 // generatePostID generates a unique post ID.
 // This is a simple implementation using block time and some randomness.
 // Consider using a more robust method in production.
-func (k Keeper) generatePostID(data string) string {
+func (k Keeper) sha256Generate(data string) string {
 	hash := sha256.Sum256([]byte(data))
 	return hex.EncodeToString(hash[:])
 }

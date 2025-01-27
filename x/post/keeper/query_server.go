@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/rollchains/tlock/x/post/types"
-
+	profileTypes "github.com/rollchains/tlock/x/profile/types"
 	"google.golang.org/grpc/status"
 )
 
@@ -125,6 +125,46 @@ func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.Query
 		postResponses = append(postResponses, &postResponse)
 	}
 	return &types.QueryFirstPageHomePostsResponse{
+		Posts: postResponses,
+	}, nil
+}
+
+// QueryTopicPosts implements types.QueryServer.
+func (k Querier) QueryTopicPosts(goCtx context.Context, req *types.QueryTopicPostsRequest) (*types.QueryTopicPostsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	topic := req.Topic
+	generateTopic := k.sha256Generate(topic)
+	postIDs, _, err := k.Keeper.GetTopicPosts(ctx, generateTopic)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	var postResponses []*types.PostResponse
+	for _, postID := range postIDs {
+		post, success := k.GetPost(ctx, postID)
+		if !success {
+			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
+		}
+		postCopy := post
+
+		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+
+		profileResponseCopy := profile
+
+		postResponse := types.PostResponse{
+			Post:    &postCopy,
+			Profile: &profileResponseCopy,
+		}
+		if post.Quote != "" {
+			quotePost, _ := k.GetPost(ctx, post.Quote)
+			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			postResponse.QuotePost = &quotePost
+			postResponse.QuoteProfile = &quoteProfile
+		}
+
+		postResponses = append(postResponses, &postResponse)
+	}
+	return &types.QueryTopicPostsResponse{
 		Posts: postResponses,
 	}, nil
 }
@@ -393,5 +433,57 @@ func (k Querier) QueryCommentsReceived(goCtx context.Context, req *types.QueryCo
 	}
 	return &types.QueryCommentsReceivedResponse{
 		Comments: commentReceivedResponses,
+	}, nil
+}
+
+// QueryActivitiesReceived implements types.QueryServer.
+func (k Querier) QueryActivitiesReceived(goCtx context.Context, req *types.QueryActivitiesReceivedRequest) (*types.QueryActivitiesReceivedResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	list := k.ProfileKeeper.GetActivitiesReceived(ctx, req.Address)
+	var activitiesReceivedList []*types.ActivitiesReceivedResponse
+	for _, activitiesReceived := range list {
+		activitiesReceivedResponse := types.ActivitiesReceivedResponse{
+			Address:        activitiesReceived.Address,
+			TargetAddress:  activitiesReceived.TargetAddress,
+			CommentId:      activitiesReceived.CommentId,
+			ParentId:       activitiesReceived.ParentId,
+			ActivitiesType: activitiesReceived.ActivitiesType,
+			Content:        activitiesReceived.Content,
+			ParentImageUrl: activitiesReceived.ParentImageUrl,
+			Timestamp:      activitiesReceived.Timestamp,
+		}
+
+		parentId := activitiesReceived.ParentId
+		if parentId != "" {
+			parentPost, _ := k.GetPost(ctx, parentId)
+			activitiesReceivedResponse.ParentPost = &parentPost
+		}
+
+		address := activitiesReceived.Address
+		if address != "" {
+			profile, _ := k.ProfileKeeper.GetProfile(ctx, address)
+			profileResponse := profileTypes.ProfileResponse{
+				UserHandle: profile.UserHandle,
+				Nickname:   profile.Nickname,
+				Avatar:     profile.Avatar,
+			}
+			activitiesReceivedResponse.Profile = &profileResponse
+		}
+		targetAddress := activitiesReceived.TargetAddress
+		if targetAddress != "" {
+			targetProfile, _ := k.ProfileKeeper.GetProfile(ctx, targetAddress)
+			targetProfileResponse := profileTypes.ProfileResponse{
+				UserHandle: targetProfile.UserHandle,
+				Nickname:   targetProfile.Nickname,
+				Avatar:     targetProfile.Avatar,
+			}
+			activitiesReceivedResponse.TargetProfile = &targetProfileResponse
+		}
+
+		activitiesReceivedList = append(activitiesReceivedList, &activitiesReceivedResponse)
+	}
+	return &types.QueryActivitiesReceivedResponse{
+		activitiesReceivedList,
 	}, nil
 }

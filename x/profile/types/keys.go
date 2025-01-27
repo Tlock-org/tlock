@@ -20,6 +20,7 @@ const (
 
 	ProfileKeyPrefix           = "Profile/value/"
 	ProfileUserHandleKeyPrefix = "Profile/userHandle/"
+	ProfileUserSearchKeyPrefix = "Profile/userSearch/"
 
 	ProfileFollowingPrefix  = "Profile/following/"
 	ProfileFollowersPrefix  = "Profile/followers/"

@@ -49,20 +49,28 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "wallet_address"},
 					},
 				},
-				{
-					RpcMethod: "QueryActivitiesReceived",
-					Use:       "activitiesReceived [wallet_address]",
-					Short:     "get list of activitiesReceived",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "wallet_address"},
-					},
-				},
+				//{
+				//	RpcMethod: "QueryActivitiesReceived",
+				//	Use:       "activitiesReceived [wallet_address]",
+				//	Short:     "get list of activitiesReceived",
+				//	PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+				//		{ProtoField: "wallet_address"},
+				//	},
+				//},
 				{
 					RpcMethod: "QueryActivitiesReceivedCount",
 					Use:       "activitiesReceivedCount [wallet_address]",
 					Short:     "get list of activitiesReceivedCount",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "wallet_address"},
+					},
+				},
+				{
+					RpcMethod: "SearchUsers",
+					Use:       "searchUsers [matching]",
+					Short:     "get users by matching",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "matching"},
 					},
 				},
 			},

@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/rollchains/tlock/x/profile/types"
+	"strings"
 )
 
 type msgServer struct {
@@ -43,18 +44,19 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	profileJson := msg.ProfileJson
 
 	dbProfile, _ := ms.k.GetProfile(ctx, msg.GetCreator())
-	handle := dbProfile.UserHandle
-	//if profileJson.UserHandle != "" {
-	//	handle = profileJson.UserHandle
-	//}
+	dbUserHandle := dbProfile.UserHandle
+	dbNickname := dbProfile.Nickname
+
 	userHandle := profileJson.UserHandle
+	nickname := profileJson.Nickname
 	if userHandle != "" {
 		validateUserHandle, err := types.ValidateUserHandle(userHandle)
 		if validateUserHandle {
-			if handle != profileJson.UserHandle {
-				exist := ms.k.HasUserHandle(ctx, profileJson.UserHandle)
+			userHandle = strings.ToLower(userHandle)
+			if dbUserHandle != userHandle {
+				exist := ms.k.HasUserHandle(ctx, userHandle)
 				if exist {
-					if handle == "" {
+					if dbUserHandle == "" {
 						suffixHandle := ms.k.TruncateAddressSuffix(dbProfile.WalletAddress)
 						suffixExist := ms.k.HasUserHandle(ctx, suffixHandle)
 						if suffixExist {
@@ -62,12 +64,32 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 						} else {
 							ms.k.AddToUserHandleList(ctx, suffixHandle, msg.Creator)
 							dbProfile.UserHandle = suffixHandle
+
+							// add userHandle to userSearch
+							ms.k.DeleteFromUserSearchList(ctx, suffixHandle, msg.Creator)
+							userSearch := types.UserSearch{
+								UserHandle:    suffixHandle,
+								WalletAddress: nickname,
+								Nickname:      msg.Creator,
+							}
+							ms.k.AddToUserSearchList(ctx, suffixHandle, userSearch)
 						}
 					}
 				} else {
-					ms.k.DeleteFromUserHandleList(ctx, profileJson.UserHandle)
-					ms.k.AddToUserHandleList(ctx, profileJson.UserHandle, msg.Creator)
-					dbProfile.UserHandle = profileJson.UserHandle
+					if dbUserHandle != "" {
+						ms.k.DeleteFromUserHandleList(ctx, dbUserHandle)
+						ms.k.AddToUserHandleList(ctx, userHandle, msg.Creator)
+						dbProfile.UserHandle = userHandle
+
+						// add userHandle to userSearch
+						ms.k.DeleteFromUserSearchList(ctx, dbUserHandle, msg.Creator)
+						userSearch := types.UserSearch{
+							UserHandle:    userHandle,
+							WalletAddress: msg.Creator,
+							Nickname:      nickname,
+						}
+						ms.k.AddToUserSearchList(ctx, userHandle, userSearch)
+					}
 				}
 
 			} else {
@@ -75,6 +97,19 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 			}
 		} else {
 			return &types.MsgAddProfileResponse{}, err
+		}
+	}
+
+	// add nickName to userSearch
+	if nickname != "" {
+		if dbNickname != nickname {
+			ms.k.DeleteFromUserSearchList(ctx, dbNickname, msg.Creator)
+			userSearch := types.UserSearch{
+				userHandle,
+				nickname,
+				msg.Creator,
+			}
+			ms.k.AddToUserSearchList(ctx, nickname, userSearch)
 		}
 	}
 
@@ -114,39 +149,42 @@ func (ms msgServer) Follow(ctx context.Context, msg *types.MsgFollowRequest) (*t
 	blockTime := sdkCtx.BlockTime().Unix()
 	follower := msg.Creator
 	targetAddr := msg.TargetAddr
-	ms.k.AddToFollowing(sdkCtx, follower, targetAddr)
-	ms.k.AddToFollowers(sdkCtx, targetAddr, follower)
+	isFollowing := ms.k.IsFollowing(sdkCtx, follower, targetAddr)
+	if !isFollowing {
+		ms.k.AddToFollowing(sdkCtx, follower, targetAddr)
+		ms.k.AddToFollowers(sdkCtx, targetAddr, follower)
 
-	profileFollower, _ := ms.k.GetProfile(sdkCtx, follower)
-	following := profileFollower.Following
-	following += 1
-	profileFollower.Following = following
-	ms.k.SetProfile(sdkCtx, profileFollower)
+		profileFollower, _ := ms.k.GetProfile(sdkCtx, follower)
+		following := profileFollower.Following
+		following += 1
+		profileFollower.Following = following
+		ms.k.SetProfile(sdkCtx, profileFollower)
 
-	profileTarget, _ := ms.k.GetProfile(sdkCtx, targetAddr)
-	followers := profileTarget.Followers
-	followers += 1
-	profileTarget.Followers = followers
-	ms.k.SetProfile(sdkCtx, profileTarget)
+		profileTarget, _ := ms.k.GetProfile(sdkCtx, targetAddr)
+		followers := profileTarget.Followers
+		followers += 1
+		profileTarget.Followers = followers
+		ms.k.SetProfile(sdkCtx, profileTarget)
 
-	activitiesReceived := types.ActivitiesReceived{
-		Address:        follower,
-		TargetAddress:  targetAddr,
-		ActivitiesType: types.ActivitiesType_ACTIVITIES_FOLLOW,
-		Timestamp:      blockTime,
+		activitiesReceived := types.ActivitiesReceived{
+			Address:        follower,
+			TargetAddress:  targetAddr,
+			ActivitiesType: types.ActivitiesType_ACTIVITIES_FOLLOW,
+			Timestamp:      blockTime,
+		}
+		ms.k.SetActivitiesReceived(sdkCtx, activitiesReceived, targetAddr, follower)
+		count, b := ms.k.GetActivitiesReceivedCount(sdkCtx, targetAddr)
+		if !b {
+			panic("GetActivitiesReceivedCount error")
+		}
+		count += 1
+		if count > types.ActivitiesReceivedCount {
+			ms.k.DeleteLastActivitiesReceived(sdkCtx, follower)
+		}
+		ms.k.SetActivitiesReceivedCount(sdkCtx, targetAddr, count)
+
+		ms.k.SetFollowTime(sdkCtx, follower, targetAddr)
 	}
-	ms.k.SetActivitiesReceived(sdkCtx, activitiesReceived, targetAddr, follower)
-	count, b := ms.k.GetActivitiesReceivedCount(sdkCtx, targetAddr)
-	if !b {
-		panic("GetActivitiesReceivedCount error")
-	}
-	count += 1
-	if count > types.ActivitiesReceivedCount {
-		ms.k.DeleteLastActivitiesReceived(sdkCtx, follower)
-	}
-	ms.k.SetActivitiesReceivedCount(sdkCtx, targetAddr, count)
-
-	ms.k.SetFollowTime(sdkCtx, follower, targetAddr)
 
 	return &types.MsgFollowResponse{}, nil
 }

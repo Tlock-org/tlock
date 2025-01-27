@@ -1,0 +1,14 @@
+syntax = "proto3";
+package profile.v1;
+
+import "profile/v1/genesis.proto";
+
+option go_package = "github.com/rollchains/tlock/x/profile/types";
+
+// UserSearch defines the structure of a UserSearch
+message UserSearch {
+  string user_handle = 1;
+  string wallet_address = 2;
+  string nickname = 3;
+}
+

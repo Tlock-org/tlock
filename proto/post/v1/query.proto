@@ -8,6 +8,7 @@ import "post/v1/commentResponse.proto";
 import "post/v1/CommentReceivedResponse.proto";
 import "post/v1/likesIMade.proto";
 import "post/v1/likesReceived.proto";
+import "post/v1/ActivitiesReceivedResponse.proto";
 
 option go_package = "github.com/rollchains/tlock/x/post/types";
 
@@ -29,6 +30,10 @@ service Query {
 
   rpc QueryFirstPageHomePosts(QueryFirstPageHomePostsRequest) returns (QueryFirstPageHomePostsResponse) {
     option (google.api.http).get = "/post/v1/firstPageHomePosts";
+  }
+
+  rpc QueryTopicPosts(QueryTopicPostsRequest) returns (QueryTopicPostsResponse) {
+    option (google.api.http).get = "/post/v1/topicPosts/{topic}";
   }
 
   // QueryPost allows querying a specific post by its ID
@@ -60,6 +65,10 @@ service Query {
     option (google.api.http).get = "/post/v1/comments/received/{wallet}";
   }
 
+  rpc QueryActivitiesReceived(QueryActivitiesReceivedRequest) returns (QueryActivitiesReceivedResponse) {
+    option (google.api.http).get = "/post/v1/activites/received/{address}";
+  };
+
 }
 
 // QueryResolveNameRequest grabs the name of a wallet.
@@ -73,11 +82,17 @@ message QueryResolveNameResponse {
 }
 
 message QueryHomePostsRequest {
-//  cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
 message QueryHomePostsResponse {
-//  repeated Post posts = 1;
+  repeated PostResponse posts = 1;
+}
+
+message QueryTopicPostsRequest {
+    string topic = 1;
+}
+
+message QueryTopicPostsResponse {
   repeated PostResponse posts = 1;
 }
 
@@ -159,4 +174,12 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params defines the parameters of the module.
   Params params = 1;
+}
+
+message QueryActivitiesReceivedRequest {
+  string address = 1;
+}
+
+message QueryActivitiesReceivedResponse {
+  repeated ActivitiesReceivedResponse activitiesReceived = 1;
 }
