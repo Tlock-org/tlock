@@ -133,8 +133,8 @@ func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.Query
 func (k Querier) QueryTopicPosts(goCtx context.Context, req *types.QueryTopicPostsRequest) (*types.QueryTopicPostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	topic := req.Topic
-	generateTopic := k.sha256Generate(topic)
-	postIDs, _, err := k.Keeper.GetTopicPosts(ctx, generateTopic)
+	topicHash := k.sha256Generate(topic)
+	postIDs, _, err := k.Keeper.GetTopicPosts(ctx, topicHash)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -244,7 +244,7 @@ func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (
 // SearchTopic implements types.QueryServer.
 func (k Querier) SearchTopics(goCtx context.Context, req *types.SearchTopicsRequest) (*types.SearchTopicsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	topics, _ := k.QueryTopics(ctx, req.Matching)
+	topics, _ := k.SearchTopicMatches(ctx, req.Matching)
 	return &types.SearchTopicsResponse{
 		Topic: topics,
 	}, nil

@@ -7,6 +7,7 @@ import (
 	"cosmossdk.io/x/feegrant"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -342,10 +343,52 @@ func (k Keeper) IsPostInHomePosts(ctx sdk.Context, postId string, homePostsUpdat
 	return store.Has(key)
 }
 
-func (k Keeper) SetTopicPostsBelong(ctx sdk.Context, topic string, postId string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix))
+func (k Keeper) SetPostTopicsMapping(ctx sdk.Context, topics []string, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostTopicsMappingKeyPrefix))
 	key := append([]byte(postId))
-	store.Set(key, []byte(topic))
+	value, _ := json.Marshal(topics)
+	store.Set(key, value)
+}
+
+func (k Keeper) SetTopicSearch(ctx sdk.Context, topic string) {
+	topicLower := strings.ToLower(topic)
+	topicHash := k.sha256Generate(topic)
+	key := fmt.Sprintf("%s%s%s%s", types.TopicSearchKeyPrefix, topicLower, ":", topicHash)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
+	if !store.Has([]byte(key)) {
+		store.Set([]byte(key), []byte(topic))
+	}
+}
+
+func (k Keeper) SearchTopicMatches(ctx sdk.Context, query string) ([]string, error) {
+	queryLower := strings.ToLower(query)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
+
+	searchPrefix := fmt.Sprintf("%s%s", types.TopicSearchKeyPrefix, queryLower)
+
+	startKey := []byte(searchPrefix)
+	endKey := []byte(fmt.Sprintf("%s\xFF", searchPrefix))
+
+	iterator := store.Iterator(startKey, endKey)
+	defer iterator.Close()
+
+	var matchedTopics []string
+	limit := 10
+	for ; iterator.Valid() && len(matchedTopics) < limit; iterator.Next() {
+		key := string(iterator.Key())
+		topicWithHash := strings.TrimPrefix(key, types.TopicSearchKeyPrefix)
+		parts := strings.SplitN(topicWithHash, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		topic := parts[0]
+		if strings.HasPrefix(topic, queryLower) {
+			originalTopic := string(iterator.Value())
+			matchedTopics = append(matchedTopics, originalTopic)
+		}
+	}
+
+	return matchedTopics, nil
 }
 
 func (k Keeper) GetTopicPosts(ctx sdk.Context, topic string) ([]string, *query.PageResponse, error) {
@@ -402,64 +445,31 @@ func (k Keeper) GetTopicPosts(ctx sdk.Context, topic string) ([]string, *query.P
 	return postIDs, pageRes, nil
 }
 
-func (k Keeper) SetTopic(ctx sdk.Context, topic string) {
-	topicLower := strings.ToLower(topic)
-	topicHash := k.sha256Generate(topic)
-	key := fmt.Sprintf("%s%s%s%s", types.TopicKeyPrefix, topicLower, ":", topicHash)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
-	if !store.Has([]byte(key)) {
-		store.Set([]byte(key), []byte(topic))
-	}
-}
-
-func (k Keeper) QueryTopics(ctx sdk.Context, query string) ([]string, error) {
-	queryLower := strings.ToLower(query)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
-
-	searchPrefix := fmt.Sprintf("%s%s", types.TopicKeyPrefix, queryLower)
-
-	startKey := []byte(searchPrefix)
-	endKey := []byte(fmt.Sprintf("%s\xFF", searchPrefix))
-
-	iterator := store.Iterator(startKey, endKey)
-	defer iterator.Close()
-
-	var matchedTopics []string
-	for ; iterator.Valid(); iterator.Next() {
-		key := string(iterator.Key())
-		topicWithHash := strings.TrimPrefix(key, types.TopicKeyPrefix)
-		parts := strings.SplitN(topicWithHash, ":", 2)
-		if len(parts) != 2 {
-			continue
-		}
-		topic := parts[0]
-		if strings.HasPrefix(topic, queryLower) {
-			originalTopic := string(iterator.Value())
-			matchedTopics = append(matchedTopics, originalTopic)
-		}
-	}
-
-	return matchedTopics, nil
-}
-
 func (k Keeper) SetTopicPosts(ctx sdk.Context, topic string, postId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix))
 	blockTime := k.EncodeBlockTime(ctx)
 	key := append(append([]byte(topic), blockTime...), []byte(postId)...)
 	store.Set(key, []byte(postId))
 }
-func (k Keeper) IsPostInTopicPosts(ctx sdk.Context, postId string) bool {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsBelongKeyPrefix))
-	//bzBlockTime := make([]byte, 8)
-	//binary.BigEndian.PutUint64(bzBlockTime, uint64(homePostsUpdate))
-	//key := append(append([]byte(topic), bzBlockTime...), []byte(postId)...)
+func (k Keeper) IsPostInTopics(ctx sdk.Context, postId string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostTopicsMappingKeyPrefix))
 	key := append([]byte(postId))
 	return store.Has(key)
 }
-func (k Keeper) GetTopicByPostId(ctx sdk.Context, postId string) string {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsBelongKeyPrefix))
+func (k Keeper) GetTopicsByPostId(ctx sdk.Context, postId string) []string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostTopicsMappingKeyPrefix))
 	key := append([]byte(postId))
-	return string(store.Get(key))
+	bz := store.Get(key)
+	if bz == nil {
+		return nil
+	}
+
+	var topics []string
+	err := json.Unmarshal(bz, &topics)
+	if err != nil {
+		return nil
+	}
+	return topics
 }
 func (k Keeper) DeleteFromTopicPostsByTopicAndPostId(ctx sdk.Context, topic string, postId string, homePostsUpdate int64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix+topic))

@@ -44,12 +44,12 @@ const (
 	HomePostsCount    = 1000
 	HomePostsPageSize = 100
 
-	TopicKeyPrefix            = "Post/topic/"
-	TopicPostsKeyPrefix       = "Post/posts/topic/"
-	TopicPostsCountKeyPrefix  = "Post/posts/topic/count/"
-	TopicPostsCount           = 1000
-	TopicPostsPageSize        = 100
-	TopicPostsBelongKeyPrefix = "Post/posts/topic/belong/"
+	TopicSearchKeyPrefix       = "Post/topic/search/"
+	TopicPostsKeyPrefix        = "Post/posts/topic/"
+	TopicPostsCountKeyPrefix   = "Post/posts/topic/count/"
+	TopicPostsCount            = 1000
+	TopicPostsPageSize         = 100
+	PostTopicsMappingKeyPrefix = "Post/topics/mapping/"
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{

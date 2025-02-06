@@ -127,8 +127,20 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 		}
 	}
 
-	topic := msg.Topic
-	ms.addToTopicPosts(ctx, topic, postID)
+	topicList := msg.Topic
+	if len(topicList) > 0 {
+		if len(topicList) > 10 {
+			return nil, fmt.Errorf("topic list can not be larger than 10")
+		}
+		var hashTopics []string
+		for _, topic := range topicList {
+			ms.k.SetTopicSearch(ctx, topic)
+			topicHash := ms.k.sha256Generate(topic)
+			ms.addToTopicPosts(ctx, topicHash, postID)
+			hashTopics = append(hashTopics, topicHash)
+		}
+		ms.k.SetPostTopicsMapping(ctx, hashTopics, postID)
+	}
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -207,9 +219,20 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 		}
 	}
 
-	topic := msg.Topic
-	ms.addToTopicPosts(ctx, topic, postID)
-	ms.k.SetTopic(ctx, topic)
+	topicList := msg.Topic
+	if len(topicList) > 0 {
+		if len(topicList) > 10 {
+			return nil, fmt.Errorf("topic list can not be larger than 10")
+		}
+		var hashTopics []string
+		for _, topic := range topicList {
+			ms.k.SetTopicSearch(ctx, topic)
+			topicHash := ms.k.sha256Generate(topic)
+			ms.addToTopicPosts(ctx, topicHash, postID)
+			hashTopics = append(hashTopics, topicHash)
+		}
+		ms.k.SetPostTopicsMapping(ctx, hashTopics, postID)
+	}
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -286,8 +309,20 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 		}
 	}
 
-	topic := msg.Topic
-	ms.addToTopicPosts(ctx, topic, postID)
+	topicList := msg.Topic
+	if len(topicList) > 0 {
+		if len(topicList) > 10 {
+			return nil, fmt.Errorf("topic list can not be larger than 10")
+		}
+		var hashTopics []string
+		for _, topic := range topicList {
+			ms.k.SetTopicSearch(ctx, topic)
+			topicHash := ms.k.sha256Generate(topic)
+			ms.addToTopicPosts(ctx, topicHash, postID)
+			hashTopics = append(hashTopics, topicHash)
+		}
+		ms.k.SetPostTopicsMapping(ctx, hashTopics, postID)
+	}
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -363,8 +398,20 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 		}
 	}
 
-	topic := msg.Topic
-	ms.addToTopicPosts(ctx, topic, postID)
+	topicList := msg.Topic
+	if len(topicList) > 0 {
+		if len(topicList) > 10 {
+			return nil, fmt.Errorf("topic list can not be larger than 10")
+		}
+		var hashTopics []string
+		for _, topic := range topicList {
+			ms.k.SetTopicSearch(ctx, topic)
+			topicHash := ms.k.sha256Generate(topic)
+			ms.addToTopicPosts(ctx, topicHash, postID)
+			hashTopics = append(hashTopics, topicHash)
+		}
+		ms.k.SetPostTopicsMapping(ctx, hashTopics, postID)
+	}
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -441,8 +488,20 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 		}
 	}
 
-	topic := msg.Topic
-	ms.addToTopicPosts(ctx, topic, postID)
+	topicList := msg.Topic
+	if len(topicList) > 0 {
+		if len(topicList) > 10 {
+			return nil, fmt.Errorf("topic list can not be larger than 10")
+		}
+		var hashTopics []string
+		for _, topic := range topicList {
+			ms.k.SetTopicSearch(ctx, topic)
+			topicHash := ms.k.sha256Generate(topic)
+			ms.addToTopicPosts(ctx, topicHash, postID)
+			hashTopics = append(hashTopics, topicHash)
+		}
+		ms.k.SetPostTopicsMapping(ctx, hashTopics, postID)
+	}
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -504,7 +563,7 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 			ms.addToHomePosts(ctx, post)
 		}
 
-		topicExist := ms.k.IsPostInTopicPosts(ctx, post.Id)
+		topicExist := ms.k.IsPostInTopics(ctx, post.Id)
 		if topicExist {
 			ms.updateTopicPosts(ctx, post)
 		}
@@ -724,7 +783,7 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 			ms.addToHomePosts(ctx, post)
 		}
 
-		topicExist := ms.k.IsPostInTopicPosts(ctx, post.Id)
+		topicExist := ms.k.IsPostInTopics(ctx, post.Id)
 		if topicExist {
 			ms.updateTopicPosts(ctx, post)
 		}
@@ -825,35 +884,38 @@ func (ms msgServer) addToUserCreatedPosts(ctx sdk.Context, creator string, post 
 	}
 }
 
-func (ms msgServer) addToTopicPosts(ctx sdk.Context, topic string, postId string) {
-	generate := ms.k.sha256Generate(topic)
-	ms.k.SetTopicPosts(ctx, generate, postId)
-	ms.k.SetTopicPostsBelong(ctx, generate, postId)
-	count, b := ms.k.GetTopicPostsCount(ctx, generate)
+func (ms msgServer) addToTopicPosts(ctx sdk.Context, topicHash string, postId string) {
+	ms.k.SetTopicPosts(ctx, topicHash, postId)
+	count, b := ms.k.GetTopicPostsCount(ctx, topicHash)
 	if !b {
-		panic("GetHomePostsCount error")
+		panic("GetTopicPostsCount error")
 	}
 	count += 1
 	if count > types.TopicPostsCount {
-		ms.k.DeleteLastPostFromTopicPosts(ctx, generate)
+		ms.k.DeleteLastPostFromTopicPosts(ctx, topicHash)
 	} else {
-		ms.k.SetTopicPostsCount(ctx, generate, count)
+		ms.k.SetTopicPostsCount(ctx, topicHash, count)
 	}
 }
 
 func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post) {
-	topic := ms.k.GetTopicByPostId(ctx, post.Id)
-	ms.k.DeleteFromTopicPostsByTopicAndPostId(ctx, topic, post.Id, post.HomePostsUpdate)
-	ms.k.SetTopicPosts(ctx, topic, post.Id)
-	count, b := ms.k.GetTopicPostsCount(ctx, topic)
-	if !b {
-		panic("GetTopicPostsCount error")
+	topics := ms.k.GetTopicsByPostId(ctx, post.Id)
+	if len(topics) > 0 {
+		for _, topic := range topics {
+			ms.k.DeleteFromTopicPostsByTopicAndPostId(ctx, topic, post.Id, post.HomePostsUpdate)
+			ms.k.SetTopicPosts(ctx, topic, post.Id)
+			count, b := ms.k.GetTopicPostsCount(ctx, topic)
+			if !b {
+				panic("GetTopicPostsCount error")
+			}
+			if count > types.TopicPostsCount {
+				ms.k.DeleteLastPostFromTopicPosts(ctx, topic)
+				count -= 1
+				ms.k.SetTopicPostsCount(ctx, topic, count)
+			}
+		}
 	}
-	if count > types.TopicPostsCount {
-		ms.k.DeleteLastPostFromTopicPosts(ctx, topic)
-		count -= 1
-		ms.k.SetTopicPostsCount(ctx, topic, count)
-	}
+
 }
 
 func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num int64) types.Post {

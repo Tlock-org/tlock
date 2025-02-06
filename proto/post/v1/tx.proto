@@ -108,7 +108,8 @@ message MsgCreateFreePostWithTitle {
   repeated string videosUrl = 8;
   string quote = 9;
   repeated string mention = 10;
-  string topic = 11;
+  repeated string topic = 11;
+  string category = 12;
 }
 
 message MsgCreateFreePostWithTitleResponse {
@@ -127,7 +128,8 @@ message MsgCreateFreePost {
   repeated string videosUrl = 8;
   string quote = 9;
   repeated string mention = 10;
-  string topic = 11;
+  repeated string topic = 11;
+  string category = 12;
 }
 
 message MsgCreateFreePostResponse {
@@ -146,7 +148,8 @@ message MsgCreateFreePostImagePayable {
   repeated string videosUrl = 8;
   string quote = 9;
   repeated string mention = 10;
-  string topic = 11;
+  repeated string topic = 11;
+  string category = 12;
 }
 
 message MsgCreateFreePostImagePayableResponse {
@@ -165,7 +168,8 @@ message MsgCreatePaidPost {
   repeated string videosUrl = 8;
   string quote = 9;
   repeated string mention = 10;
-  string topic = 11;
+  repeated string topic = 11;
+  string category = 12;
 }
 
 message MsgCreatePaidPostResponse {
@@ -178,7 +182,8 @@ message MsgQuotePostRequest {
   string quote = 2;
   string comment = 3;
   repeated string mention = 4;
-  string topic = 5;
+  repeated string topic = 5;
+  string category = 6;
 }
 
 message MsgQuotePostResponse {
@@ -189,8 +194,9 @@ message MsgRepostRequest {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string quote = 2;
-  repeated string mention = 4;
-  string topic = 5;
+  repeated string mention = 3;
+  repeated string topic = 4;
+  string category = 5;
 }
 
 message MsgRepostResponse {
