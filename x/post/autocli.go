@@ -59,6 +59,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
+					RpcMethod: "SearchTopics",
+					Use:       "searchTopics [matching]",
+					Short:     "get topics by matching",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "matching"},
+					},
+				},
+				{
 					RpcMethod: "QueryComments",
 					Use:       "query-comments",
 					Short:     "query commends",

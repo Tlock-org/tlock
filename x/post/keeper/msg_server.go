@@ -209,6 +209,7 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 
 	topic := msg.Topic
 	ms.addToTopicPosts(ctx, topic, postID)
+	ms.k.SetTopic(ctx, topic)
 
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{

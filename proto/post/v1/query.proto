@@ -32,6 +32,10 @@ service Query {
     option (google.api.http).get = "/post/v1/firstPageHomePosts";
   }
 
+  rpc SearchTopics(SearchTopicsRequest) returns (SearchTopicsResponse) {
+    option (google.api.http).get = "/post/v1/topics/{matching}";
+  }
+
   rpc QueryTopicPosts(QueryTopicPostsRequest) returns (QueryTopicPostsResponse) {
     option (google.api.http).get = "/post/v1/topicPosts/{topic}";
   }
@@ -86,6 +90,14 @@ message QueryHomePostsRequest {
 
 message QueryHomePostsResponse {
   repeated PostResponse posts = 1;
+}
+
+message SearchTopicsRequest {
+  string matching = 1;
+}
+
+message SearchTopicsResponse {
+  repeated string topic = 1;
 }
 
 message QueryTopicPostsRequest {

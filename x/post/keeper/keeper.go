@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"strings"
 	"time"
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -399,6 +400,46 @@ func (k Keeper) GetTopicPosts(ctx sdk.Context, topic string) ([]string, *query.P
 		return nil, nil, err
 	}
 	return postIDs, pageRes, nil
+}
+
+func (k Keeper) SetTopic(ctx sdk.Context, topic string) {
+	topicLower := strings.ToLower(topic)
+	topicHash := k.sha256Generate(topic)
+	key := fmt.Sprintf("%s%s%s%s", types.TopicKeyPrefix, topicLower, ":", topicHash)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
+	if !store.Has([]byte(key)) {
+		store.Set([]byte(key), []byte(topic))
+	}
+}
+
+func (k Keeper) QueryTopics(ctx sdk.Context, query string) ([]string, error) {
+	queryLower := strings.ToLower(query)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
+
+	searchPrefix := fmt.Sprintf("%s%s", types.TopicKeyPrefix, queryLower)
+
+	startKey := []byte(searchPrefix)
+	endKey := []byte(fmt.Sprintf("%s\xFF", searchPrefix))
+
+	iterator := store.Iterator(startKey, endKey)
+	defer iterator.Close()
+
+	var matchedTopics []string
+	for ; iterator.Valid(); iterator.Next() {
+		key := string(iterator.Key())
+		topicWithHash := strings.TrimPrefix(key, types.TopicKeyPrefix)
+		parts := strings.SplitN(topicWithHash, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		topic := parts[0]
+		if strings.HasPrefix(topic, queryLower) {
+			originalTopic := string(iterator.Value())
+			matchedTopics = append(matchedTopics, originalTopic)
+		}
+	}
+
+	return matchedTopics, nil
 }
 
 func (k Keeper) SetTopicPosts(ctx sdk.Context, topic string, postId string) {

@@ -74,15 +74,15 @@ func SetupTest(t *testing.T) *testFixture {
 	registerBaseSDKModules(logger, f, encCfg, keys)
 
 	// Setup Keeper.
-	f.k = keeper.NewKeeper(
-		encCfg.Codec,
-		keys[types.ModuleName],
-		runtime.NewKVStoreService(keys[types.ModuleName]),
-		logger,
-		f.govModAddr
-	)
+	//f.k = keeper.NewKeeper(
+	//	encCfg.Codec,
+	//	keys[types.ModuleName],
+	//	runtime.NewKVStoreService(keys[types.ModuleName]),
+	//	logger,
+	//	f.govModAddr,
+	//
 	f.msgServer = keeper.NewMsgServerImpl(f.k)
-	f.queryServer = keeper.NewQuerier(f.k)
+	//f.queryServer = keeper.NewQuerier(f.k)
 	f.appModule = module.NewAppModule(encCfg.Codec, f.k)
 
 	return f

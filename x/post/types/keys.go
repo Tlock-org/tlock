@@ -44,6 +44,7 @@ const (
 	HomePostsCount    = 1000
 	HomePostsPageSize = 100
 
+	TopicKeyPrefix            = "Post/topic/"
 	TopicPostsKeyPrefix       = "Post/posts/topic/"
 	TopicPostsCountKeyPrefix  = "Post/posts/topic/count/"
 	TopicPostsCount           = 1000

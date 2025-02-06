@@ -121,7 +121,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	dbProfile.Website = profileJson.Website
 	dbProfile.CreationTime = blockTime
 
-	if msg.Creator == "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p" {
+	if msg.Creator == "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p" || msg.Creator == "tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg" {
 		dbProfile.Level = 6
 	}
 

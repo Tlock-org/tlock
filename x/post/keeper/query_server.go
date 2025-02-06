@@ -241,6 +241,15 @@ func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (
 	return &types.QueryPostResponse{Post: &postResponse}, nil
 }
 
+// SearchTopic implements types.QueryServer.
+func (k Querier) SearchTopics(goCtx context.Context, req *types.SearchTopicsRequest) (*types.SearchTopicsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	topics, _ := k.QueryTopics(ctx, req.Matching)
+	return &types.SearchTopicsResponse{
+		Topic: topics,
+	}, nil
+}
+
 // likesIMade implements types.QueryServer.
 func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeRequest) (*types.LikesIMadeResponse, error) {
 	if request == nil {
