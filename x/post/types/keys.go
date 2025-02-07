@@ -50,6 +50,8 @@ const (
 	TopicPostsCount            = 1000
 	TopicPostsPageSize         = 100
 	PostTopicsMappingKeyPrefix = "Post/topics/mapping/"
+
+	PollUserPrefix = "Post/poll/"
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{

@@ -13,4 +13,7 @@ var (
 	ErrLikesIMadeRemove    = errorsmod.Register(ModuleName, 1105, "likes i made remove error")
 	ErrSavesIMadeRemove    = errorsmod.Register(ModuleName, 1106, "saves i made remove error")
 	ErrLikesReceivedRemove = errorsmod.Register(ModuleName, 1107, "likes received remove error")
+	ErrVotingNotStarted    = errorsmod.Register(ModuleName, 1108, "Voting has not started yet.")
+	ErrVotingEnded         = errorsmod.Register(ModuleName, 1109, "Voting has ended.")
+	ErrAlreadyVoted        = errorsmod.Register(ModuleName, 1110, "Already voted.")
 )

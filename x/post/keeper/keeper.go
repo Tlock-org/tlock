@@ -984,3 +984,19 @@ func (k Keeper) GrantPeriodicAllowance(ctx sdk.Context, sender sdk.AccAddress, u
 	}
 
 }
+
+func (k Keeper) SetPoll(ctx sdk.Context, id string, sender string, optionId int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PollUserPrefix+id+"/"))
+	optionIdBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(optionIdBytes, uint64(optionId))
+	store.Set([]byte(sender), optionIdBytes)
+}
+
+func (k Keeper) GetPoll(ctx sdk.Context, id string, sender string) (string, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PollUserPrefix+id+"/"))
+	b := store.Get([]byte(sender))
+	if b == nil {
+		return "", false
+	}
+	return string(b), true
+}

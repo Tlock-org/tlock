@@ -1032,3 +1032,32 @@ func (ms msgServer) addActivitiesReceived(sdkCtx sdk.Context, parentPost types.P
 	}
 	ms.k.ProfileKeeper.SetActivitiesReceivedCount(sdkCtx, target, count)
 }
+
+// CastVoteOnPoll implements types.MsgServer.
+func (ms msgServer) CastVoteOnPoll(goCtx context.Context, msg *types.CastVoteOnPollRequest) (*types.CastVoteOnPollResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	blockTime := ctx.BlockTime().Unix()
+	parentPost, _ := ms.k.GetPost(ctx, msg.Id)
+
+	if blockTime < parentPost.Poll.VotingStart {
+		return nil, errors.Wrapf(types.ErrVotingNotStarted, "voting has not started yet")
+	}
+	if blockTime > parentPost.Poll.VotingEnd {
+		return nil, errors.Wrapf(types.ErrVotingEnded, "voting has ended")
+	}
+	_, b := ms.k.GetPoll(ctx, msg.Id, msg.Creator)
+	if b {
+		return nil, errors.Wrapf(types.ErrAlreadyVoted, "already voted")
+	}
+	ms.k.SetPoll(ctx, msg.Id, msg.Creator, msg.OptionId)
+	parentPost.Poll.TotalVotes += 1
+	voteList := parentPost.Poll.Vote
+	for i, _ := range voteList {
+		if parentPost.Poll.Vote[i].Id == msg.OptionId {
+			parentPost.Poll.Vote[i].Count += 1
+			break
+		}
+	}
+	ms.k.SetPost(ctx, parentPost)
+	return &types.CastVoteOnPollResponse{Status: true}, nil
+}

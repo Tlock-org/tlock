@@ -33,5 +33,19 @@ message Post {
   uint64 repost_count = 14;
   uint64 score = 15;
   int64 homePostsUpdate = 16;
+  Poll poll = 17;
+}
+
+message Poll {
+  int64 totalVotes = 1;
+  int64 votingStart = 2;
+  int64 votingEnd = 3;
+  repeated Vote vote = 4;
+}
+
+message Vote{
+  string option = 1;
+  int64 count = 2;
+  int64 id=3;
 }
 
