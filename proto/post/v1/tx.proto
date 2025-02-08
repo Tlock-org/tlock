@@ -132,6 +132,7 @@ message MsgCreateFreePost {
   repeated string mention = 10;
   repeated string topic = 11;
   string category = 12;
+  Poll poll = 13;
 }
 
 message MsgCreateFreePostResponse {
