@@ -90,11 +90,11 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 	blockTime := ctx.BlockTime().Unix()
 	// Generate a unique post ID
 	data := fmt.Sprintf("%s|%s|%s|%d", msg.Creator, msg.Title, msg.Content, blockTime)
-	postID := ms.k.sha256Generate(data)
+	postId := ms.k.sha256Generate(data)
 
 	// Create the post
 	post := types.Post{
-		Id:              postID,
+		Id:              postId,
 		PostType:        types.PostType_ARTICLE,
 		Title:           msg.Title,
 		Content:         msg.Content,
@@ -129,18 +129,10 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 	}
 
 	topicList := msg.Topic
-	if len(topicList) > 0 {
-		if len(topicList) > 10 {
-			return nil, fmt.Errorf("topic list can not be larger than 10")
-		}
-		var hashTopics []string
-		for _, topic := range topicList {
-			ms.k.SetTopicSearch(ctx, topic)
-			topicHash := ms.k.sha256Generate(topic)
-			ms.addToTopicPosts(ctx, topicHash, postID)
-			hashTopics = append(hashTopics, topicHash)
-		}
-		ms.k.SetPostTopicsMapping(ctx, hashTopics, postID)
+	category := msg.Category
+	err = ms.handleCategoryTopicPost(ctx, topicList, category, blockTime, postId)
+	if err != nil {
+		return nil, err
 	}
 
 	//Emit an event for the creation
@@ -148,13 +140,13 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 		sdk.NewEvent(
 			types.EventTypeCreateFreePostWithTitle,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
-			sdk.NewAttribute(types.AttributeKeyPostID, postID),
+			sdk.NewAttribute(types.AttributeKeyPostID, postId),
 			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})
 
-	return &types.MsgCreateFreePostWithTitleResponse{PostId: postID}, nil
+	return &types.MsgCreateFreePostWithTitleResponse{PostId: postId}, nil
 }
 
 // CreateFreePost implements types.MsgServer.
@@ -181,11 +173,11 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	// Generate a unique post ID
 	blockTime := ctx.BlockTime().Unix()
 	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
-	postID := ms.k.sha256Generate(data)
+	postId := ms.k.sha256Generate(data)
 
 	// Create the post
 	post := types.Post{
-		Id:              postID,
+		Id:              postId,
 		PostType:        types.PostType_ORIGINAL,
 		Content:         msg.Content,
 		Creator:         msg.Creator,
@@ -222,18 +214,10 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	}
 
 	topicList := msg.Topic
-	if len(topicList) > 0 {
-		if len(topicList) > 10 {
-			return nil, fmt.Errorf("topic list can not be larger than 10")
-		}
-		var hashTopics []string
-		for _, topic := range topicList {
-			ms.k.SetTopicSearch(ctx, topic)
-			topicHash := ms.k.sha256Generate(topic)
-			ms.addToTopicPosts(ctx, topicHash, postID)
-			hashTopics = append(hashTopics, topicHash)
-		}
-		ms.k.SetPostTopicsMapping(ctx, hashTopics, postID)
+	category := msg.Category
+	err = ms.handleCategoryTopicPost(ctx, topicList, category, blockTime, postId)
+	if err != nil {
+		return nil, err
 	}
 
 	//Emit an event for the creation
@@ -241,12 +225,12 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 		sdk.NewEvent(
 			types.EventTypeCreateFreePost,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
-			sdk.NewAttribute(types.AttributeKeyPostID, postID),
+			sdk.NewAttribute(types.AttributeKeyPostID, postId),
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})
 	//ms.k.Logger().Warn("============= create free post end ==============")
-	return &types.MsgCreateFreePostResponse{PostId: postID}, nil
+	return &types.MsgCreateFreePostResponse{PostId: postId}, nil
 }
 
 // CreateFreePostImagePayable implements types.MsgServer.
@@ -271,11 +255,11 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 
 	blockTime := ctx.BlockTime().Unix()
 	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
-	postID := ms.k.sha256Generate(data)
+	postId := ms.k.sha256Generate(data)
 
 	// Create the post
 	post := types.Post{
-		Id:              postID,
+		Id:              postId,
 		PostType:        types.PostType_ADVERTISEMENT,
 		Content:         msg.Content,
 		Creator:         msg.Creator,
@@ -312,18 +296,10 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 	}
 
 	topicList := msg.Topic
-	if len(topicList) > 0 {
-		if len(topicList) > 10 {
-			return nil, fmt.Errorf("topic list can not be larger than 10")
-		}
-		var hashTopics []string
-		for _, topic := range topicList {
-			ms.k.SetTopicSearch(ctx, topic)
-			topicHash := ms.k.sha256Generate(topic)
-			ms.addToTopicPosts(ctx, topicHash, postID)
-			hashTopics = append(hashTopics, topicHash)
-		}
-		ms.k.SetPostTopicsMapping(ctx, hashTopics, postID)
+	category := msg.Category
+	err = ms.handleCategoryTopicPost(ctx, topicList, category, blockTime, postId)
+	if err != nil {
+		return nil, err
 	}
 
 	//Emit an event for the creation
@@ -331,7 +307,7 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 		sdk.NewEvent(
 			types.EventTypeCreatePaidPost,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
-			sdk.NewAttribute(types.AttributeKeyPostID, postID),
+			sdk.NewAttribute(types.AttributeKeyPostID, postId),
 			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
@@ -360,11 +336,11 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 
 	blockTime := ctx.BlockTime().Unix()
 	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
-	postID := ms.k.sha256Generate(data)
+	postId := ms.k.sha256Generate(data)
 
 	// Create the post
 	post := types.Post{
-		Id:              postID,
+		Id:              postId,
 		PostType:        types.PostType_ADVERTISEMENT,
 		Content:         msg.Content,
 		Creator:         msg.Creator,
@@ -401,18 +377,10 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 	}
 
 	topicList := msg.Topic
-	if len(topicList) > 0 {
-		if len(topicList) > 10 {
-			return nil, fmt.Errorf("topic list can not be larger than 10")
-		}
-		var hashTopics []string
-		for _, topic := range topicList {
-			ms.k.SetTopicSearch(ctx, topic)
-			topicHash := ms.k.sha256Generate(topic)
-			ms.addToTopicPosts(ctx, topicHash, postID)
-			hashTopics = append(hashTopics, topicHash)
-		}
-		ms.k.SetPostTopicsMapping(ctx, hashTopics, postID)
+	category := msg.Category
+	err = ms.handleCategoryTopicPost(ctx, topicList, category, blockTime, postId)
+	if err != nil {
+		return nil, err
 	}
 
 	//Emit an event for the creation
@@ -420,13 +388,13 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 		sdk.NewEvent(
 			types.EventTypeCreatePaidPost,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
-			sdk.NewAttribute(types.AttributeKeyPostID, postID),
+			sdk.NewAttribute(types.AttributeKeyPostID, postId),
 			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})
 
-	return &types.MsgCreatePaidPostResponse{PostId: postID}, nil
+	return &types.MsgCreatePaidPostResponse{PostId: postId}, nil
 }
 
 // QuotePost implements types.MsgServer.
@@ -449,11 +417,11 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 
 	blockTime := ctx.BlockTime().Unix()
 	data := fmt.Sprintf("%s|%s|%s|%d", msg.Creator, msg.Quote, msg.Comment, blockTime)
-	postID := ms.k.sha256Generate(data)
+	postId := ms.k.sha256Generate(data)
 
 	// Create the post
 	post := types.Post{
-		Id:              postID,
+		Id:              postId,
 		PostType:        types.PostType_QUOTE,
 		Content:         msg.Comment,
 		Creator:         msg.Creator,
@@ -491,18 +459,10 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 	}
 
 	topicList := msg.Topic
-	if len(topicList) > 0 {
-		if len(topicList) > 10 {
-			return nil, fmt.Errorf("topic list can not be larger than 10")
-		}
-		var hashTopics []string
-		for _, topic := range topicList {
-			ms.k.SetTopicSearch(ctx, topic)
-			topicHash := ms.k.sha256Generate(topic)
-			ms.addToTopicPosts(ctx, topicHash, postID)
-			hashTopics = append(hashTopics, topicHash)
-		}
-		ms.k.SetPostTopicsMapping(ctx, hashTopics, postID)
+	category := msg.Category
+	err = ms.handleCategoryTopicPost(ctx, topicList, category, blockTime, postId)
+	if err != nil {
+		return nil, err
 	}
 
 	//Emit an event for the creation
@@ -510,7 +470,7 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 		sdk.NewEvent(
 			types.EventTypeCreateFreePostWithTitle,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
-			sdk.NewAttribute(types.AttributeKeyPostID, postID),
+			sdk.NewAttribute(types.AttributeKeyPostID, postId),
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})
@@ -568,6 +528,10 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		topicExist := ms.k.IsPostInTopics(ctx, post.Id)
 		if topicExist {
 			ms.updateTopicPosts(ctx, post)
+		}
+		categoryExist := ms.k.IsPostInCategory(ctx, post.Id)
+		if categoryExist {
+			ms.updateCategoryPosts(ctx, post)
 		}
 
 	}
@@ -789,6 +753,10 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 		if topicExist {
 			ms.updateTopicPosts(ctx, post)
 		}
+		categoryExist := ms.k.IsPostInCategory(ctx, post.Id)
+		if categoryExist {
+			ms.updateCategoryPosts(ctx, post)
+		}
 	}
 	//ms.addCommentList(ctx, post, commentID)
 	ms.k.AddToCommentList(ctx, post.Id, commentID, 0)
@@ -917,7 +885,6 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post) {
 			}
 		}
 	}
-
 }
 
 func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num int64) types.Post {
@@ -1035,6 +1002,101 @@ func (ms msgServer) addActivitiesReceived(sdkCtx sdk.Context, parentPost types.P
 	ms.k.ProfileKeeper.SetActivitiesReceivedCount(sdkCtx, target, count)
 }
 
+func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string, category string, blockTime int64, postId string) error {
+	if len(topicList) > 0 {
+		if len(topicList) > 10 {
+			return fmt.Errorf("topic list length can not be larger than 10")
+		}
+		var hashTopics []string
+		for _, topicName := range topicList {
+			topicHash := ms.k.sha256Generate(topicName)
+			// add topic
+			exists := ms.k.TopicExists(ctx, topicHash)
+			if !exists {
+				topic := types.Topic{
+					Id:         topicHash,
+					Name:       topicName,
+					CreateTime: blockTime,
+					UpdateTime: blockTime,
+				}
+				ms.k.AddTopic(ctx, topic)
+
+				ms.k.addToHotTopics72(ctx, topicHash, 0)
+			}
+
+			// add topic search
+			ms.k.SetTopicSearch(ctx, topicName)
+			ms.addToTopicPosts(ctx, topicHash, postId)
+			hashTopics = append(hashTopics, topicHash)
+
+			// add category posts
+			categoryDb := ms.k.getCategoryByTopicHash(ctx, topicHash)
+			if categoryDb != "" {
+				//ms.k.SetCategorySearch(ctx, categoryDb)
+				categoryHash := ms.k.sha256Generate(categoryDb)
+				ms.addToCategoryPosts(ctx, categoryHash, postId)
+				ms.k.SetPostCategoryMapping(ctx, categoryHash, postId)
+			} else {
+				if category != "" {
+					exists := ms.k.CategoryExists(ctx, category)
+					if exists {
+						//ms.k.SetCategorySearch(ctx, category)
+						categoryHash := ms.k.sha256Generate(category)
+						ms.addToCategoryPosts(ctx, categoryHash, postId)
+						topic, _ := ms.k.GetTopic(ctx, topicHash)
+						ms.k.SetCategoryTopics(ctx, topic.Score, categoryHash, topicHash)
+
+						ms.k.SetPostCategoryMapping(ctx, categoryHash, postId)
+						ms.k.SetTopicCategoryMapping(ctx, topicHash, category)
+					}
+				}
+			}
+
+		}
+		ms.k.SetPostTopicsMapping(ctx, hashTopics, postId)
+	} else {
+		// connect category and post
+		if category != "" {
+			exists := ms.k.CategoryExists(ctx, category)
+			if exists {
+				//ms.k.SetCategorySearch(ctx, category)
+				categoryHash := ms.k.sha256Generate(category)
+				ms.addToCategoryPosts(ctx, categoryHash, postId)
+				ms.k.SetPostCategoryMapping(ctx, categoryHash, postId)
+			}
+		}
+	}
+	return nil
+}
+
+func (ms msgServer) addToCategoryPosts(ctx sdk.Context, categoryHash string, postId string) {
+	ms.k.SetCategoryPosts(ctx, categoryHash, postId)
+	count, b := ms.k.GetCategoryPostsCount(ctx, categoryHash)
+	if !b {
+		panic("GetCategoryPostsCount error")
+	}
+	count += 1
+	if count > types.CategoryPostsCount {
+		ms.k.DeleteLastPostFromCategoryPosts(ctx, categoryHash)
+	} else {
+		ms.k.SetCategoryPostsCount(ctx, categoryHash, count)
+	}
+}
+func (ms msgServer) updateCategoryPosts(ctx sdk.Context, post types.Post) {
+	category := ms.k.GetCategoryByPostId(ctx, post.Id)
+	ms.k.DeleteFromCategoryPostsByCategoryAndPostId(ctx, category, post.Id, post.HomePostsUpdate)
+	ms.k.SetCategoryPosts(ctx, category, post.Id)
+	count, b := ms.k.GetCategoryPostsCount(ctx, category)
+	if !b {
+		panic("GetCategoryPostsCount error")
+	}
+	if count > types.CategoryPostsCount {
+		ms.k.DeleteLastPostFromCategoryPosts(ctx, category)
+		count -= 1
+		ms.k.SetCategoryPostsCount(ctx, category, count)
+	}
+}
+
 // CastVoteOnPoll implements types.MsgServer.
 func (ms msgServer) CastVoteOnPoll(goCtx context.Context, msg *types.CastVoteOnPollRequest) (*types.CastVoteOnPollResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -1062,4 +1124,63 @@ func (ms msgServer) CastVoteOnPoll(goCtx context.Context, msg *types.CastVoteOnP
 	}
 	ms.k.SetPost(ctx, parentPost)
 	return &types.CastVoteOnPollResponse{Status: true}, nil
+}
+
+// AddCategory implements types.MsgServer.
+func (ms msgServer) AddCategory(ctx context.Context, msg *types.AddCategoryRequest) (*types.AddCategoryResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	creator := msg.Creator
+	isAdmin := ms.k.ProfileKeeper.IsAdmin(sdkCtx, creator)
+	if isAdmin {
+		params := msg.Params
+		name := params.Name
+		id := ms.k.sha256Generate(name)
+		category := types.Category{
+			Id:     id,
+			Name:   params.Name,
+			Avatar: params.Avatar,
+		}
+		ms.k.AddCategory(sdkCtx, category)
+
+		sdkCtx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				types.EventTypeAddCategory,
+				sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+				sdk.NewAttribute(types.AttributeKeyCategoryID, id),
+				sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", sdkCtx.BlockTime())),
+			),
+		})
+		return &types.AddCategoryResponse{
+			Status: true,
+		}, nil
+	} else {
+		return &types.AddCategoryResponse{
+			Status: false,
+		}, errors.Wrapf(types.ErrRequestDenied, "request denied")
+	}
+}
+
+// DeleteCategory implements types.MsgServer.
+func (ms msgServer) DeleteCategory(ctx context.Context, msg *types.DeleteCategoryRequest) (*types.DeleteCategoryResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	creator := msg.Creator
+	isAdmin := ms.k.ProfileKeeper.IsAdmin(sdkCtx, creator)
+	if isAdmin {
+		ms.k.DeleteCategory(sdkCtx, msg.Id)
+		sdkCtx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				types.EventTypeDeleteCategory,
+				sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+				sdk.NewAttribute(types.AttributeKeyCategoryID, msg.Id),
+				sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", sdkCtx.BlockTime())),
+			),
+		})
+		return &types.DeleteCategoryResponse{
+			Status: true,
+		}, nil
+	} else {
+		return &types.DeleteCategoryResponse{
+			Status: false,
+		}, errors.Wrapf(types.ErrRequestDenied, "request denied")
+	}
 }

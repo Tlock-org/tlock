@@ -73,6 +73,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "matching"},
 					},
 				},
+				{
+					RpcMethod: "IsAdmin",
+					Use:       "is-admin [address]",
+					Short:     "is admin",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "address"},
+					},
+				},
 			},
 		},
 		Tx: &autocliv1.ServiceCommandDescriptor{
@@ -132,6 +140,34 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 						{
 							ProtoField: "targetAddr",
+						},
+					},
+				},
+				{
+					RpcMethod: "AddAdmin",
+					Use:       "add-admin [creator] [address]",
+					Short:     "add admin",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+							Optional:   false,
+						},
+						{
+							ProtoField: "address",
+						},
+					},
+				},
+				{
+					RpcMethod: "RemoveAdmin",
+					Use:       "remove-admin [creator] [address]",
+					Short:     "remove admin",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+							Optional:   false,
+						},
+						{
+							ProtoField: "address",
 						},
 					},
 				},

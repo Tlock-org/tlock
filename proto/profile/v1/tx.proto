@@ -23,6 +23,9 @@ service Msg {
   rpc Follow(MsgFollowRequest) returns (MsgFollowResponse);
 
   rpc Unfollow(MsgUnfollowRequest) returns (MsgUnfollowResponse);
+
+  rpc AddAdmin(MsgAddAdminRequest) returns (MsgAddAdminResponse);
+  rpc RemoveAdmin(MsgRemoveAdminRequest) returns (MsgRemoveAdminResponse);
 }
 
 // MsgUpdateParams is the Msg/UpdateParams request type.
@@ -83,4 +86,24 @@ message MsgUnfollowRequest {
 
 message MsgUnfollowResponse {
 
+}
+
+message MsgAddAdminRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string address = 2;
+}
+
+message MsgAddAdminResponse {
+  bool status = 1;
+}
+
+message MsgRemoveAdminRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string address = 2;
+}
+
+message MsgRemoveAdminResponse {
+  bool status = 1;
 }

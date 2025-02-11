@@ -369,3 +369,28 @@ func (k Keeper) GetActivitiesReceivedCount(ctx sdk.Context, walletAddr string) (
 	count := int64(binary.BigEndian.Uint64(bz))
 	return count, true
 }
+
+func (k Keeper) AddAdmin(ctx sdk.Context, address string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AuthorityKeyPrefix))
+	key := append([]byte(address))
+
+	if store.Has(key) {
+		return fmt.Errorf("address %s is already an admin", address)
+	}
+
+	store.Set(key, []byte(address))
+	return nil
+}
+
+func (k Keeper) RemoveAdmin(ctx sdk.Context, address string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AuthorityKeyPrefix))
+	key := append([]byte(address))
+	store.Delete(key)
+	return nil
+}
+
+func (k Keeper) IsAdmin(ctx sdk.Context, address string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AuthorityKeyPrefix))
+	key := append([]byte(address))
+	return store.Has(key)
+}

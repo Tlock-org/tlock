@@ -180,3 +180,12 @@ func (k Querier) SearchUsers(goCtx context.Context, req *types.SearchUsersReques
 		Users: list,
 	}, nil
 }
+
+// IsAdmin implements types.QueryServer.
+func (k Querier) IsAdmin(goCtx context.Context, req *types.IsAdminRequest) (*types.IsAdminResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	isAdmin := k.Keeper.IsAdmin(ctx, req.Address)
+	return &types.IsAdminResponse{
+		Status: isAdmin,
+	}, nil
+}

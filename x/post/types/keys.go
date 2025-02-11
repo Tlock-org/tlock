@@ -23,7 +23,6 @@ const (
 	PostKeyPrefix = "Post/content/"
 
 	HomePostsKeyPrefix      = "Post/posts/home/"
-	CategoryPostsKeyPrefix  = "Post/posts/category/"
 	FollowedPostsKeyPrefix  = "Post/posts/followed/"
 	HomePostsCountKeyPrefix = "home_posts_count"
 
@@ -50,6 +49,19 @@ const (
 	TopicPostsCount            = 1000
 	TopicPostsPageSize         = 100
 	PostTopicsMappingKeyPrefix = "Post/topics/mapping/"
+
+	CategoryKeyPrefix             = "Post/category/"
+	TopicKeyPrefix                = "Post/topic/"
+	TopicCategoryMappingKeyPrefix = "Post/topicCategoryMapping/"
+	CategoryTopicsKeyPrefix       = "Post/category/topics/"
+	HotTopics72KeyPrefix          = "Post/hot/topics/72/"
+
+	CategoryPostsKeyPrefix       = "Post/posts/category/"
+	CategoryPostsCountKeyPrefix  = "Post/posts/topic/count/"
+	CategoryPostsCount           = 10000
+	CategoryPostsPageSize        = 100
+	CategorySearchKeyPrefix      = "Post/category/search/"
+	PostCategoryMappingKeyPrefix = "Post/category/mapping/"
 
 	PollUserPrefix = "Post/poll/"
 )

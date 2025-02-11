@@ -142,6 +142,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "address"},
 					},
 				},
+				{
+					RpcMethod: "QueryCategoryExists",
+					Use:       "category-exists [category]",
+					Short:     "get category exists",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "category"},
+					},
+				},
 			},
 		},
 		Tx: &autocliv1.ServiceCommandDescriptor{
@@ -371,6 +379,32 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 						{
 							ProtoField: "comment",
+						},
+					},
+				},
+				{
+					RpcMethod: "AddCategory",
+					Use:       "add-category [creator] [params]",
+					Short:     "add category",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+						},
+						{
+							ProtoField: "params",
+						},
+					},
+				},
+				{
+					RpcMethod: "DeleteCategory",
+					Use:       "delete-category [creator] [id]",
+					Short:     "delete category",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+						},
+						{
+							ProtoField: "id",
 						},
 					},
 				},

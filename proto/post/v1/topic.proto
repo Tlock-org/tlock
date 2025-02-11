@@ -1,0 +1,25 @@
+syntax = "proto3";
+package post.v1;
+
+import "post/v1/genesis.proto";
+
+option go_package = "github.com/rollchains/tlock/x/post/types";
+
+message Topic {
+  string id = 1;
+  string name = 2;
+  string avatar = 3;
+  string title = 4;
+  // Brief summary or description of the topic.
+  string summary = 5;
+  string topic_admin = 6;
+  uint64 score = 7;
+  uint64 total_followers = 8;
+  uint64 post_count = 9;
+  uint64 comment_count = 10;
+  uint64 like_count = 11;
+  int64 create_time = 12;
+  int64 update_time = 13;
+}
+
+
