@@ -5,6 +5,7 @@ import (
 )
 
 var (
+	ErrRequestDenied       = errorsmod.Register(ModuleName, 10000, "Request denied.")
 	ErrPostNotFound        = errorsmod.Register(ModuleName, 1100, "post not found")
 	ErrInvalidRequest      = errorsmod.Register(ModuleName, 1101, "invalid request")
 	ErrInvalidAddress      = errorsmod.Register(ModuleName, 1102, "invalid address error")

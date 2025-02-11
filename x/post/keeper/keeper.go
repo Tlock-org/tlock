@@ -463,7 +463,6 @@ func (k Keeper) GetTopicsByPostId(ctx sdk.Context, postId string) []string {
 	if bz == nil {
 		return nil
 	}
-
 	var topics []string
 	err := json.Unmarshal(bz, &topics)
 	if err != nil {
@@ -663,15 +662,6 @@ func (k Keeper) GetCommentsReceived(ctx sdk.Context, creator string) ([]string, 
 	return list, nil
 }
 
-func (k Keeper) SetCategoryPosts(ctx sdk.Context, postId string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsKeyPrefix))
-	blockTime := k.EncodeBlockTime(ctx)
-	key := append(blockTime, []byte(postId)...)
-	store.Set([]byte(key), []byte(postId))
-}
-func (k Keeper) GetCategoryPosts(ctx sdk.Context, pagination *query.PageRequest) ([]string, *query.PageResponse, error) {
-	return nil, nil, nil
-}
 func (k Keeper) SetFollowedPosts(ctx sdk.Context, postId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowedPostsKeyPrefix))
 	blockTime := k.EncodeBlockTime(ctx)
@@ -984,6 +974,278 @@ func (k Keeper) GrantPeriodicAllowance(ctx sdk.Context, sender sdk.AccAddress, u
 	}
 
 }
+
+func (k Keeper) SetCategoryPosts(ctx sdk.Context, category string, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsKeyPrefix))
+	blockTime := k.EncodeBlockTime(ctx)
+	key := append(append([]byte(category), blockTime...), []byte(postId)...)
+	store.Set(key, []byte(postId))
+}
+func (k Keeper) SetCategoryPostsCount(ctx sdk.Context, category string, count int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsCountKeyPrefix))
+	key := append([]byte(category))
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, uint64(count))
+	store.Set(key, bz)
+}
+func (k Keeper) DeleteFromCategoryPostsByCategoryAndPostId(ctx sdk.Context, category string, postId string, homePostsUpdate int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsKeyPrefix+category))
+	bzBlockTime := make([]byte, 8)
+	binary.BigEndian.PutUint64(bzBlockTime, uint64(homePostsUpdate))
+	key := append(bzBlockTime, []byte(postId)...)
+	store.Delete(key)
+}
+func (k Keeper) DeleteLastPostFromCategoryPosts(ctx sdk.Context, category string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsKeyPrefix+category))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	if !iterator.Valid() {
+		panic("categoryPostsCount exceeds 1000 but no posts found")
+	}
+	earliestKey := iterator.Key()
+	earliestPostID := string(iterator.Value())
+
+	store.Delete(earliestKey)
+	k.Logger().Info("Deleted earliest category post", "post_id", earliestPostID)
+}
+func (k Keeper) GetCategoryPosts(ctx sdk.Context, category string) ([]string, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsKeyPrefix+category))
+
+	categoryPostsCount, _ := k.GetTopicPostsCount(ctx, category)
+	if categoryPostsCount == 0 {
+		return []string{}, &query.PageResponse{
+			NextKey: nil,
+			Total:   uint64(categoryPostsCount),
+		}, nil
+	}
+
+	const pageSize = types.CategoryPostsPageSize
+	totalPages := categoryPostsCount / pageSize
+	if categoryPostsCount%pageSize != 0 {
+		totalPages += 1
+	}
+
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	currentTime := time.Now()
+	unixMilli := currentTime.Unix()
+	lastTwoDigits := unixMilli % 100
+
+	pageIndex := lastTwoDigits % totalPages
+	// 00-99  10000 00:1-100 01:101-200 02:201-300
+	//first := lastTwoDigits * 100
+	first := pageIndex * pageSize
+
+	const totalPosts = types.CategoryPostsCount
+	if first >= totalPosts {
+		return nil, nil, fmt.Errorf("offset exceeds total number of category posts")
+	}
+
+	pagination := &query.PageRequest{}
+
+	pagination.Limit = pageSize
+	pagination.Offset = uint64(first)
+	pagination.Reverse = true
+
+	var postIDs []string
+
+	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
+		postIDs = append(postIDs, string(value))
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+	return postIDs, pageRes, nil
+}
+func (k Keeper) GetCategoryPostsCount(ctx sdk.Context, category string) (int64, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsCountKeyPrefix))
+	key := append([]byte(category))
+	bz := store.Get(key)
+	if bz == nil {
+		return 0, true
+	}
+	count := int64(binary.BigEndian.Uint64(bz))
+	return count, true
+}
+
+//	func (k Keeper) SetCategorySearch(ctx sdk.Context, category string) {
+//		categoryLower := strings.ToLower(category)
+//		categoryHash := k.sha256Generate(category)
+//		key := fmt.Sprintf("%s%s%s%s", types.CategorySearchKeyPrefix, categoryLower, ":", categoryHash)
+//		store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
+//		if !store.Has([]byte(key)) {
+//			store.Set([]byte(key), []byte(category))
+//		}
+//	}
+func (k Keeper) SetPostCategoryMapping(ctx sdk.Context, category string, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostCategoryMappingKeyPrefix))
+	key := append([]byte(postId))
+	store.Set(key, []byte(category))
+}
+func (k Keeper) IsPostInCategory(ctx sdk.Context, postId string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostCategoryMappingKeyPrefix))
+	key := append([]byte(postId))
+	return store.Has(key)
+}
+func (k Keeper) GetCategoryByPostId(ctx sdk.Context, postId string) string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostCategoryMappingKeyPrefix))
+	key := append([]byte(postId))
+	bz := store.Get(key)
+	if bz == nil {
+		return ""
+	}
+	return string(bz)
+}
+
+func (k Keeper) AddCategory(ctx sdk.Context, category types.Category) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryKeyPrefix))
+	// Use the category ID as the key
+	key := []byte(category.Id)
+	// Marshal the category using the codec
+	bz := k.cdc.MustMarshal(&category)
+	// Set the category in the store
+	store.Set(key, bz)
+}
+
+func (k Keeper) DeleteCategory(ctx sdk.Context, id string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryKeyPrefix))
+	key := []byte(id)
+	store.Delete(key)
+}
+
+func (k Keeper) CategoryExists(ctx sdk.Context, id string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryKeyPrefix))
+	key := []byte(id)
+	return store.Has(key)
+}
+
+func (k Keeper) AddTopic(ctx sdk.Context, topic types.Topic) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicKeyPrefix))
+	key := []byte(topic.Id)
+	bz := k.cdc.MustMarshal(&topic)
+	store.Set(key, bz)
+}
+func (k Keeper) GetTopic(ctx sdk.Context, id string) (types.Topic, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicKeyPrefix))
+	// Use the topic ID as the key
+	key := []byte(id)
+	// Get the value from the store
+	bz := store.Get(key)
+	if bz == nil {
+		// Topic not found
+		return types.Topic{}, false
+	}
+	var topic types.Topic
+	// Unmarshal the binary data into the Topic struct
+	err := k.cdc.Unmarshal(bz, &topic)
+	if err != nil {
+		// If unmarshalling fails, log an error and return false
+		panic(fmt.Sprintf("Failed to unmarshal topic with id %s: %v", id, err))
+	}
+	return topic, true
+}
+
+func (k Keeper) TopicExists(ctx sdk.Context, id string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicKeyPrefix))
+	key := []byte(id)
+	return store.Has(key)
+}
+
+func (k Keeper) addToHotTopics72(ctx sdk.Context, topicHash string, topicScore uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72KeyPrefix))
+	bzScore := k.EncodeScore(topicScore)
+	var buffer bytes.Buffer
+	buffer.Write(bzScore)
+	buffer.WriteString(topicHash)
+	key := buffer.Bytes()
+	store.Set(key, []byte(topicHash))
+}
+
+func (k Keeper) SetTopicCategoryMapping(ctx sdk.Context, topicHash string, category string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicCategoryMappingKeyPrefix))
+	key := append([]byte(topicHash))
+	value, _ := json.Marshal(category)
+	store.Set(key, value)
+}
+func (k Keeper) getCategoryByTopicHash(ctx sdk.Context, topicHash string) string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicCategoryMappingKeyPrefix))
+	key := append([]byte(topicHash))
+	value := store.Get(key)
+	if value == nil {
+		return ""
+	}
+	return string(value)
+}
+
+func (k Keeper) SetCategoryTopics(ctx sdk.Context, topicScore uint64, categoryHash string, topicHash string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryTopicsKeyPrefix))
+	bzScore := k.EncodeScore(topicScore)
+	var buffer bytes.Buffer
+	buffer.WriteString(categoryHash)
+	buffer.Write(bzScore)
+	buffer.WriteString(topicHash)
+	key := buffer.Bytes()
+	store.Set(key, []byte(topicHash))
+}
+
+//func (k Keeper) GetCategoryTopics(ctx sdk.Context, categoryHash string) ([]string, *query.PageResponse, error) {
+//	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryTopicsKeyPrefix+categoryHash))
+//
+//	categoryPostsCount, _ := k.GetTopicPostsCount(ctx, categoryHash)
+//	if categoryPostsCount == 0 {
+//		return []string{}, &query.PageResponse{
+//			NextKey: nil,
+//			Total:   uint64(categoryPostsCount),
+//		}, nil
+//	}
+//
+//	const pageSize = types.CategoryPostsPageSize
+//	totalPages := categoryPostsCount / pageSize
+//	if categoryPostsCount%pageSize != 0 {
+//		totalPages += 1
+//	}
+//
+//	if totalPages == 0 {
+//		totalPages = 1
+//	}
+//
+//	currentTime := time.Now()
+//	unixMilli := currentTime.Unix()
+//	lastTwoDigits := unixMilli % 100
+//
+//	pageIndex := lastTwoDigits % totalPages
+//	// 00-99  10000 00:1-100 01:101-200 02:201-300
+//	//first := lastTwoDigits * 100
+//	first := pageIndex * pageSize
+//
+//	const totalPosts = types.CategoryPostsCount
+//	if first >= totalPosts {
+//		return nil, nil, fmt.Errorf("offset exceeds total number of category posts")
+//	}
+//
+//	pagination := &query.PageRequest{}
+//
+//	pagination.Limit = pageSize
+//	pagination.Offset = uint64(first)
+//	pagination.Reverse = true
+//
+//	var postIDs []string
+//
+//	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
+//		postIDs = append(postIDs, string(value))
+//		return nil
+//	})
+//
+//	if err != nil {
+//		return nil, nil, err
+//	}
+//	return postIDs, pageRes, nil
+//}
 
 func (k Keeper) SetPoll(ctx sdk.Context, id string, sender string, optionId int64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PollUserPrefix+id+"/"))

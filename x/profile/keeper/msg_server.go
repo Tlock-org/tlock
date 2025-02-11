@@ -213,3 +213,35 @@ func (ms msgServer) Unfollow(ctx context.Context, msg *types.MsgUnfollowRequest)
 
 	return &types.MsgUnfollowResponse{}, nil
 }
+
+// AddAdmin implements types.MsgServer.
+func (ms msgServer) AddAdmin(goCtx context.Context, msg *types.MsgAddAdminRequest) (*types.MsgAddAdminResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msg.Creator == types.AdminAddress {
+		err := ms.k.AddAdmin(ctx, msg.Address)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &types.MsgAddAdminResponse{
+		Status: true,
+	}, nil
+}
+
+// RemoveAdmin implements types.MsgServer.
+func (ms msgServer) RemoveAdmin(goCtx context.Context, msg *types.MsgRemoveAdminRequest) (*types.MsgRemoveAdminResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msg.Creator == types.AdminAddress {
+		err := ms.k.RemoveAdmin(ctx, msg.Address)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return &types.MsgRemoveAdminResponse{
+			Status: false,
+		}, fmt.Errorf("address %s is not an admin", msg.Creator)
+	}
+	return &types.MsgRemoveAdminResponse{
+		Status: true,
+	}, nil
+}

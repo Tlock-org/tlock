@@ -39,6 +39,10 @@ service Query {
   rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse) {
     option (google.api.http).get = "/profile/v1/users/search/{matching}";
   };
+
+  rpc IsAdmin(IsAdminRequest) returns (IsAdminResponse) {
+    option (google.api.http).get = "/profile/v1/isAdmin/{address}";
+  };
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -105,4 +109,12 @@ message SearchUsersRequest {
 
 message SearchUsersResponse {
   repeated UserSearch users = 1;
+}
+
+message IsAdminRequest {
+  string address = 1;
+}
+
+message IsAdminResponse {
+  bool status = 1;
 }

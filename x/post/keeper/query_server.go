@@ -496,3 +496,14 @@ func (k Querier) QueryActivitiesReceived(goCtx context.Context, req *types.Query
 		activitiesReceivedList,
 	}, nil
 }
+
+// QueryCategoryExists implements types.QueryServer.
+func (k Querier) QueryCategoryExists(goCtx context.Context, req *types.QueryCategoryExistsRequest) (*types.QueryCategoryExistsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	category := req.Category
+	id := k.sha256Generate(category)
+	exists := k.CategoryExists(ctx, id)
+	return &types.QueryCategoryExistsResponse{
+		Exists: exists,
+	}, nil
+}
