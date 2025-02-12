@@ -512,6 +512,26 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
 	}
 
+	oldScore := post.Score
+	// Score Accumulation
+	uintExponent := ms.ScoreAccumulation(ctx, msg.Sender, post, 3)
+	if uintExponent >= 1 {
+		newScore := oldScore + uintExponent
+		post.Score = newScore
+	}
+	ms.k.logger.Warn("==========score", "oldScore", oldScore, "newScore", post.Score, "post", post)
+	// update commentList
+	if post.PostType == types.PostType_COMMENT {
+		ms.k.DeleteFromCommentList(ctx, post.ParentId, post.Id, oldScore)
+		ms.k.AddToCommentList(ctx, post.ParentId, post.Id, post.Score)
+	}
+
+	// update post
+	blockTime := ctx.BlockTime().Unix()
+	post.LikeCount += 1
+	post.HomePostsUpdate = blockTime
+	ms.k.SetPost(ctx, post)
+
 	// add home posts
 	if post.PostType != types.PostType_COMMENT {
 		exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
@@ -525,7 +545,7 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 
 		topicExist := ms.k.IsPostInTopics(ctx, post.Id)
 		if topicExist {
-			ms.updateTopicPosts(ctx, post)
+			ms.updateTopicPosts(ctx, post, uintExponent)
 		}
 		categoryExist := ms.k.IsPostInCategory(ctx, post.Id)
 		if categoryExist {
@@ -533,22 +553,6 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		}
 
 	}
-	score := post.Score
-
-	// Score Accumulation
-	post = ms.ScoreAccumulation(ctx, msg.Sender, post, 3)
-	ms.k.logger.Warn("==========score", "score", score, "postScore", post.Score, "post", post)
-	// update commentList
-	if post.PostType == types.PostType_COMMENT {
-		ms.k.DeleteFromCommentList(ctx, post.ParentId, post.Id, score)
-		ms.k.AddToCommentList(ctx, post.ParentId, post.Id, post.Score)
-	}
-
-	// update post
-	blockTime := ctx.BlockTime().Unix()
-	post.LikeCount += 1
-	post.HomePostsUpdate = blockTime
-	ms.k.SetPost(ctx, post)
 
 	// set likes I made
 	likesIMade := types.LikesIMade{
@@ -739,6 +743,24 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	ms.k.PostReward(ctx, comment)
 
 	post, found := ms.k.GetPost(ctx, msg.ParentId)
+	if !found {
+		return nil, errors.Wrap(types.ErrPostNotFound, msg.ParentId)
+	}
+
+	oldScore := post.Score
+	// Score Accumulation
+	uintExponent := ms.ScoreAccumulation(ctx, msg.Creator, post, 3)
+	if uintExponent >= 1 {
+		newScore := oldScore + uintExponent
+		post.Score = newScore
+	}
+	ms.k.logger.Warn("==========score", "oldScore", oldScore, "newScore", post.Score, "post", post)
+	// update commentList
+	if post.PostType == types.PostType_COMMENT {
+		ms.k.DeleteFromCommentList(ctx, post.ParentId, post.Id, oldScore)
+		ms.k.AddToCommentList(ctx, post.ParentId, post.Id, post.Score)
+	}
+
 	if post.PostType != types.PostType_COMMENT {
 		exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
 		if exist {
@@ -749,7 +771,7 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 
 		topicExist := ms.k.IsPostInTopics(ctx, post.Id)
 		if topicExist {
-			ms.updateTopicPosts(ctx, post)
+			ms.updateTopicPosts(ctx, post, uintExponent)
 		}
 		categoryExist := ms.k.IsPostInCategory(ctx, post.Id)
 		if categoryExist {
@@ -758,20 +780,6 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	}
 	//ms.addCommentList(ctx, post, commentID)
 	ms.k.AddToCommentList(ctx, post.Id, commentID, 0)
-	score := post.Score
-
-	// update post commentCount
-	if !found {
-		return nil, errors.Wrap(types.ErrPostNotFound, msg.ParentId)
-	}
-	// Score Accumulation
-	post = ms.ScoreAccumulation(ctx, msg.Creator, post, 1)
-	ms.k.logger.Warn("==========score", "score", score, "postScore", post.Score, "post", post)
-	// update commentList
-	if post.PostType == types.PostType_COMMENT {
-		ms.k.DeleteFromCommentList(ctx, post.ParentId, post.Id, score)
-		ms.k.AddToCommentList(ctx, post.ParentId, post.Id, post.Score)
-	}
 
 	// update post
 	post.CommentCount += 1
@@ -866,28 +874,69 @@ func (ms msgServer) addToTopicPosts(ctx sdk.Context, topicHash string, postId st
 	}
 }
 
-func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post) {
+func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExponent uint64) {
 	topics := ms.k.GetTopicsByPostId(ctx, post.Id)
 	if len(topics) > 0 {
-		for _, topic := range topics {
-			ms.k.DeleteFromTopicPostsByTopicAndPostId(ctx, topic, post.Id, post.HomePostsUpdate)
-			ms.k.SetTopicPosts(ctx, topic, post.Id)
-			count, b := ms.k.GetTopicPostsCount(ctx, topic)
+		for _, topicHash := range topics {
+			ms.k.DeleteFromTopicPostsByTopicAndPostId(ctx, topicHash, post.Id, post.HomePostsUpdate)
+			ms.k.SetTopicPosts(ctx, topicHash, post.Id)
+			count, b := ms.k.GetTopicPostsCount(ctx, topicHash)
 			if !b {
 				panic("GetTopicPostsCount error")
 			}
 			if count > types.TopicPostsCount {
-				ms.k.DeleteLastPostFromTopicPosts(ctx, topic)
+				ms.k.DeleteLastPostFromTopicPosts(ctx, topicHash)
 				count -= 1
-				ms.k.SetTopicPostsCount(ctx, topic, count)
+				ms.k.SetTopicPostsCount(ctx, topicHash, count)
+			}
+
+			//update topic
+			topic, _ := ms.k.GetTopic(ctx, topicHash)
+			oldScore := topic.Score
+
+			if topic.Id != "" {
+				newScore := oldScore + uintExponent
+				topic.Score = newScore
+				topic.LikeCount += 1
+				ms.k.AddTopic(ctx, topic)
+
+				// update hotTopics72
+				createTime := topic.CreateTime
+				blockTime := ctx.BlockTime().Unix()
+				isWithin72 := isWithin72Hours(createTime, blockTime)
+				ms.k.deleteFormHotTopics72(ctx, topicHash, oldScore)
+				if isWithin72 {
+					ms.k.addToHotTopics72(ctx, topicHash, newScore)
+				}
+				hotTopics72Count, b := ms.k.GetHotTopics72Count(ctx, topicHash)
+				if !b {
+					panic("GetHotTopics72Count error")
+				}
+				hotTopics72Count += 1
+				if hotTopics72Count > types.HotTopics72Count {
+					ms.k.DeleteLastFromHotTopics72(ctx, topicHash)
+				} else {
+					ms.k.SetHotTopics72Count(ctx, topicHash, count)
+				}
+
 			}
 		}
 	}
 }
 
-func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num int64) types.Post {
+func isWithin72Hours(createTime int64, blockTime int64) bool {
+	const seventyTwoHoursInSeconds int64 = 72 * 3600 // 259200秒
+	timeDifference := blockTime - createTime
+	if timeDifference < 0 {
+		return false
+	}
+	return timeDifference <= seventyTwoHoursInSeconds
+}
+
+func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num int64) uint64 {
 	operatorProfile, b1 := ms.k.ProfileKeeper.GetProfile(ctx, operator)
 	creatorProfile, b2 := ms.k.ProfileKeeper.GetProfile(ctx, post.Creator)
+	uintExponent := uint64(0)
 	// score
 	if b1 && b2 {
 		operatorLevel := operatorProfile.Level
@@ -895,12 +944,12 @@ func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post typ
 
 		creatorScore := creatorProfile.Score
 		//creatorScoreSigned := int64(creatorScore)
-		postScore := post.Score
+		//postScore := post.Score
 		exponent := math.Pow(5, float64(operatorLevelSigned-num))
 		if exponent >= 1 {
-			postScore += uint64(exponent)
-			post.Score = postScore
-			//ms.k.SetPost(ctx, post)
+			uintExponent = uint64(exponent)
+			//postScore += uint64(exponent)
+			//post.Score = postScore
 
 			creatorScore += uint64(exponent)
 			creatorProfile.Score = creatorScore
@@ -916,7 +965,7 @@ func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post typ
 			ms.k.ProfileKeeper.SetProfile(ctx, creatorProfile)
 		}
 	}
-	return post
+	return uintExponent
 }
 
 // Mention implements types.MsgServer.

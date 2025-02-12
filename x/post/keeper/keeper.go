@@ -489,7 +489,7 @@ func (k Keeper) DeleteLastPostFromTopicPosts(ctx sdk.Context, topic string) {
 	earliestPostID := string(iterator.Value())
 
 	store.Delete(earliestKey)
-	k.Logger().Info("Deleted earliest home post", "post_id", earliestPostID)
+	k.Logger().Info("Deleted earliest topic posts", "post_id", earliestPostID)
 }
 func (k Keeper) SetTopicPostsCount(ctx sdk.Context, topic string, count int64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsCountKeyPrefix))
@@ -1165,7 +1165,43 @@ func (k Keeper) addToHotTopics72(ctx sdk.Context, topicHash string, topicScore u
 	key := buffer.Bytes()
 	store.Set(key, []byte(topicHash))
 }
+func (k Keeper) deleteFormHotTopics72(ctx sdk.Context, topicHash string, topicScore uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72KeyPrefix))
+	bzScore := k.EncodeScore(topicScore)
+	var buffer bytes.Buffer
+	buffer.Write(bzScore)
+	buffer.WriteString(topicHash)
+	key := buffer.Bytes()
+	store.Delete(key)
+}
+func (k Keeper) SetHotTopics72Count(ctx sdk.Context, topicHash string, count int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72CountKeyPrefix))
+	key := append([]byte(topicHash))
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, uint64(count))
+	store.Set(key, bz)
+}
+func (k Keeper) GetHotTopics72Count(ctx sdk.Context, topicHash string) (int64, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72CountKeyPrefix))
+	key := append([]byte(topicHash))
+	bz := store.Get(key)
+	if bz == nil {
+		return 0, true
+	}
 
+	count := int64(binary.BigEndian.Uint64(bz))
+	return count, true
+}
+func (k Keeper) DeleteLastFromHotTopics72(ctx sdk.Context, topicHash string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72CountKeyPrefix+topicHash))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+	if !iterator.Valid() {
+		panic("hotTopics72Count exceeds 1000 but no posts found")
+	}
+	earliestKey := iterator.Key()
+	store.Delete(earliestKey)
+}
 func (k Keeper) SetTopicCategoryMapping(ctx sdk.Context, topicHash string, category string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicCategoryMappingKeyPrefix))
 	key := append([]byte(topicHash))
