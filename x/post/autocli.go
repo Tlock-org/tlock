@@ -60,7 +60,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "SearchTopics",
-					Use:       "searchTopics [matching]",
+					Use:       "search-topics [matching]",
 					Short:     "get topics by matching",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "matching"},
@@ -165,7 +165,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryCategoryPosts",
-					Use:       "category-Posts [categoryId]",
+					Use:       "category-posts [categoryId]",
 					Short:     "get posts by category",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "categoryId"},

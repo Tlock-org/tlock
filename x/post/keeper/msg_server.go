@@ -519,7 +519,6 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		newScore := oldScore + uintExponent
 		post.Score = newScore
 	}
-	ms.k.logger.Warn("==========score", "oldScore", oldScore, "newScore", post.Score, "post", post)
 	// update commentList
 	if post.PostType == types.PostType_COMMENT {
 		ms.k.DeleteFromCommentList(ctx, post.ParentId, post.Id, oldScore)
@@ -754,7 +753,6 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 		newScore := oldScore + uintExponent
 		post.Score = newScore
 	}
-	ms.k.logger.Warn("==========score", "oldScore", oldScore, "newScore", post.Score, "post", post)
 	// update commentList
 	if post.PostType == types.PostType_COMMENT {
 		ms.k.DeleteFromCommentList(ctx, post.ParentId, post.Id, oldScore)
@@ -908,15 +906,15 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 				if isWithin72 {
 					ms.k.addToHotTopics72(ctx, topicHash, newScore)
 				}
-				hotTopics72Count, b := ms.k.GetHotTopics72Count(ctx, topicHash)
+				hotTopics72Count, b := ms.k.GetHotTopics72Count(ctx)
 				if !b {
 					panic("GetHotTopics72Count error")
 				}
 				hotTopics72Count += 1
 				if hotTopics72Count > types.HotTopics72Count {
-					ms.k.DeleteLastFromHotTopics72(ctx, topicHash)
+					ms.k.DeleteLastFromHotTopics72(ctx)
 				} else {
-					ms.k.SetHotTopics72Count(ctx, topicHash, count)
+					ms.k.SetHotTopics72Count(ctx, count)
 				}
 
 			}
@@ -1085,13 +1083,13 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string,
 				ms.k.SetPostCategoryMapping(ctx, categoryHash, postId)
 			} else {
 				if category != "" {
-					exists := ms.k.CategoryExists(ctx, category)
+					categoryHash := ms.k.sha256Generate(category)
+					exists := ms.k.CategoryExists(ctx, categoryHash)
 					if exists {
 						//ms.k.SetCategorySearch(ctx, category)
-						categoryHash := ms.k.sha256Generate(category)
 						ms.addToCategoryPosts(ctx, categoryHash, postId)
 						topic, _ := ms.k.GetTopic(ctx, topicHash)
-						ms.k.SetCategoryTopics(ctx, topic.Score, categoryHash, topicHash)
+						ms.addToCategoryTopics(ctx, categoryHash, topic)
 
 						ms.k.SetPostCategoryMapping(ctx, categoryHash, postId)
 						ms.k.SetTopicCategoryMapping(ctx, topicHash, category)
@@ -1104,10 +1102,10 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string,
 	} else {
 		// connect category and post
 		if category != "" {
-			exists := ms.k.CategoryExists(ctx, category)
+			categoryHash := ms.k.sha256Generate(category)
+			exists := ms.k.CategoryExists(ctx, categoryHash)
 			if exists {
 				//ms.k.SetCategorySearch(ctx, category)
-				categoryHash := ms.k.sha256Generate(category)
 				ms.addToCategoryPosts(ctx, categoryHash, postId)
 				ms.k.SetPostCategoryMapping(ctx, categoryHash, postId)
 			}
@@ -1141,6 +1139,19 @@ func (ms msgServer) updateCategoryPosts(ctx sdk.Context, post types.Post) {
 		ms.k.DeleteLastPostFromCategoryPosts(ctx, category)
 		count -= 1
 		ms.k.SetCategoryPostsCount(ctx, category, count)
+	}
+}
+func (ms msgServer) addToCategoryTopics(ctx sdk.Context, categoryHash string, topic types.Topic) {
+	ms.k.SetCategoryTopics(ctx, topic.Score, categoryHash, topic.Id)
+	count, b := ms.k.GetCategoryTopicsCount(ctx, categoryHash)
+	if !b {
+		panic("GetCategoryTopicsCount error")
+	}
+	count += 1
+	if count > types.CategoryTopicsCount {
+		ms.k.DeleteLastPostFromCategoryTopics(ctx, categoryHash)
+	} else {
+		ms.k.SetCategoryTopicsCount(ctx, categoryHash, count)
 	}
 }
 
@@ -1194,6 +1205,7 @@ func (ms msgServer) AddCategory(ctx context.Context, msg *types.AddCategoryReque
 			Index:  index,
 		}
 		ms.k.AddCategory(sdkCtx, category)
+		ms.k.AddCategoryWithIndex(sdkCtx, category)
 		ms.k.SetCategoryIndex(sdkCtx, index)
 
 		sdkCtx.EventManager().EmitEvents(sdk.Events{

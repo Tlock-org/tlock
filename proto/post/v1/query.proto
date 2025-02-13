@@ -10,6 +10,7 @@ import "post/v1/likesIMade.proto";
 import "post/v1/likesReceived.proto";
 import "post/v1/activitiesReceivedResponse.proto";
 import "post/v1/categoryResponse.proto";
+import "post/v1/categoryTopicResponse.proto";
 import "post/v1/topicResponse.proto";
 import "post/v1/categoryPostsResponse.proto";
 
@@ -40,7 +41,7 @@ service Query {
   }
 
   rpc QueryTopicPosts(QueryTopicPostsRequest) returns (QueryTopicPostsResponse) {
-    option (google.api.http).get = "/post/v1/topicPosts/{topic}";
+    option (google.api.http).get = "/post/v1/topic/posts/{topic}";
   }
 
   // QueryPost allows querying a specific post by its ID
@@ -238,7 +239,7 @@ message QueryTopicsByCategoryRequest {
 }
 
 message QueryTopicsByCategoryResponse {
-  CategoryResponse response = 1;
+  CategoryTopicResponse response = 1;
 }
 
 message QueryCategoryPostsRequest {
@@ -246,7 +247,7 @@ message QueryCategoryPostsRequest {
 }
 
 message QueryCategoryPostsResponse {
-  repeated CategoryPostsResponse response = 1;
+  CategoryPostsResponse response = 1;
 }
 
 message QueryHotTopics72Request {

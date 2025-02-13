@@ -51,6 +51,7 @@ const (
 	PostTopicsMappingKeyPrefix = "Post/topics/mapping/"
 
 	CategoryKeyPrefix             = "Post/category/"
+	CategoryWithIndexKeyPrefix    = "Post/category/index/"
 	CategoryIndexKeyPrefix        = "Post/category_index"
 	TopicKeyPrefix                = "Post/topic/"
 	TopicCategoryMappingKeyPrefix = "Post/topicCategoryMapping/"

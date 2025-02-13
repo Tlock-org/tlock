@@ -518,6 +518,7 @@ func (k Querier) QueryCategories(goCtx context.Context, req *types.QueryCategori
 			Id:     category.Id,
 			Name:   category.Name,
 			Avatar: category.Avatar,
+			Index:  category.Index,
 		}
 		categoryResponseList = append(categoryResponseList, &categoryResponse)
 	}
@@ -539,6 +540,7 @@ func (k Querier) QueryTopicsByCategory(goCtx context.Context, req *types.QueryTo
 		Id:     category.Id,
 		Name:   category.Name,
 		Avatar: category.Avatar,
+		Index:  category.Index,
 	}
 	var TopicResponseList []*types.TopicResponse
 	for _, topicHash := range topics {
@@ -549,12 +551,17 @@ func (k Querier) QueryTopicsByCategory(goCtx context.Context, req *types.QueryTo
 			Avatar:  topic.Avatar,
 			Title:   topic.Title,
 			Summary: topic.Summary,
+			Score:   topic.Score,
 		}
 		TopicResponseList = append(TopicResponseList, &topicResponse)
 	}
-	categoryResponse.Topics = TopicResponseList
+	categoryTopicResponse := types.CategoryTopicResponse{
+		Category: &categoryResponse,
+		Topics:   TopicResponseList,
+	}
+
 	return &types.QueryTopicsByCategoryResponse{
-		Response: &categoryResponse,
+		Response: &categoryTopicResponse,
 	}, nil
 }
 
@@ -566,7 +573,7 @@ func (k Querier) QueryCategoryPosts(goCtx context.Context, req *types.QueryCateg
 	if err != nil {
 		return nil, fmt.Errorf("failed to get posts by category %s: %w", req.CategoryId, err)
 	}
-	categoryPostsResponse := types.CategoryPostsResponse{
+	categoryResponse := types.CategoryResponse{
 		Id:     category.Id,
 		Name:   category.Name,
 		Avatar: category.Avatar,
@@ -587,9 +594,14 @@ func (k Querier) QueryCategoryPosts(goCtx context.Context, req *types.QueryCateg
 		}
 		postResponseList = append(postResponseList, &postResponse)
 	}
-	categoryPostsResponse.Posts = postResponseList
+	categoryPostsResponse := types.CategoryPostsResponse{
+		Category: &categoryResponse,
+		Posts:    postResponseList,
+	}
 
-	return &types.QueryCategoryPostsResponse{}, nil
+	return &types.QueryCategoryPostsResponse{
+		Response: &categoryPostsResponse,
+	}, nil
 }
 
 // QueryHotTopics72 implements types.QueryServer.
@@ -608,6 +620,7 @@ func (k Querier) QueryHotTopics72(goCtx context.Context, req *types.QueryHotTopi
 			Avatar:  topic.Avatar,
 			Title:   topic.Title,
 			Summary: topic.Summary,
+			Score:   topic.Score,
 		}
 		topicResponseList = append(topicResponseList, &topicResponse)
 	}

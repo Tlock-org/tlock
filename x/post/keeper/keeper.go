@@ -995,19 +995,12 @@ func (k Keeper) DeleteFromCategoryPostsByCategoryAndPostId(ctx sdk.Context, cate
 	key := append(bzBlockTime, []byte(postId)...)
 	store.Delete(key)
 }
-func (k Keeper) DeleteLastPostFromCategoryPosts(ctx sdk.Context, category string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsKeyPrefix+category))
+func (k Keeper) DeleteLastPostFromCategoryPosts(ctx sdk.Context, categoryHash string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsKeyPrefix+categoryHash))
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
-
-	if !iterator.Valid() {
-		panic("categoryPostsCount exceeds 1000 but no posts found")
-	}
 	earliestKey := iterator.Key()
-	earliestPostID := string(iterator.Value())
-
 	store.Delete(earliestKey)
-	k.Logger().Info("Deleted earliest category post", "post_id", earliestPostID)
 }
 func (k Keeper) GetCategoryPosts(ctx sdk.Context, categoryHash string) ([]string, *query.PageResponse, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsKeyPrefix+categoryHash))
@@ -1104,8 +1097,19 @@ func (k Keeper) GetCategoryByPostId(ctx sdk.Context, postId string) string {
 
 func (k Keeper) AddCategory(ctx sdk.Context, category types.Category) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryKeyPrefix))
-	bzIndex := k.EncodeScore(category.Index)
 	var buffer bytes.Buffer
+	//bzIndex := k.EncodeScore(category.Index)
+	//buffer.Write(bzIndex)
+	buffer.WriteString(category.Id)
+	key := buffer.Bytes()
+	bz := k.cdc.MustMarshal(&category)
+	// Set the category in the store
+	store.Set(key, bz)
+}
+func (k Keeper) AddCategoryWithIndex(ctx sdk.Context, category types.Category) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryWithIndexKeyPrefix))
+	var buffer bytes.Buffer
+	bzIndex := k.EncodeScore(category.Index)
 	buffer.Write(bzIndex)
 	buffer.WriteString(category.Id)
 	key := buffer.Bytes()
@@ -1127,14 +1131,14 @@ func (k Keeper) GetCategory(ctx sdk.Context, categoryHash string) types.Category
 	k.cdc.MustUnmarshal(bz, &category)
 	return category
 }
-func (k Keeper) CategoryExists(ctx sdk.Context, id string) bool {
+func (k Keeper) CategoryExists(ctx sdk.Context, categoryHash string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryKeyPrefix))
-	key := []byte(id)
+	key := []byte(categoryHash)
 	return store.Has(key)
 }
 
 func (k Keeper) GetAllCategories(ctx sdk.Context) []types.Category {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryKeyPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryWithIndexKeyPrefix))
 
 	// Create an iterator to iterate over all keys in the category store
 	iterator := store.Iterator(nil, nil) // Iterate over the entire prefix store
@@ -1184,10 +1188,10 @@ func (k Keeper) AddTopic(ctx sdk.Context, topic types.Topic) {
 	bz := k.cdc.MustMarshal(&topic)
 	store.Set(key, bz)
 }
-func (k Keeper) GetTopic(ctx sdk.Context, id string) (types.Topic, bool) {
+func (k Keeper) GetTopic(ctx sdk.Context, topicHash string) (types.Topic, bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicKeyPrefix))
 	// Use the topic ID as the key
-	key := []byte(id)
+	key := []byte(topicHash)
 	// Get the value from the store
 	bz := store.Get(key)
 	if bz == nil {
@@ -1199,14 +1203,14 @@ func (k Keeper) GetTopic(ctx sdk.Context, id string) (types.Topic, bool) {
 	err := k.cdc.Unmarshal(bz, &topic)
 	if err != nil {
 		// If unmarshalling fails, log an error and return false
-		panic(fmt.Sprintf("Failed to unmarshal topic with id %s: %v", id, err))
+		panic(fmt.Sprintf("Failed to unmarshal topic with topicHash %s: %v", topicHash, err))
 	}
 	return topic, true
 }
 
-func (k Keeper) TopicExists(ctx sdk.Context, id string) bool {
+func (k Keeper) TopicExists(ctx sdk.Context, topicHash string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicKeyPrefix))
-	key := []byte(id)
+	key := []byte(topicHash)
 	return store.Has(key)
 }
 
@@ -1231,7 +1235,7 @@ func (k Keeper) deleteFormHotTopics72(ctx sdk.Context, topicHash string, topicSc
 func (k Keeper) GetHotTopics72(ctx sdk.Context) ([]string, *query.PageResponse, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72KeyPrefix))
 
-	hotTopics72Count, _ := k.GetHotTopics72Count(ctx, topicHash)
+	hotTopics72Count, _ := k.GetHotTopics72Count(ctx)
 	if hotTopics72Count == 0 {
 		return []string{}, &query.PageResponse{
 			NextKey: nil,
@@ -1287,7 +1291,7 @@ func (k Keeper) SetHotTopics72Count(ctx sdk.Context, count int64) {
 	binary.BigEndian.PutUint64(bz, uint64(count))
 	store.Set([]byte("count"), bz)
 }
-func (k Keeper) GetHotTopics72Count(ctx sdk.Context, topicHash string) (int64, bool) {
+func (k Keeper) GetHotTopics72Count(ctx sdk.Context) (int64, bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72CountKeyPrefix))
 	bz := store.Get([]byte("count"))
 	if bz == nil {
@@ -1296,8 +1300,8 @@ func (k Keeper) GetHotTopics72Count(ctx sdk.Context, topicHash string) (int64, b
 	count := int64(binary.BigEndian.Uint64(bz))
 	return count, true
 }
-func (k Keeper) DeleteLastFromHotTopics72(ctx sdk.Context, topicHash string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72CountKeyPrefix+topicHash))
+func (k Keeper) DeleteLastFromHotTopics72(ctx sdk.Context) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72CountKeyPrefix))
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 	if !iterator.Valid() {
@@ -1323,16 +1327,22 @@ func (k Keeper) getCategoryByTopicHash(ctx sdk.Context, topicHash string) string
 }
 
 func (k Keeper) SetCategoryTopics(ctx sdk.Context, topicScore uint64, categoryHash string, topicHash string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryTopicsKeyPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryTopicsKeyPrefix+categoryHash))
 	bzScore := k.EncodeScore(topicScore)
 	var buffer bytes.Buffer
-	buffer.WriteString(categoryHash)
+	//buffer.WriteString(categoryHash)
 	buffer.Write(bzScore)
 	buffer.WriteString(topicHash)
 	key := buffer.Bytes()
 	store.Set(key, []byte(topicHash))
 }
-
+func (k Keeper) DeleteLastPostFromCategoryTopics(ctx sdk.Context, categoryHash string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryTopicsKeyPrefix+categoryHash))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+	earliestKey := iterator.Key()
+	store.Delete(earliestKey)
+}
 func (k Keeper) GetCategoryTopics(ctx sdk.Context, categoryHash string) ([]string, *query.PageResponse, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryTopicsKeyPrefix+categoryHash))
 
