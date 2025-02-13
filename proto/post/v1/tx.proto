@@ -282,6 +282,7 @@ message CastVoteOnPollResponse {
 message CategoryParams {
   string name = 1;
   string avatar = 2;
+  uint64 index = 3;
 }
 message AddCategoryRequest {
   option (cosmos.msg.v1.signer) = "creator";

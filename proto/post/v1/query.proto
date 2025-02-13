@@ -5,10 +5,14 @@ import "post/v1/genesis.proto";
 import "google/api/annotations.proto";
 import "post/v1/postResponse.proto";
 import "post/v1/commentResponse.proto";
-import "post/v1/CommentReceivedResponse.proto";
+import "post/v1/commentReceivedResponse.proto";
 import "post/v1/likesIMade.proto";
 import "post/v1/likesReceived.proto";
-import "post/v1/ActivitiesReceivedResponse.proto";
+import "post/v1/activitiesReceivedResponse.proto";
+import "post/v1/categoryResponse.proto";
+import "post/v1/categoryTopicResponse.proto";
+import "post/v1/topicResponse.proto";
+import "post/v1/categoryPostsResponse.proto";
 
 option go_package = "github.com/rollchains/tlock/x/post/types";
 
@@ -37,7 +41,7 @@ service Query {
   }
 
   rpc QueryTopicPosts(QueryTopicPostsRequest) returns (QueryTopicPostsResponse) {
-    option (google.api.http).get = "/post/v1/topicPosts/{topic}";
+    option (google.api.http).get = "/post/v1/topic/posts/{topic}";
   }
 
   // QueryPost allows querying a specific post by its ID
@@ -73,9 +77,24 @@ service Query {
     option (google.api.http).get = "/post/v1/activites/received/{address}";
   };
 
+//  rpc QueryCategoryExists(QueryCategoryExistsRequest) returns (QueryCategoryExistsResponse) {
+//    option (google.api.http).get = "/post/v1/category/exists/{category}";
+//  };
 
-  rpc QueryCategoryExists(QueryCategoryExistsRequest) returns (QueryCategoryExistsResponse) {
-    option (google.api.http).get = "/post/v1/category/exists/{category}";
+  rpc QueryCategories(QueryCategoriesRequest) returns (QueryCategoriesResponse) {
+    option (google.api.http).get = "/post/v1/categories";
+  };
+
+  rpc QueryTopicsByCategory(QueryTopicsByCategoryRequest) returns (QueryTopicsByCategoryResponse) {
+    option (google.api.http).get = "/post/v1/category/topics/{categoryId}";
+  };
+
+  rpc QueryCategoryPosts(QueryCategoryPostsRequest) returns (QueryCategoryPostsResponse) {
+    option (google.api.http).get = "/post/v1/category/posts/{categoryId}";
+  };
+
+  rpc QueryHotTopics72(QueryHotTopics72Request) returns (QueryHotTopics72Response) {
+    option (google.api.http).get = "/post/v1/hot/topics/72";
   };
 }
 
@@ -206,4 +225,35 @@ message QueryCategoryExistsRequest {
 
 message QueryCategoryExistsResponse {
   bool exists = 1;
+}
+
+message QueryCategoriesRequest {
+}
+
+message QueryCategoriesResponse {
+  repeated CategoryResponse categories = 1;
+}
+
+message QueryTopicsByCategoryRequest {
+  string categoryId = 1;
+}
+
+message QueryTopicsByCategoryResponse {
+  CategoryTopicResponse response = 1;
+}
+
+message QueryCategoryPostsRequest {
+  string categoryId = 1;
+}
+
+message QueryCategoryPostsResponse {
+  CategoryPostsResponse response = 1;
+}
+
+message QueryHotTopics72Request {
+
+}
+
+message QueryHotTopics72Response {
+  repeated TopicResponse topics = 1;
 }

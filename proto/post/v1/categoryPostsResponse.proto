@@ -1,0 +1,13 @@
+syntax = "proto3";
+package post.v1;
+
+import "post/v1/genesis.proto";
+import "post/v1/categoryResponse.proto";
+import "post/v1/postResponse.proto";
+
+option go_package = "github.com/rollchains/tlock/x/post/types";
+
+message CategoryPostsResponse {
+  CategoryResponse category = 1;
+  repeated PostResponse posts = 2;
+}

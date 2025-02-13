@@ -507,3 +507,124 @@ func (k Querier) QueryCategoryExists(goCtx context.Context, req *types.QueryCate
 		Exists: exists,
 	}, nil
 }
+
+// QueryCategories implements types.QueryServer.
+func (k Querier) QueryCategories(goCtx context.Context, req *types.QueryCategoriesRequest) (*types.QueryCategoriesResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	categories := k.GetAllCategories(ctx)
+	var categoryResponseList []*types.CategoryResponse
+	for _, category := range categories {
+		categoryResponse := types.CategoryResponse{
+			Id:     category.Id,
+			Name:   category.Name,
+			Avatar: category.Avatar,
+			Index:  category.Index,
+		}
+		categoryResponseList = append(categoryResponseList, &categoryResponse)
+	}
+	return &types.QueryCategoriesResponse{
+		Categories: categoryResponseList,
+	}, nil
+}
+
+// QueryTopicsByCategory implements types.QueryServer.
+func (k Querier) QueryTopicsByCategory(goCtx context.Context, req *types.QueryTopicsByCategoryRequest) (*types.QueryTopicsByCategoryResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	category := k.GetCategory(ctx, req.CategoryId)
+	topics, _, err := k.GetCategoryTopics(ctx, req.CategoryId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	categoryResponse := types.CategoryResponse{
+		Id:     category.Id,
+		Name:   category.Name,
+		Avatar: category.Avatar,
+		Index:  category.Index,
+	}
+	var TopicResponseList []*types.TopicResponse
+	for _, topicHash := range topics {
+		topic, _ := k.GetTopic(ctx, topicHash)
+		topicResponse := types.TopicResponse{
+			Id:      topic.Id,
+			Name:    topic.Name,
+			Avatar:  topic.Avatar,
+			Title:   topic.Title,
+			Summary: topic.Summary,
+			Score:   topic.Score,
+		}
+		TopicResponseList = append(TopicResponseList, &topicResponse)
+	}
+	categoryTopicResponse := types.CategoryTopicResponse{
+		Category: &categoryResponse,
+		Topics:   TopicResponseList,
+	}
+
+	return &types.QueryTopicsByCategoryResponse{
+		Response: &categoryTopicResponse,
+	}, nil
+}
+
+// QueryCategoryPosts implements types.QueryServer.
+func (k Querier) QueryCategoryPosts(goCtx context.Context, req *types.QueryCategoryPostsRequest) (*types.QueryCategoryPostsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	category := k.GetCategory(ctx, req.CategoryId)
+	posts, _, err := k.Keeper.GetCategoryPosts(ctx, req.CategoryId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get posts by category %s: %w", req.CategoryId, err)
+	}
+	categoryResponse := types.CategoryResponse{
+		Id:     category.Id,
+		Name:   category.Name,
+		Avatar: category.Avatar,
+	}
+	var postResponseList []*types.PostResponse
+	for _, postId := range posts {
+		post, _ := k.GetPost(ctx, postId)
+		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		postResponse := types.PostResponse{
+			Post:    &post,
+			Profile: &profile,
+		}
+		if post.Quote != "" {
+			quotePost, _ := k.GetPost(ctx, post.Quote)
+			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			postResponse.QuotePost = &quotePost
+			postResponse.QuoteProfile = &quoteProfile
+		}
+		postResponseList = append(postResponseList, &postResponse)
+	}
+	categoryPostsResponse := types.CategoryPostsResponse{
+		Category: &categoryResponse,
+		Posts:    postResponseList,
+	}
+
+	return &types.QueryCategoryPostsResponse{
+		Response: &categoryPostsResponse,
+	}, nil
+}
+
+// QueryHotTopics72 implements types.QueryServer.
+func (k Querier) QueryHotTopics72(goCtx context.Context, req *types.QueryHotTopics72Request) (*types.QueryHotTopics72Response, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	topics72, _, err := k.GetHotTopics72(ctx)
+	if err != nil {
+		return &types.QueryHotTopics72Response{}, nil
+	}
+	var topicResponseList []*types.TopicResponse
+	for _, topicHash := range topics72 {
+		topic, _ := k.GetTopic(ctx, topicHash)
+		topicResponse := types.TopicResponse{
+			Id:      topic.Id,
+			Name:    topic.Name,
+			Avatar:  topic.Avatar,
+			Title:   topic.Title,
+			Summary: topic.Summary,
+			Score:   topic.Score,
+		}
+		topicResponseList = append(topicResponseList, &topicResponse)
+	}
+	return &types.QueryHotTopics72Response{
+		Topics: topicResponseList,
+	}, nil
+}
