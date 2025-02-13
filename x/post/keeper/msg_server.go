@@ -1182,12 +1182,19 @@ func (ms msgServer) AddCategory(ctx context.Context, msg *types.AddCategoryReque
 		params := msg.Params
 		name := params.Name
 		id := ms.k.sha256Generate(name)
+		index := params.Index
+		if index == 0 {
+			categoryIndex, _ := ms.k.GetCategoryIndex(sdkCtx)
+			index = categoryIndex + 1
+		}
 		category := types.Category{
 			Id:     id,
 			Name:   params.Name,
 			Avatar: params.Avatar,
+			Index:  index,
 		}
 		ms.k.AddCategory(sdkCtx, category)
+		ms.k.SetCategoryIndex(sdkCtx, index)
 
 		sdkCtx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(

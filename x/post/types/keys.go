@@ -51,13 +51,17 @@ const (
 	PostTopicsMappingKeyPrefix = "Post/topics/mapping/"
 
 	CategoryKeyPrefix             = "Post/category/"
+	CategoryIndexKeyPrefix        = "Post/category_index"
 	TopicKeyPrefix                = "Post/topic/"
 	TopicCategoryMappingKeyPrefix = "Post/topicCategoryMapping/"
 	CategoryTopicsKeyPrefix       = "Post/category/topics/"
 	HotTopics72KeyPrefix          = "Post/hot/topics/72/"
-	HotTopics72CountKeyPrefix     = "Post/hot/topics/72/count/"
+	HotTopics72CountKeyPrefix     = "Post/hot_topics_72_count/"
 	HotTopics72Count              = 1000
 	HotTopics72PageSize           = 100
+	CategoryTopicsCountKeyPrefix  = "Post/category/topics/count/"
+	CategoryTopicsCount           = 10000
+	CategoryTopicsPageSize        = 20
 
 	CategoryPostsKeyPrefix       = "Post/posts/category/"
 	CategoryPostsCountKeyPrefix  = "Post/posts/topic/count/"

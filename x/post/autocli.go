@@ -142,13 +142,39 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "address"},
 					},
 				},
+				//{
+				//	RpcMethod: "QueryCategoryExists",
+				//	Use:       "category-exists [category]",
+				//	Short:     "get category exists",
+				//	PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+				//		{ProtoField: "category"},
+				//	},
+				//},
 				{
-					RpcMethod: "QueryCategoryExists",
-					Use:       "category-exists [category]",
-					Short:     "get category exists",
+					RpcMethod: "QueryCategories",
+					Use:       "categories",
+					Short:     "query categories",
+				},
+				{
+					RpcMethod: "QueryTopicsByCategory",
+					Use:       "category-topics [categoryId]",
+					Short:     "get topics by category",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "category"},
+						{ProtoField: "categoryId"},
 					},
+				},
+				{
+					RpcMethod: "QueryCategoryPosts",
+					Use:       "category-Posts [categoryId]",
+					Short:     "get posts by category",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "categoryId"},
+					},
+				},
+				{
+					RpcMethod: "QueryHotTopics72",
+					Use:       "hot-topics",
+					Short:     "get hot topics",
 				},
 			},
 		},
