@@ -22,6 +22,9 @@ const (
 
 	PostKeyPrefix = "Post/content/"
 
+	MaxPostContentLength          = 150
+	MaxPostWithTitleContentLength = 10000
+
 	HomePostsKeyPrefix      = "Post/posts/home/"
 	FollowedPostsKeyPrefix  = "Post/posts/followed/"
 	HomePostsCountKeyPrefix = "home_posts_count"
@@ -33,8 +36,10 @@ const (
 
 	CommentListKeyPrefix = "Post/comment/list/"
 
+	UserLikesPrefix  = "Post/user/likes/"
 	LikesIMadePrefix = "Post/likes/i/made/"
 
+	UserSavesPrefix  = "Post/user/saves/"
 	SavesIMadePrefix = "Post/saves/i/made/"
 
 	LikesReceivedPrefix    = "Post/likes/received/"

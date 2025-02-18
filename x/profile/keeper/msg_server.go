@@ -71,6 +71,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 								UserHandle:    suffixHandle,
 								WalletAddress: nickname,
 								Nickname:      msg.Creator,
+								Avatar:        profileJson.Avatar,
 							}
 							ms.k.AddToUserSearchList(ctx, suffixHandle, userSearch)
 						}
@@ -87,6 +88,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 							UserHandle:    userHandle,
 							WalletAddress: msg.Creator,
 							Nickname:      nickname,
+							Avatar:        profileJson.Avatar,
 						}
 						ms.k.AddToUserSearchList(ctx, userHandle, userSearch)
 					}
@@ -102,14 +104,20 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 
 	// add nickName to userSearch
 	if nickname != "" {
-		if dbNickname != nickname {
-			ms.k.DeleteFromUserSearchList(ctx, dbNickname, msg.Creator)
-			userSearch := types.UserSearch{
-				userHandle,
-				nickname,
-				msg.Creator,
+		validateNickName, err := types.ValidateNickName(nickname)
+		if validateNickName {
+			if dbNickname != nickname {
+				ms.k.DeleteFromUserSearchList(ctx, dbNickname, msg.Creator)
+				userSearch := types.UserSearch{
+					UserHandle:    userHandle,
+					WalletAddress: msg.Creator,
+					Nickname:      nickname,
+					Avatar:        profileJson.Avatar,
+				}
+				ms.k.AddToUserSearchList(ctx, nickname, userSearch)
 			}
-			ms.k.AddToUserSearchList(ctx, nickname, userSearch)
+		} else {
+			return &types.MsgAddProfileResponse{}, err
 		}
 	}
 
@@ -217,7 +225,8 @@ func (ms msgServer) Unfollow(ctx context.Context, msg *types.MsgUnfollowRequest)
 // AddAdmin implements types.MsgServer.
 func (ms msgServer) AddAdmin(goCtx context.Context, msg *types.MsgAddAdminRequest) (*types.MsgAddAdminResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if msg.Creator == types.AdminAddress {
+	adminAddress, _ := ms.k.GetAdminAddress(ctx)
+	if msg.Creator == adminAddress {
 		err := ms.k.AddAdmin(ctx, msg.Address)
 		if err != nil {
 			return nil, err
@@ -231,7 +240,8 @@ func (ms msgServer) AddAdmin(goCtx context.Context, msg *types.MsgAddAdminReques
 // RemoveAdmin implements types.MsgServer.
 func (ms msgServer) RemoveAdmin(goCtx context.Context, msg *types.MsgRemoveAdminRequest) (*types.MsgRemoveAdminResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if msg.Creator == types.AdminAddress {
+	adminAddress, _ := ms.k.GetAdminAddress(ctx)
+	if msg.Creator == adminAddress {
 		err := ms.k.RemoveAdmin(ctx, msg.Address)
 		if err != nil {
 			return nil, err

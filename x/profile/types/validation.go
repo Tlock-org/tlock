@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // ValidateUserHandle ensures that the userHandle consists solely of lowercase English letters (a-z).
@@ -19,9 +20,20 @@ import (
 //}
 
 func ValidateUserHandle(userHandle string) (bool, error) {
-	var validHandle = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
+	var validHandle = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 	if !validHandle.MatchString(userHandle) {
-		return false, fmt.Errorf("userHandle must contain only lowercase English letters (a-z) or digits (0-9)")
+		return false, fmt.Errorf("userHandle must contain only lowercase English letters (a-z), digits (0-9), or underscores (_)")
+	}
+	return true, nil
+}
+
+func ValidateNickName(nickName string) (bool, error) {
+	validNickname := regexp.MustCompile(`^[\p{L}\p{N}_ ]+$`)
+	if !validNickname.MatchString(nickName) {
+		return false, fmt.Errorf("nickName must contain only letters, numbers, underscores (_), or spaces")
+	}
+	if strings.Contains(nickName, "  ") || strings.Contains(nickName, "__") {
+		return false, fmt.Errorf("nickname cannot contain consecutive spaces or underscores")
 	}
 	return true, nil
 }

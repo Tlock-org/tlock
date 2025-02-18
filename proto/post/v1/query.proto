@@ -41,7 +41,7 @@ service Query {
   }
 
   rpc QueryTopicPosts(QueryTopicPostsRequest) returns (QueryTopicPostsResponse) {
-    option (google.api.http).get = "/post/v1/topic/posts/{topic}";
+    option (google.api.http).get = "/post/v1/topic/posts/{topic_id}";
   }
 
   // QueryPost allows querying a specific post by its ID
@@ -86,11 +86,11 @@ service Query {
   };
 
   rpc QueryTopicsByCategory(QueryTopicsByCategoryRequest) returns (QueryTopicsByCategoryResponse) {
-    option (google.api.http).get = "/post/v1/category/topics/{categoryId}";
+    option (google.api.http).get = "/post/v1/category/topics/{category_id}";
   };
 
   rpc QueryCategoryPosts(QueryCategoryPostsRequest) returns (QueryCategoryPostsResponse) {
-    option (google.api.http).get = "/post/v1/category/posts/{categoryId}";
+    option (google.api.http).get = "/post/v1/category/posts/{category_id}";
   };
 
   rpc QueryHotTopics72(QueryHotTopics72Request) returns (QueryHotTopics72Response) {
@@ -120,11 +120,11 @@ message SearchTopicsRequest {
 }
 
 message SearchTopicsResponse {
-  repeated string topic = 1;
+  repeated TopicResponse topics = 1;
 }
 
 message QueryTopicPostsRequest {
-    string topic = 1;
+    string topic_id = 1;
 }
 
 message QueryTopicPostsResponse {
@@ -235,7 +235,7 @@ message QueryCategoriesResponse {
 }
 
 message QueryTopicsByCategoryRequest {
-  string categoryId = 1;
+  string category_id = 1;
 }
 
 message QueryTopicsByCategoryResponse {
@@ -243,7 +243,7 @@ message QueryTopicsByCategoryResponse {
 }
 
 message QueryCategoryPostsRequest {
-  string categoryId = 1;
+  string category_id = 1;
 }
 
 message QueryCategoryPostsResponse {

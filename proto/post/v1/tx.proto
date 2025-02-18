@@ -55,6 +55,8 @@ service Msg {
 
   rpc DeleteCategory(DeleteCategoryRequest) returns (DeleteCategoryResponse);
 
+  rpc UpdateTopic(UpdateTopicRequest) returns (UpdateTopicResponse);
+
   //  rpc Mention(MsgMentionRequest) returns (MsgMentionResponse);
 
 }
@@ -309,5 +311,21 @@ message MsgMentionRequest {
 }
 
 message MsgMentionResponse {
+
+}
+
+message UpdateTopicJson {
+  string id = 1;
+  string avatar = 2;
+  uint64 hotness = 3;
+}
+
+message UpdateTopicRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  UpdateTopicJson topic_json = 2;
+}
+
+message UpdateTopicResponse {
 
 }

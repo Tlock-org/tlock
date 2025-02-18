@@ -119,7 +119,6 @@ func (k Keeper) Logger() log.Logger {
 
 // InitGenesis initializes the module's state from a genesis state.
 func (k *Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) error {
-
 	if err := data.Params.Validate(); err != nil {
 		return err
 	}
@@ -671,6 +670,19 @@ func (k Keeper) SetFollowedPosts(ctx sdk.Context, postId string) {
 func (k Keeper) GetFollowedPosts(ctx sdk.Context, pagination *query.PageRequest) ([]string, *query.PageResponse, error) {
 	return nil, nil, nil
 }
+
+func (k Keeper) MarkUserLikedPost(ctx sdk.Context, sender, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserLikesPrefix+sender+"/"))
+	blockTime := k.EncodeBlockTime(ctx)
+	key := []byte(postId)
+	store.Set(key, blockTime)
+}
+func (k Keeper) HasUserLikedPost(ctx sdk.Context, sender, postId string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserLikesPrefix+sender+"/"))
+	key := []byte(postId)
+	return store.Has(key)
+}
+
 func (k Keeper) SetLikesIMade(ctx sdk.Context, likesIMade types.LikesIMade, sender string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix+sender+"/"))
 	blockTime := k.EncodeBlockTime(ctx)
@@ -747,6 +759,18 @@ func (k Keeper) RemoveFromLikesIMade(ctx sdk.Context, sender string, postId stri
 		}
 	}
 	return fmt.Errorf("like not found for sender %s and postId %s", sender, postId)
+}
+
+func (k Keeper) MarkUserSavedPost(ctx sdk.Context, sender, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserSavesPrefix+sender+"/"))
+	blockTime := k.EncodeBlockTime(ctx)
+	key := []byte(postId)
+	store.Set(key, blockTime)
+}
+func (k Keeper) HasUserSavedPost(ctx sdk.Context, sender, postId string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserSavesPrefix+sender+"/"))
+	key := []byte(postId)
+	return store.Has(key)
 }
 
 func (k Keeper) SetSavesIMade(ctx sdk.Context, likesIMade types.LikesIMade, sender string) {

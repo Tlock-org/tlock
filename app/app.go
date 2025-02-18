@@ -629,6 +629,7 @@ func NewChainApp(
 		testSubspace,
 	)
 
+	profileSubspace := app.GetSubspace(profiletypes.ModuleName).WithKeyTable(profiletypes.ParamKeyTable())
 	// Create the profile Keeper
 	app.ProfileKeeper = profilekeeper.NewKeeper(
 		appCodec,
@@ -636,6 +637,7 @@ func NewChainApp(
 		runtime.NewKVStoreService(keys[profiletypes.StoreKey]),
 		logger,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		profileSubspace,
 	)
 
 	// Create the post Keeper
