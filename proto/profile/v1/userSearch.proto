@@ -10,5 +10,6 @@ message UserSearch {
   string user_handle = 1;
   string wallet_address = 2;
   string nickname = 3;
+  string avatar = 4;
 }
 

@@ -132,8 +132,8 @@ func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.Query
 // QueryTopicPosts implements types.QueryServer.
 func (k Querier) QueryTopicPosts(goCtx context.Context, req *types.QueryTopicPostsRequest) (*types.QueryTopicPostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	topic := req.Topic
-	topicHash := k.sha256Generate(topic)
+	topicHash := req.TopicId
+	//topicHash := k.sha256Generate(topic)
 	postIDs, _, err := k.Keeper.GetTopicPosts(ctx, topicHash)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -244,9 +244,24 @@ func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (
 // SearchTopic implements types.QueryServer.
 func (k Querier) SearchTopics(goCtx context.Context, req *types.SearchTopicsRequest) (*types.SearchTopicsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	topics, _ := k.SearchTopicMatches(ctx, req.Matching)
+	topicOriginalList, _ := k.SearchTopicMatches(ctx, req.Matching)
+	var topicResponses []*types.TopicResponse
+	for _, topicOriginal := range topicOriginalList {
+		topicHash := k.sha256Generate(topicOriginal)
+		topic, _ := k.GetTopic(ctx, topicHash)
+		topicResponse := types.TopicResponse{
+			Id:      topic.Id,
+			Name:    topic.Name,
+			Avatar:  topic.Avatar,
+			Title:   topic.Title,
+			Summary: topic.Summary,
+			Score:   topic.Score,
+			Hotness: topic.Hotness,
+		}
+		topicResponses = append(topicResponses, &topicResponse)
+	}
 	return &types.SearchTopicsResponse{
-		Topic: topics,
+		Topics: topicResponses,
 	}, nil
 }
 
@@ -552,6 +567,7 @@ func (k Querier) QueryTopicsByCategory(goCtx context.Context, req *types.QueryTo
 			Title:   topic.Title,
 			Summary: topic.Summary,
 			Score:   topic.Score,
+			Hotness: topic.Hotness,
 		}
 		TopicResponseList = append(TopicResponseList, &topicResponse)
 	}
@@ -621,6 +637,7 @@ func (k Querier) QueryHotTopics72(goCtx context.Context, req *types.QueryHotTopi
 			Title:   topic.Title,
 			Summary: topic.Summary,
 			Score:   topic.Score,
+			Hotness: topic.Hotness,
 		}
 		topicResponseList = append(topicResponseList, &topicResponse)
 	}

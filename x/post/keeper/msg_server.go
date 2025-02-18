@@ -76,6 +76,9 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 	if len(msg.Content) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
 	}
+	if err := types.ValidatePostWithTitleContent(msg.Content); err != nil {
+		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
+	}
 
 	// Validate sender address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
@@ -159,6 +162,9 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 	if len(msg.Content) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
 	}
+	if err := types.ValidatePostContent(msg.Content); err != nil {
+		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
+	}
 
 	// Validate sender address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
@@ -241,6 +247,9 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 	if len(msg.Content) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
 	}
+	if err := types.ValidatePostContent(msg.Content); err != nil {
+		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
+	}
 
 	// Validate sender address
 	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
@@ -321,6 +330,9 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 	// Validate the message
 	if len(msg.Content) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
+	}
+	if err := types.ValidatePostContent(msg.Content); err != nil {
+		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
 	}
 
 	// Validate sender address
@@ -407,6 +419,9 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 	}
 	if len(msg.Quote) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidRequest, "Quote cannot be empty")
+	}
+	if err := types.ValidatePostContent(msg.Comment); err != nil {
+		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
 	}
 
 	// Validate sender address
@@ -509,6 +524,10 @@ func (ms msgServer) Repost(goCtx context.Context, msg *types.MsgRepostRequest) (
 // LikePost implements types.MsgServer.
 func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*types.MsgLikeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	hasLiked := ms.k.HasUserLikedPost(ctx, msg.Sender, msg.Id)
+	if hasLiked {
+		return nil, errors.Wrap(types.ErrAlreadyLiked, "user has already liked this post")
+	}
 	post, found := ms.k.GetPost(ctx, msg.Id)
 	if !found {
 		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
@@ -561,6 +580,7 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		Timestamp: blockTime,
 	}
 	ms.k.SetLikesIMade(ctx, likesIMade, msg.Sender)
+	ms.k.MarkUserLikedPost(ctx, msg.Sender, post.Id)
 
 	// set likes received
 	likesReceived := types.LikesReceived{
@@ -629,6 +649,10 @@ func (ms msgServer) Unlike(goCtx context.Context, msg *types.MsgUnlikeRequest) (
 // SavePost implements types.MsgServer.
 func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (*types.MsgSaveResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	hasSaved := ms.k.HasUserSavedPost(ctx, msg.Sender, msg.Id)
+	if hasSaved {
+		return nil, errors.Wrap(types.ErrAlreadySaved, "user has already saved this post")
+	}
 	// Retrieve the post by ID
 	post, found := ms.k.GetPost(ctx, msg.Id)
 	if !found {
@@ -650,6 +674,7 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 		Timestamp: blockTime,
 	}
 	ms.k.SetSavesIMade(ctx, likesIMade, msg.Sender)
+	ms.k.MarkUserSavedPost(ctx, msg.Sender, post.Id)
 
 	// set likes received
 	likesReceived := types.LikesReceived{
@@ -1251,4 +1276,20 @@ func (ms msgServer) DeleteCategory(ctx context.Context, msg *types.DeleteCategor
 			Status: false,
 		}, errors.Wrapf(types.ErrRequestDenied, "request denied")
 	}
+}
+
+// UpdateTopic implements types.MsgServer.
+func (ms msgServer) UpdateTopic(goCtx context.Context, msg *types.UpdateTopicRequest) (*types.UpdateTopicResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	creator := msg.Creator
+	isAdmin := ms.k.ProfileKeeper.IsAdmin(ctx, creator)
+	if isAdmin {
+		json := msg.TopicJson
+		id := json.Id
+		topic, _ := ms.k.GetTopic(ctx, id)
+		topic.Hotness = json.Hotness
+		topic.Avatar = json.Avatar
+		ms.k.AddTopic(ctx, topic)
+	}
+	return &types.UpdateTopicResponse{}, nil
 }

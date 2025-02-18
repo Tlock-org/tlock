@@ -6,9 +6,8 @@ import (
 	kvtypes "cosmossdk.io/store/types"
 	"encoding/binary"
 	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -18,6 +17,7 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/orm/model/ormdb"
 
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	apiv1 "github.com/rollchains/tlock/api/profile/v1"
 	"github.com/rollchains/tlock/x/profile/types"
 )
@@ -32,8 +32,9 @@ type Keeper struct {
 	Params collections.Item[types.Params]
 	OrmDB  apiv1.StateStore
 
-	authority string
-	storeKey  kvtypes.StoreKey
+	authority     string
+	storeKey      kvtypes.StoreKey
+	paramSubspace paramtypes.Subspace
 }
 
 // NewKeeper creates a new Keeper instance
@@ -43,8 +44,12 @@ func NewKeeper(
 	storeService storetypes.KVStoreService,
 	logger log.Logger,
 	authority string,
+	paramSpace paramtypes.Subspace,
 ) Keeper {
 	logger = logger.With(log.ModuleKey, "x/"+types.ModuleName)
+	if !paramSpace.HasKeyTable() {
+		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
+	}
 
 	sb := collections.NewSchemaBuilder(storeService)
 
@@ -69,8 +74,9 @@ func NewKeeper(
 		Params: collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		OrmDB:  store,
 
-		storeKey:  storeKey,
-		authority: authority,
+		storeKey:      storeKey,
+		authority:     authority,
+		paramSubspace: paramSpace,
 	}
 
 	schema, err := sb.Build()
@@ -88,12 +94,21 @@ func (k Keeper) Logger() log.Logger {
 }
 
 // InitGenesis initializes the module's state from a genesis state.
-func (k *Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) error {
-
+// func (k *Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) error {
+//
+//		if err := data.Params.Validate(); err != nil {
+//			return err
+//		}
+//		return k.Params.Set(ctx, data.Params)
+//	}
+func (k *Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) error {
 	if err := data.Params.Validate(); err != nil {
 		return err
 	}
-
+	err := k.SetParams(ctx, data.Params)
+	if err != nil {
+		return err
+	}
 	return k.Params.Set(ctx, data.Params)
 }
 
@@ -109,6 +124,29 @@ func (k *Keeper) ExportGenesis(ctx context.Context) *types.GenesisState {
 	}
 }
 
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+	k.Logger().Warn("===============set params:", "params", params)
+	k.paramSubspace.SetParamSet(ctx, &params)
+	return nil
+}
+
+//	func (k Keeper) GetParamsSubspace(ctx sdk.Context) types.Params {
+//		var params types.Params
+//		k.paramSubspace.GetParamSet(ctx, &params)
+//		return params
+//	}
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	params, _ := k.Params.Get(ctx)
+	return params
+}
+func (k Keeper) GetAdminAddress(ctx sdk.Context) (string, error) {
+	params := k.GetParams(ctx)
+	adminAddr := params.AdminAddress
+	if adminAddr == "" {
+		return "", types.ErrInvalidAdminAddress
+	}
+	return adminAddr, nil
+}
 func (k Keeper) SetProfile(ctx sdk.Context, profile types.Profile) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileKeyPrefix))
 	bz := k.cdc.MustMarshal(&profile)
@@ -172,11 +210,14 @@ func (k Keeper) SearchUsersByMatching(ctx sdk.Context, matching string) ([]types
 	iterator := store.ReverseIterator(nil, nil)
 	defer iterator.Close()
 	var users []types.UserSearch
-	for ; iterator.Valid(); iterator.Next() {
+	const limit = 10
+	count := 0
+	for ; iterator.Valid() && count < limit; iterator.Next() {
 		val := iterator.Value()
 		var user types.UserSearch
 		k.cdc.MustUnmarshal(val, &user)
 		users = append(users, user)
+		count++
 	}
 	return users, true
 }

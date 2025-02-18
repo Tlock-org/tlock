@@ -36,15 +36,15 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryTopicPosts",
-					Use:       "topic-posts",
+					Use:       "topic-posts [topic_id]",
 					Short:     "query topic posts",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "topic"},
+						{ProtoField: "topic_id"},
 					},
 				},
 				{
 					RpcMethod: "QueryUserCreatedPosts",
-					Use:       "user-created-posts",
+					Use:       "user-created-posts [wallet]",
 					Short:     "query user created posts",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "wallet"},
@@ -157,18 +157,18 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryTopicsByCategory",
-					Use:       "category-topics [categoryId]",
+					Use:       "category-topics [category_id]",
 					Short:     "get topics by category",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "categoryId"},
+						{ProtoField: "category_id"},
 					},
 				},
 				{
 					RpcMethod: "QueryCategoryPosts",
-					Use:       "category-posts [categoryId]",
+					Use:       "category-posts [category_id]",
 					Short:     "get posts by category",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "categoryId"},
+						{ProtoField: "category_id"},
 					},
 				},
 				{
@@ -431,6 +431,20 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 						{
 							ProtoField: "id",
+						},
+					},
+				},
+				{
+					RpcMethod: "UpdateTopic",
+					Use:       "update-topic [creator] [topic_json]",
+					Short:     "update topic",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+							Optional:   false,
+						},
+						{
+							ProtoField: "topic_json",
 						},
 					},
 				},

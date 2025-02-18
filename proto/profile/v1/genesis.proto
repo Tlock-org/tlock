@@ -19,4 +19,5 @@ message Params {
   option (gogoproto.goproto_stringer) = false;
 
   bool some_value = 2;
+  string admin_address = 3;
 }

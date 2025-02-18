@@ -32,8 +32,6 @@ const (
 	ActivitiesReceivedCountPrefix = "Activities/received/count/"
 
 	ActivitiesReceivedCount = 100
-
-	AdminAddress = "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p"
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{
