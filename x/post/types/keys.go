@@ -77,6 +77,9 @@ const (
 	PostCategoryMappingKeyPrefix = "Post/category/mapping/"
 
 	PollUserPrefix = "Post/poll/"
+
+	FollowTopicPrefix     = "Post/follow/topic/"
+	FollowTopicTimePrefix = "Post/follow/topic/time/"
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{

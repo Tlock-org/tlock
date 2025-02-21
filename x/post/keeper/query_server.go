@@ -6,6 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
 	"google.golang.org/grpc/codes"
+	"sort"
+	"time"
 
 	"github.com/rollchains/tlock/x/post/types"
 	profileTypes "github.com/rollchains/tlock/x/profile/types"
@@ -256,7 +258,6 @@ func (k Querier) SearchTopics(goCtx context.Context, req *types.SearchTopicsRequ
 			Title:   topic.Title,
 			Summary: topic.Summary,
 			Score:   topic.Score,
-			Hotness: topic.Hotness,
 		}
 		topicResponses = append(topicResponses, &topicResponse)
 	}
@@ -567,7 +568,6 @@ func (k Querier) QueryTopicsByCategory(goCtx context.Context, req *types.QueryTo
 			Title:   topic.Title,
 			Summary: topic.Summary,
 			Score:   topic.Score,
-			Hotness: topic.Hotness,
 		}
 		TopicResponseList = append(TopicResponseList, &topicResponse)
 	}
@@ -637,11 +637,115 @@ func (k Querier) QueryHotTopics72(goCtx context.Context, req *types.QueryHotTopi
 			Title:   topic.Title,
 			Summary: topic.Summary,
 			Score:   topic.Score,
-			Hotness: topic.Hotness,
 		}
 		topicResponseList = append(topicResponseList, &topicResponse)
 	}
 	return &types.QueryHotTopics72Response{
+		Topics: topicResponseList,
+	}, nil
+}
+
+// QueryFollowingPosts implements types.QueryServer.
+func (k Querier) QueryFollowingPosts(goCtx context.Context, req *types.QueryFollowingPostsRequest) (*types.QueryFollowingPostsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	address := req.Address
+	followingList := k.ProfileKeeper.GetFollowing(ctx, address)
+	followingCount := len(followingList)
+	var postResponses []*types.PostResponse
+	if followingCount > 0 {
+		var postIds []string
+		if followingCount <= 5 {
+			for _, follow := range followingList {
+				ids, _, _ := k.GetLastPostsByAddress(ctx, follow, 5)
+				postIds = append(postIds, ids...)
+			}
+		} else if followingCount <= 50 {
+			y := 50 / followingCount
+			if y < 1 {
+				y = 1
+			}
+			for _, follow := range followingList {
+				ids, _, _ := k.GetLastPostsByAddress(ctx, follow, y)
+				postIds = append(postIds, ids...)
+			}
+
+		} else {
+			selectedUsers := select50Users(followingList)
+
+			for _, follow := range selectedUsers {
+				ids, _, _ := k.GetLastPostsByAddress(ctx, follow, 1)
+				if len(ids) > 0 {
+					postIds = append(postIds, ids...)
+				}
+			}
+		}
+		for _, id := range postIds {
+			post, _ := k.GetPost(ctx, id)
+			postTime := post.Timestamp
+			if isToday(ctx, postTime) {
+				profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+				response := types.PostResponse{
+					Post:    &post,
+					Profile: &profile,
+				}
+				if post.Quote != "" {
+					quotePost, _ := k.GetPost(ctx, post.Quote)
+					quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+					response.QuotePost = &quotePost
+					response.QuoteProfile = &quoteProfile
+				}
+				postResponses = append(postResponses, &response)
+			}
+		}
+
+	} else {
+
+	}
+	return &types.QueryFollowingPostsResponse{
+		Posts: postResponses,
+	}, nil
+}
+
+func isToday(ctx sdk.Context, postTimestamp int64) bool {
+	postTime := time.Unix(postTimestamp, 0).UTC()
+	blockTime := ctx.BlockTime().UTC()
+	return blockTime.Year() == postTime.Year() &&
+		blockTime.Month() == postTime.Month() &&
+		blockTime.Day() == postTime.Day()
+}
+
+func select50Users(followingList []string) []string {
+	n := len(followingList)
+	limit := 50
+	if n < 50 {
+		limit = n
+	}
+	sortedList := make([]string, len(followingList))
+	copy(sortedList, followingList)
+	sort.Strings(sortedList)
+	return sortedList[:limit]
+}
+
+// QueryFollowingTopics implements types.QueryServer.
+func (k Querier) QueryFollowingTopics(goCtx context.Context, req *types.QueryFollowingTopicsRequest) (*types.QueryFollowingTopicsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	topicIds := k.GetFollowingTopics(ctx, req.Address)
+	var topicResponseList []*types.TopicResponse
+	if len(topicIds) > 0 {
+		for _, topicHash := range topicIds {
+			topic, _ := k.GetTopic(ctx, topicHash)
+			topicResponse := types.TopicResponse{
+				Id:      topic.Id,
+				Name:    topic.Name,
+				Avatar:  topic.Avatar,
+				Title:   topic.Title,
+				Summary: topic.Summary,
+				Score:   topic.Score,
+			}
+			topicResponseList = append(topicResponseList, &topicResponse)
+		}
+	}
+	return &types.QueryFollowingTopicsResponse{
 		Topics: topicResponseList,
 	}, nil
 }
