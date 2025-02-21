@@ -106,6 +106,7 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 		ImagesUrl:       msg.ImagesUrl,
 		VideosUrl:       msg.VideosUrl,
 		HomePostsUpdate: blockTime,
+		Poll:            msg.Poll,
 	}
 
 	// Store the post in the state
@@ -190,6 +191,7 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 		ImagesUrl:       msg.ImagesUrl,
 		VideosUrl:       msg.VideosUrl,
 		HomePostsUpdate: blockTime,
+		Poll:            msg.Poll,
 	}
 
 	// Store the post in the state
