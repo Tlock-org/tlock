@@ -108,6 +108,9 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 		HomePostsUpdate: blockTime,
 		Poll:            msg.Poll,
 	}
+	if msg.Poll != nil {
+		post.PostType = types.PostType_POLL
+	}
 
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
@@ -192,6 +195,9 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 		VideosUrl:       msg.VideosUrl,
 		HomePostsUpdate: blockTime,
 		Poll:            msg.Poll,
+	}
+	if msg.Poll != nil {
+		post.PostType = types.PostType_POLL
 	}
 
 	// Store the post in the state
