@@ -96,6 +96,14 @@ service Query {
   rpc QueryHotTopics72(QueryHotTopics72Request) returns (QueryHotTopics72Response) {
     option (google.api.http).get = "/post/v1/hot/topics/72";
   };
+
+  rpc QueryFollowingPosts(QueryFollowingPostsRequest) returns (QueryFollowingPostsResponse) {
+    option (google.api.http).get = "/post/v1/following/posts/{address}";
+  };
+
+  rpc QueryFollowingTopics(QueryFollowingTopicsRequest) returns (QueryFollowingTopicsResponse) {
+    option (google.api.http).get = "/post/v1/following/topics/{address}";
+  };
 }
 
 // QueryResolveNameRequest grabs the name of a wallet.
@@ -172,7 +180,6 @@ message SavesIMadeRequest {
 }
 
 message SavesIMadeResponse {
-//  repeated LikesIMade saves_made = 1;
   repeated PostResponse posts = 1;
 }
 
@@ -255,5 +262,21 @@ message QueryHotTopics72Request {
 }
 
 message QueryHotTopics72Response {
+  repeated TopicResponse topics = 1;
+}
+
+message QueryFollowingPostsRequest {
+  string address = 1;
+}
+
+message QueryFollowingPostsResponse {
+  repeated PostResponse posts = 1;
+}
+
+message QueryFollowingTopicsRequest {
+  string address = 1;
+}
+
+message QueryFollowingTopicsResponse {
   repeated TopicResponse topics = 1;
 }

@@ -1285,9 +1285,39 @@ func (ms msgServer) UpdateTopic(goCtx context.Context, msg *types.UpdateTopicReq
 		json := msg.TopicJson
 		id := json.Id
 		topic, _ := ms.k.GetTopic(ctx, id)
-		topic.Hotness = json.Hotness
+		topic.Score = json.Score
 		topic.Avatar = json.Avatar
 		ms.k.AddTopic(ctx, topic)
 	}
 	return &types.UpdateTopicResponse{}, nil
+}
+
+// FollowTopic implements types.MsgServer.
+func (ms msgServer) FollowTopic(goCtx context.Context, msg *types.MsgFollowTopicRequest) (*types.MsgFollowTopicResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	follower := msg.Creator
+	topicHash := msg.TopicId
+	isFollowing := ms.k.IsFollowingTopic(ctx, follower, topicHash)
+	if !isFollowing {
+		exists := ms.k.TopicExists(ctx, topicHash)
+		if exists {
+			ms.k.FollowTopic(ctx, follower, topicHash)
+			ms.k.SetFollowTopicTime(ctx, follower, topicHash)
+		}
+	}
+	return &types.MsgFollowTopicResponse{
+		Status: true,
+	}, nil
+}
+
+func (ms msgServer) UnfollowTopic(goCtx context.Context, msg *types.MsgUnfollowTopicRequest) (*types.MsgUnfollowTopicResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	topicHash := msg.TopicId
+	time, _ := ms.k.GetFollowTopicTime(ctx, msg.Creator, topicHash)
+	ms.k.UnfollowTopic(ctx, msg.Creator, time, topicHash)
+	ms.k.DeleteFollowTopicTime(ctx, msg.Creator, topicHash)
+
+	return &types.MsgUnfollowTopicResponse{
+		Status: true,
+	}, nil
 }

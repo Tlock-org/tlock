@@ -176,6 +176,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Use:       "hot-topics",
 					Short:     "get hot topics",
 				},
+				{
+					RpcMethod: "QueryFollowingTopics",
+					Use:       "following-topics [address]",
+					Short:     "get following topics",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "address"},
+					},
+				},
 			},
 		},
 		Tx: &autocliv1.ServiceCommandDescriptor{
@@ -445,6 +453,34 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 						{
 							ProtoField: "topic_json",
+						},
+					},
+				},
+				{
+					RpcMethod: "FollowTopic",
+					Use:       "follow-topic [creator] [topic_id]",
+					Short:     "follow topic",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+							Optional:   false,
+						},
+						{
+							ProtoField: "topic_id",
+						},
+					},
+				},
+				{
+					RpcMethod: "UnfollowTopic",
+					Use:       "unfollow-topic [creator] [topic_id]",
+					Short:     "unfollow topic",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+							Optional:   false,
+						},
+						{
+							ProtoField: "topic_id",
 						},
 					},
 				},

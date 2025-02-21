@@ -18,9 +18,8 @@ message Topic {
   uint64 post_count = 9;
   uint64 comment_count = 10;
   uint64 like_count = 11;
-  uint64 hotness = 12;
-  int64 create_time = 13;
-  int64 update_time = 14;
+  int64 create_time = 12;
+  int64 update_time = 13;
 }
 
 

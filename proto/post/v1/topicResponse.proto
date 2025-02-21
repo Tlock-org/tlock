@@ -12,7 +12,6 @@ message TopicResponse {
   string title = 4;
   string summary = 5;
   uint64 score = 6;
-  uint64 hotness = 7;
 }
 
 

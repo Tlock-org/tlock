@@ -601,6 +601,36 @@ func (k Keeper) GetUserCreatedPosts(ctx sdk.Context, creator string) ([]string, 
 	return postIDs, pageRes, nil
 }
 
+func (k Keeper) GetLastPostsByAddress(ctx sdk.Context, address string, limit int) ([]string, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserCreatedPostsKeyPrefix+address))
+
+	userCreatedPostsCount, _ := k.GetUserCreatedPostsCount(ctx, address)
+	if userCreatedPostsCount == 0 {
+		return []string{}, &query.PageResponse{
+			NextKey: nil,
+			Total:   uint64(userCreatedPostsCount),
+		}, nil
+	}
+
+	pagination := &query.PageRequest{}
+
+	pagination.Limit = uint64(limit)
+	pagination.Offset = uint64(0)
+	pagination.Reverse = true
+
+	var postIDs []string
+
+	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
+		postIDs = append(postIDs, string(value))
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+	return postIDs, pageRes, nil
+}
+
 func (k Keeper) AddToCommentList(ctx sdk.Context, postId string, commentId string, score uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CommentListKeyPrefix))
 	bzScore := k.EncodeScore(score)
@@ -1451,4 +1481,77 @@ func (k Keeper) GetPoll(ctx sdk.Context, id string, sender string) (string, bool
 		return "", false
 	}
 	return string(b), true
+}
+
+func itob(v int64) []byte {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(v))
+	return b
+}
+func btoi(bz []byte) int64 {
+	if len(bz) != 8 {
+		return 0
+	}
+	return int64(binary.BigEndian.Uint64(bz))
+}
+func (k Keeper) FollowTopic(ctx sdk.Context, address string, topicHash string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowTopicPrefix+address+"/"))
+	blockTime := ctx.BlockTime().Unix()
+	key := append(itob(blockTime), []byte(topicHash)...)
+	store.Set(key, []byte(topicHash))
+}
+
+func (k Keeper) GetFollowingTopics(ctx sdk.Context, address string) []string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowTopicPrefix+address+"/"))
+	iterator := store.ReverseIterator(nil, nil)
+	defer iterator.Close()
+	var followingTopics []string
+	for ; iterator.Valid(); iterator.Next() {
+		val := iterator.Value()
+		followingTopics = append(followingTopics, string(val))
+	}
+	return followingTopics
+}
+
+func (k Keeper) IsFollowingTopic(ctx sdk.Context, follower string, topicHash string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowTopicPrefix+follower+"/"))
+	iterator := store.ReverseIterator(nil, nil)
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		val := iterator.Value()
+		if string(val) == topicHash {
+			return true
+		}
+	}
+	return false
+}
+
+func (k Keeper) SetFollowTopicTime(ctx sdk.Context, address string, topicHash string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowTopicTimePrefix))
+	blockTime := ctx.BlockTime().Unix()
+	key := []byte(fmt.Sprintf("%s:%s", address, topicHash))
+	store.Set(key, itob(blockTime))
+}
+
+func (k Keeper) GetFollowTopicTime(ctx sdk.Context, followerAddr string, targetAddr string) (uint64, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowTopicTimePrefix))
+	key := []byte(fmt.Sprintf("%s:%s", followerAddr, targetAddr))
+	bz := store.Get(key)
+	if bz == nil {
+		return 0, false
+	}
+	followTime := btoi(bz)
+	return uint64(followTime), true
+}
+
+func (k Keeper) DeleteFollowTopicTime(ctx sdk.Context, address string, topicHash string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowTopicTimePrefix))
+	key := []byte(fmt.Sprintf("%s:%s", address, topicHash))
+	store.Delete(key)
+}
+
+func (k Keeper) UnfollowTopic(ctx sdk.Context, address string, time uint64, topicHash string) {
+	storeFlowing := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowTopicPrefix+address+"/"))
+	keyFlowing := append(itob(int64(time)), []byte(topicHash)...)
+	storeFlowing.Delete(keyFlowing)
 }
