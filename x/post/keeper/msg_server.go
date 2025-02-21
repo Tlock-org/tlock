@@ -1201,7 +1201,7 @@ func (ms msgServer) CastVoteOnPoll(goCtx context.Context, msg *types.CastVoteOnP
 	voteList := parentPost.Poll.Vote
 	for i, _ := range voteList {
 		if parentPost.Poll.Vote[i].Id == msg.OptionId {
-			parentPost.PostType = 5
+			parentPost.PostType = types.PostType_POLL
 			parentPost.Poll.Vote[i].Count += 1
 			break
 		}
