@@ -251,7 +251,6 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) 
 
 func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context) ([]string, *query.PageResponse, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
-
 	homePostsCount, _ := k.GetHomePostsCount(ctx)
 	if homePostsCount == 0 {
 		return []string{}, &query.PageResponse{
@@ -307,7 +306,6 @@ func (k Keeper) DeleteLastPostFromHomePosts(ctx sdk.Context) {
 
 func (k Keeper) DeleteFromHomePostsByPostId(ctx sdk.Context, postId string, homePostsUpdate int64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
-
 	bzBlockTime := make([]byte, 8)
 	binary.BigEndian.PutUint64(bzBlockTime, uint64(homePostsUpdate))
 	key := append(bzBlockTime, []byte(postId)...)
@@ -417,14 +415,17 @@ func (k Keeper) GetTopicPosts(ctx sdk.Context, topic string) ([]string, *query.P
 }
 
 func (k Keeper) SetTopicPosts(ctx sdk.Context, topic string, postId string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix+topic))
+	k.Logger().Warn("===SetTopicPosts time:", "blocktime", ctx.BlockTime().Unix())
 	blockTime := k.EncodeBlockTime(ctx)
-	key := append(append([]byte(topic), blockTime...), []byte(postId)...)
+	key := append(blockTime, []byte(postId)...)
+	k.Logger().Warn("===SetTopicPosts key:", "key", key)
 	store.Set(key, []byte(postId))
 }
 func (k Keeper) IsPostInTopics(ctx sdk.Context, postId string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostTopicsMappingKeyPrefix))
 	key := append([]byte(postId))
+	k.Logger().Warn("===IsPostInTopics key:", "key", key)
 	return store.Has(key)
 }
 func (k Keeper) GetTopicsByPostId(ctx sdk.Context, postId string) []string {
@@ -442,10 +443,12 @@ func (k Keeper) GetTopicsByPostId(ctx sdk.Context, postId string) []string {
 	return topics
 }
 func (k Keeper) DeleteFromTopicPostsByTopicAndPostId(ctx sdk.Context, topic string, postId string, homePostsUpdate int64) {
+	k.Logger().Warn("===DeleteFromTopicPostsByTopicAndPostId time:", "time", uint64(homePostsUpdate))
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix+topic))
 	bzBlockTime := make([]byte, 8)
 	binary.BigEndian.PutUint64(bzBlockTime, uint64(homePostsUpdate))
 	key := append(bzBlockTime, []byte(postId)...)
+	k.Logger().Warn("===DeleteFromTopicPostsByTopicAndPostId key:", "key", key)
 	store.Delete(key)
 }
 func (k Keeper) DeleteLastPostFromTopicPosts(ctx sdk.Context, topic string) {
@@ -1247,6 +1250,7 @@ func (k Keeper) addToHotTopics72(ctx sdk.Context, topicHash string, topicScore u
 	buffer.Write(bzScore)
 	buffer.WriteString(topicHash)
 	key := buffer.Bytes()
+	k.Logger().Warn("============addToHotTopics72 key:", "key", key)
 	store.Set(key, []byte(topicHash))
 }
 func (k Keeper) deleteFormHotTopics72(ctx sdk.Context, topicHash string, topicScore uint64) {
@@ -1256,6 +1260,7 @@ func (k Keeper) deleteFormHotTopics72(ctx sdk.Context, topicHash string, topicSc
 	buffer.Write(bzScore)
 	buffer.WriteString(topicHash)
 	key := buffer.Bytes()
+	k.Logger().Warn("============deleteFormHotTopics72 key:", "key", key)
 	store.Delete(key)
 }
 func (k Keeper) GetHotTopics72(ctx sdk.Context) ([]string, *query.PageResponse, error) {
@@ -1305,7 +1310,7 @@ func (k Keeper) GetHotTopics72(ctx sdk.Context) ([]string, *query.PageResponse, 
 		postIDs = append(postIDs, string(value))
 		return nil
 	})
-
+	k.Logger().Warn("======postIds:", "postIDs", postIDs)
 	if err != nil {
 		return nil, nil, err
 	}
