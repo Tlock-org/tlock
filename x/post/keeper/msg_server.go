@@ -552,26 +552,20 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		ms.k.AddToCommentList(ctx, post.ParentId, post.Id, post.Score)
 	}
 
-	updateTime := post.HomePostsUpdate
-	// update post
-	blockTime := ctx.BlockTime().Unix()
-	post.LikeCount += 1
-	post.HomePostsUpdate = blockTime
-	ms.k.SetPost(ctx, post)
-
 	// add home posts
 	if post.PostType != types.PostType_COMMENT {
-		exist := ms.k.IsPostInHomePosts(ctx, post.Id, updateTime)
+		exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
 
+		ms.k.Logger().Warn("============exist:", "exist", exist)
 		if exist {
-			ms.updateHomePosts(ctx, post, updateTime)
+			ms.updateHomePosts(ctx, post)
 		} else {
 			ms.addToHomePosts(ctx, post)
 		}
 
 		topicExist := ms.k.IsPostInTopics(ctx, post.Id)
 		if topicExist {
-			ms.updateTopicPosts(ctx, post, uintExponent, updateTime)
+			ms.updateTopicPosts(ctx, post, uintExponent)
 		}
 		categoryExist := ms.k.IsPostInCategory(ctx, post.Id)
 		if categoryExist {
@@ -579,6 +573,12 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		}
 
 	}
+
+	// update post
+	blockTime := ctx.BlockTime().Unix()
+	post.LikeCount += 1
+	post.HomePostsUpdate = blockTime
+	ms.k.SetPost(ctx, post)
 
 	// set likes I made
 	likesIMade := types.LikesIMade{
@@ -795,14 +795,14 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	if post.PostType != types.PostType_COMMENT {
 		exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
 		if exist {
-			ms.updateHomePosts(ctx, post, post.HomePostsUpdate)
+			ms.updateHomePosts(ctx, post)
 		} else {
 			ms.addToHomePosts(ctx, post)
 		}
 
 		topicExist := ms.k.IsPostInTopics(ctx, post.Id)
 		if topicExist {
-			ms.updateTopicPosts(ctx, post, uintExponent, post.HomePostsUpdate)
+			ms.updateTopicPosts(ctx, post, uintExponent)
 		}
 		categoryExist := ms.k.IsPostInCategory(ctx, post.Id)
 		if categoryExist {
@@ -849,8 +849,8 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	return &types.MsgCommentResponse{}, nil
 }
 
-func (ms msgServer) updateHomePosts(ctx sdk.Context, post types.Post, updateTime int64) {
-	ms.k.DeleteFromHomePostsByPostId(ctx, post.Id, updateTime)
+func (ms msgServer) updateHomePosts(ctx sdk.Context, post types.Post) {
+	ms.k.DeleteFromHomePostsByPostId(ctx, post.Id, post.HomePostsUpdate)
 	ms.k.SetHomePosts(ctx, post.Id)
 	count, b := ms.k.GetHomePostsCount(ctx)
 	if !b {
@@ -905,11 +905,13 @@ func (ms msgServer) addToTopicPosts(ctx sdk.Context, topicHash string, postId st
 	}
 }
 
-func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExponent uint64, updateTime int64) {
+func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExponent uint64) {
 	topics := ms.k.GetTopicsByPostId(ctx, post.Id)
+	ms.k.Logger().Warn("=======topics:", "topics", topics)
 	if len(topics) > 0 {
 		for _, topicHash := range topics {
-			ms.k.DeleteFromTopicPostsByTopicAndPostId(ctx, topicHash, post.Id, updateTime)
+			ms.k.Logger().Warn("=======updateTopicPosts time:", "HomePostsUpdate", post.HomePostsUpdate)
+			ms.k.DeleteFromTopicPostsByTopicAndPostId(ctx, topicHash, post.Id, post.HomePostsUpdate)
 			ms.k.SetTopicPosts(ctx, topicHash, post.Id)
 			count, b := ms.k.GetTopicPostsCount(ctx, topicHash)
 			if !b {
@@ -931,6 +933,7 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 				topic.LikeCount += 1
 				ms.k.AddTopic(ctx, topic)
 
+				ms.k.Logger().Warn("==========score:", "old", oldScore, "new", newScore)
 				// update hotTopics72
 				createTime := topic.CreateTime
 				blockTime := ctx.BlockTime().Unix()
@@ -1086,6 +1089,7 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string,
 			return fmt.Errorf("topic list length can not be larger than 10")
 		}
 		var hashTopics []string
+		ms.k.Logger().Warn("==========topicList:", "topicList", topicList)
 		for _, topicName := range topicList {
 			topicHash := ms.k.sha256Generate(topicName)
 			// add topic
@@ -1293,9 +1297,11 @@ func (ms msgServer) UpdateTopic(goCtx context.Context, msg *types.UpdateTopicReq
 		json := msg.TopicJson
 		id := json.Id
 		topic, _ := ms.k.GetTopic(ctx, id)
+		ms.k.deleteFormHotTopics72(ctx, id, topic.Score)
 		topic.Score = json.Score
 		topic.Avatar = json.Avatar
 		ms.k.AddTopic(ctx, topic)
+		ms.k.addToHotTopics72(ctx, id, topic.Score)
 	}
 	return &types.UpdateTopicResponse{}, nil
 }
