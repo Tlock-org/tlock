@@ -1297,11 +1297,11 @@ func (ms msgServer) UpdateTopic(goCtx context.Context, msg *types.UpdateTopicReq
 		json := msg.TopicJson
 		id := json.Id
 		topic, _ := ms.k.GetTopic(ctx, id)
+		ms.k.deleteFormHotTopics72(ctx, id, topic.Score)
 		topic.Score = json.Score
 		topic.Avatar = json.Avatar
 		ms.k.AddTopic(ctx, topic)
-
-		ms.k.deleteFormHotTopics72(ctx, id, topic.Score)
+		ms.k.addToHotTopics72(ctx, id, topic.Score)
 	}
 	return &types.UpdateTopicResponse{}, nil
 }
