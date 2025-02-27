@@ -552,16 +552,9 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		ms.k.AddToCommentList(ctx, post.ParentId, post.Id, post.Score)
 	}
 
-	// update post
-	blockTime := ctx.BlockTime().Unix()
-	post.LikeCount += 1
-	post.HomePostsUpdate = blockTime
-	ms.k.SetPost(ctx, post)
-
 	// add home posts
 	if post.PostType != types.PostType_COMMENT {
 		exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
-		fmt.Sprintf("==========exist: %s\n", exist)
 
 		if exist {
 			ms.updateHomePosts(ctx, post)
@@ -579,6 +572,12 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		}
 
 	}
+
+	// update post
+	blockTime := ctx.BlockTime().Unix()
+	post.LikeCount += 1
+	post.HomePostsUpdate = blockTime
+	ms.k.SetPost(ctx, post)
 
 	// set likes I made
 	likesIMade := types.LikesIMade{

@@ -181,34 +181,17 @@ func (k Keeper) GetHomePostsCount(ctx sdk.Context) (int64, bool) {
 
 func (k Keeper) SetHomePosts(ctx sdk.Context, postId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
-
 	blockTime := k.EncodeBlockTime(ctx)
-
 	key := append(blockTime, []byte(postId)...)
-	fmt.Sprintf("===============key:%s", key)
-
-	//iterator := store.Iterator(nil, nil)
-	//defer iterator.Close()
-	//
-	//var count int
-	//var keysToDelete [][]byte
-	//for ; iterator.Valid(); iterator.Next() {
-	//
-	//	existingPostID := string(iterator.Value())
-	//	if existingPostID == postId {
-	//		return
-	//	}
-	//
-	//	count++
-	//	if count > 100 {
-	//		keysToDelete = append(keysToDelete, iterator.Key())
-	//	}
-	//}
-	//
-	//for _, keyToDelete := range keysToDelete {
-	//	store.Delete(keyToDelete)
-	//}
 	store.Set(key, []byte(postId))
+}
+
+func (k Keeper) IsPostInHomePosts(ctx sdk.Context, postId string, homePostsUpdate int64) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
+	bzBlockTime := make([]byte, 8)
+	binary.BigEndian.PutUint64(bzBlockTime, uint64(homePostsUpdate))
+	key := append(bzBlockTime, []byte(postId)...)
+	return store.Has(key)
 }
 
 func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) ([]string, *query.PageResponse, error) {
@@ -329,17 +312,6 @@ func (k Keeper) DeleteFromHomePostsByPostId(ctx sdk.Context, postId string, home
 	binary.BigEndian.PutUint64(bzBlockTime, uint64(homePostsUpdate))
 	key := append(bzBlockTime, []byte(postId)...)
 	store.Delete(key)
-}
-
-func (k Keeper) IsPostInHomePosts(ctx sdk.Context, postId string, homePostsUpdate int64) bool {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
-
-	bzBlockTime := make([]byte, 8)
-	binary.BigEndian.PutUint64(bzBlockTime, uint64(homePostsUpdate))
-
-	key := append(bzBlockTime, []byte(postId)...)
-
-	return store.Has(key)
 }
 
 func (k Keeper) SetPostTopicsMapping(ctx sdk.Context, topics []string, postId string) {

@@ -18,7 +18,8 @@ const (
 
 	QuerierRoute = ModuleName
 
-	AuthorityKeyPrefix = "Authority/admin/"
+	AuthorityKeyPrefix              = "Authority/admin/"
+	AuthorityEditableAdminKeyPrefix = "Authority/editable/admin/"
 
 	ProfileKeyPrefix           = "Profile/value/"
 	ProfileUserHandleKeyPrefix = "Profile/userHandle/"
@@ -32,6 +33,8 @@ const (
 	ActivitiesReceivedCountPrefix = "Activities/received/count/"
 
 	ActivitiesReceivedCount = 100
+	AdminActionAppoint      = "appoint"
+	AdminActionRemove       = "remove"
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{

@@ -22,7 +22,7 @@ const (
 
 	PostKeyPrefix = "Post/content/"
 
-	MaxPostContentLength          = 150
+	MaxPostContentLength          = 300
 	MaxPostWithTitleContentLength = 10000
 
 	HomePostsKeyPrefix      = "Post/posts/home/"

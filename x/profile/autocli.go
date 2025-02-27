@@ -171,6 +171,23 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 					},
 				},
+				{
+					RpcMethod: "ManageAdmin",
+					Use:       "manage-admin [creator] [action] [manage_json]",
+					Short:     "manage admin",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+							Optional:   false,
+						},
+						{
+							ProtoField: "action",
+						},
+						{
+							ProtoField: "manage_json",
+						},
+					},
+				},
 			},
 		},
 	}

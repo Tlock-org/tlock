@@ -125,7 +125,6 @@ func (k *Keeper) ExportGenesis(ctx context.Context) *types.GenesisState {
 }
 
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	k.Logger().Warn("===============set params:", "params", params)
 	k.paramSubspace.SetParamSet(ctx, &params)
 	return nil
 }
@@ -147,6 +146,23 @@ func (k Keeper) GetAdminAddress(ctx sdk.Context) (string, error) {
 	}
 	return adminAddr, nil
 }
+func (k Keeper) GetChiefModerator(ctx sdk.Context) (string, error) {
+	params := k.GetParams(ctx)
+	chiefModerator := params.ChiefModerator
+	if chiefModerator == "" {
+		return "", types.ErrInvalidChiefModerator
+	}
+	return chiefModerator, nil
+}
+func (k Keeper) SetChiefModerator(ctx sdk.Context, address string) (bool, error) {
+	params := k.GetParams(ctx)
+	params.ChiefModerator = address
+	err := k.SetParams(ctx, params)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
 func (k Keeper) SetProfile(ctx sdk.Context, profile types.Profile) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileKeyPrefix))
 	bz := k.cdc.MustMarshal(&profile)
@@ -154,13 +170,13 @@ func (k Keeper) SetProfile(ctx sdk.Context, profile types.Profile) {
 }
 
 // GetProfile
-func (k Keeper) GetProfile(ctx sdk.Context, walletAddress string) (types.Profile, bool) {
+func (k Keeper) GetProfile(ctx sdk.Context, address string) (types.Profile, bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileKeyPrefix))
-	bz := store.Get([]byte(walletAddress))
+	bz := store.Get([]byte(address))
 	if bz == nil {
 		return types.Profile{
-			WalletAddress: walletAddress,
-			UserHandle:    k.TruncateAddressSuffix(walletAddress),
+			WalletAddress: address,
+			UserHandle:    k.TruncateAddressSuffix(address),
 		}, true
 	}
 
@@ -434,4 +450,25 @@ func (k Keeper) IsAdmin(ctx sdk.Context, address string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AuthorityKeyPrefix))
 	key := append([]byte(address))
 	return store.Has(key)
+}
+
+func (k Keeper) AddEditableAdmin(ctx sdk.Context, address string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AuthorityEditableAdminKeyPrefix))
+	key := append([]byte(address))
+	if store.Has(key) {
+		return fmt.Errorf("address %s is already an editable admin", address)
+	}
+	store.Set(key, []byte(address))
+	return nil
+}
+func (k Keeper) IsEditableAdmin(ctx sdk.Context, address string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AuthorityEditableAdminKeyPrefix))
+	key := append([]byte(address))
+	return store.Has(key)
+}
+func (k Keeper) RemoveEditableAdmin(ctx sdk.Context, address string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AuthorityEditableAdminKeyPrefix))
+	key := append([]byte(address))
+	store.Delete(key)
+	return nil
 }
