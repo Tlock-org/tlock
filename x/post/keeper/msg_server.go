@@ -552,19 +552,26 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		ms.k.AddToCommentList(ctx, post.ParentId, post.Id, post.Score)
 	}
 
+	updateTime := post.HomePostsUpdate
+	// update post
+	blockTime := ctx.BlockTime().Unix()
+	post.LikeCount += 1
+	post.HomePostsUpdate = blockTime
+	ms.k.SetPost(ctx, post)
+
 	// add home posts
 	if post.PostType != types.PostType_COMMENT {
-		exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
+		exist := ms.k.IsPostInHomePosts(ctx, post.Id, updateTime)
 
 		if exist {
-			ms.updateHomePosts(ctx, post)
+			ms.updateHomePosts(ctx, post, updateTime)
 		} else {
 			ms.addToHomePosts(ctx, post)
 		}
 
 		topicExist := ms.k.IsPostInTopics(ctx, post.Id)
 		if topicExist {
-			ms.updateTopicPosts(ctx, post, uintExponent)
+			ms.updateTopicPosts(ctx, post, uintExponent, updateTime)
 		}
 		categoryExist := ms.k.IsPostInCategory(ctx, post.Id)
 		if categoryExist {
@@ -572,12 +579,6 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		}
 
 	}
-
-	// update post
-	blockTime := ctx.BlockTime().Unix()
-	post.LikeCount += 1
-	post.HomePostsUpdate = blockTime
-	ms.k.SetPost(ctx, post)
 
 	// set likes I made
 	likesIMade := types.LikesIMade{
@@ -794,14 +795,14 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	if post.PostType != types.PostType_COMMENT {
 		exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
 		if exist {
-			ms.updateHomePosts(ctx, post)
+			ms.updateHomePosts(ctx, post, post.HomePostsUpdate)
 		} else {
 			ms.addToHomePosts(ctx, post)
 		}
 
 		topicExist := ms.k.IsPostInTopics(ctx, post.Id)
 		if topicExist {
-			ms.updateTopicPosts(ctx, post, uintExponent)
+			ms.updateTopicPosts(ctx, post, uintExponent, post.HomePostsUpdate)
 		}
 		categoryExist := ms.k.IsPostInCategory(ctx, post.Id)
 		if categoryExist {
@@ -848,8 +849,8 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	return &types.MsgCommentResponse{}, nil
 }
 
-func (ms msgServer) updateHomePosts(ctx sdk.Context, post types.Post) {
-	ms.k.DeleteFromHomePostsByPostId(ctx, post.Id, post.HomePostsUpdate)
+func (ms msgServer) updateHomePosts(ctx sdk.Context, post types.Post, updateTime int64) {
+	ms.k.DeleteFromHomePostsByPostId(ctx, post.Id, updateTime)
 	ms.k.SetHomePosts(ctx, post.Id)
 	count, b := ms.k.GetHomePostsCount(ctx)
 	if !b {
@@ -904,11 +905,11 @@ func (ms msgServer) addToTopicPosts(ctx sdk.Context, topicHash string, postId st
 	}
 }
 
-func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExponent uint64) {
+func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExponent uint64, updateTime int64) {
 	topics := ms.k.GetTopicsByPostId(ctx, post.Id)
 	if len(topics) > 0 {
 		for _, topicHash := range topics {
-			ms.k.DeleteFromTopicPostsByTopicAndPostId(ctx, topicHash, post.Id, post.HomePostsUpdate)
+			ms.k.DeleteFromTopicPostsByTopicAndPostId(ctx, topicHash, post.Id, updateTime)
 			ms.k.SetTopicPosts(ctx, topicHash, post.Id)
 			count, b := ms.k.GetTopicPostsCount(ctx, topicHash)
 			if !b {
