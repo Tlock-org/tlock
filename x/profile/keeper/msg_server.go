@@ -255,3 +255,54 @@ func (ms msgServer) RemoveAdmin(goCtx context.Context, msg *types.MsgRemoveAdmin
 		Status: true,
 	}, nil
 }
+
+// AppointAdmin implements types.MsgServer.
+func (ms msgServer) ManageAdmin(goCtx context.Context, msg *types.MsgManageAdminRequest) (*types.MsgManageAdminResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	creator := msg.Creator
+	profile, _ := ms.k.GetProfile(ctx, creator)
+	json := msg.ManageJson
+	if profile.AdminLevel > 2 {
+		action := msg.Action
+		address := json.AdminAddress
+		adminProfile, _ := ms.k.GetProfile(ctx, address)
+		if action == types.AdminActionAppoint {
+			supervisorAddr := json.SupervisorAddr
+			level := json.AdminLevel
+			adminProfile.SupervisorAddr = supervisorAddr
+			adminProfile.AdminLevel = level
+			ms.k.SetProfile(ctx, adminProfile)
+
+			editable := json.Editable
+			if editable {
+				err := ms.k.AddEditableAdmin(ctx, address)
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else if action == types.AdminActionRemove {
+			adminProfile.SupervisorAddr = ""
+			adminProfile.AdminLevel = 0
+			ms.k.SetProfile(ctx, adminProfile)
+			editable := ms.k.IsEditableAdmin(ctx, address)
+			if editable {
+				err := ms.k.RemoveEditableAdmin(ctx, address)
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			return &types.MsgManageAdminResponse{
+				Status: false,
+			}, errors.Wrapf(types.ErrRequestDenied, "request denied")
+		}
+
+		return &types.MsgManageAdminResponse{
+			Status: true,
+		}, nil
+	} else {
+		return &types.MsgManageAdminResponse{
+			Status: false,
+		}, errors.Wrapf(types.ErrRequestDenied, "request denied")
+	}
+}

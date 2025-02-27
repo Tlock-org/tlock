@@ -20,4 +20,5 @@ message Params {
 
   bool some_value = 2;
   string admin_address = 3;
+  string chief_moderator = 4;
 }

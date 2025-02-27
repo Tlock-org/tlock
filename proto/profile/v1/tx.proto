@@ -26,6 +26,8 @@ service Msg {
 
   rpc AddAdmin(MsgAddAdminRequest) returns (MsgAddAdminResponse);
   rpc RemoveAdmin(MsgRemoveAdminRequest) returns (MsgRemoveAdminResponse);
+
+  rpc ManageAdmin(MsgManageAdminRequest) returns (MsgManageAdminResponse);
 }
 
 // MsgUpdateParams is the Msg/UpdateParams request type.
@@ -105,5 +107,23 @@ message MsgRemoveAdminRequest {
 }
 
 message MsgRemoveAdminResponse {
+  bool status = 1;
+}
+
+message ManageOptions {
+  string supervisor_addr = 1;
+  string admin_address = 2;
+  uint64 admin_level = 3;
+  bool editable = 4;
+}
+
+message MsgManageAdminRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  ManageOptions manage_json = 2;
+  string action = 3;
+}
+
+message MsgManageAdminResponse {
   bool status = 1;
 }

@@ -7,16 +7,18 @@ import (
 )
 
 const (
-	KeySomeValue    = "someValue"
-	KeyAdminAddress = "adminAddress"
+	KeySomeValue      = "someValue"
+	KeyAdminAddress   = "adminAddress"
+	KeyChiefModerator = "chiefModerator"
 )
 
 // DefaultParams returns default module parameters.
 func DefaultParams() Params {
 	// TODO:
 	return Params{
-		SomeValue:    true,
-		AdminAddress: "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p",
+		SomeValue:      true,
+		AdminAddress:   "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p",
+		ChiefModerator: "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p",
 	}
 }
 
@@ -43,7 +45,8 @@ func ParamKeyTable() paramstypes.KeyTable {
 func (p *Params) ParamSetPairs() paramstypes.ParamSetPairs {
 	return paramstypes.ParamSetPairs{
 		paramstypes.NewParamSetPair([]byte(KeySomeValue), &p.SomeValue, validateSomeValue),
-		paramstypes.NewParamSetPair([]byte(KeyAdminAddress), &p.AdminAddress, validateAdminAddress),
+		paramstypes.NewParamSetPair([]byte(KeyAdminAddress), &p.AdminAddress, validateAddress),
+		paramstypes.NewParamSetPair([]byte(KeyChiefModerator), &p.ChiefModerator, validateAddress),
 	}
 }
 
@@ -55,7 +58,7 @@ func validateSomeValue(i interface{}) error {
 	return nil
 }
 
-func validateAdminAddress(i interface{}) error {
+func validateAddress(i interface{}) error {
 	_, ok := i.(string)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T, expected string", i)

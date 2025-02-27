@@ -27,5 +27,6 @@ message Profile {
   string website = 12;
   IdVerificationStatus idVerification_status = 13;
   uint64 score = 14;
+  string supervisor_addr = 15;
 }
 
