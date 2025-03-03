@@ -262,13 +262,14 @@ func (ms msgServer) ManageAdmin(goCtx context.Context, msg *types.MsgManageAdmin
 	creator := msg.Creator
 	profile, _ := ms.k.GetProfile(ctx, creator)
 	json := msg.ManageJson
-	if profile.AdminLevel > 2 {
+	level := json.AdminLevel
+	moderator, _ := ms.k.GetChiefModerator(ctx)
+	if moderator == creator || (profile.AdminLevel > 2 && profile.AdminLevel > level) {
 		action := msg.Action
 		address := json.AdminAddress
 		adminProfile, _ := ms.k.GetProfile(ctx, address)
 		if action == types.AdminActionAppoint {
 			supervisorAddr := json.SupervisorAddr
-			level := json.AdminLevel
 			adminProfile.SupervisorAddr = supervisorAddr
 			adminProfile.AdminLevel = level
 			ms.k.SetProfile(ctx, adminProfile)

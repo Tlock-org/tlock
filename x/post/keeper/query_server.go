@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"cosmossdk.io/errors"
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
@@ -273,7 +274,6 @@ func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeReques
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	k.Logger().Warn("======Processing LikesIMade query", "wallet", request.Wallet)
 	likes, err := k.GetLikesIMade(sdkCtx, request.Wallet)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -345,7 +345,6 @@ func (k Querier) SavesIMade(ctx context.Context, request *types.SavesIMadeReques
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	k.Logger().Warn("======Processing LikesIMade query", "wallet", request.Wallet)
 	saves, err := k.GetSavesIMade(sdkCtx, request.Wallet)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -390,7 +389,6 @@ func (k Querier) LikesReceived(ctx context.Context, request *types.LikesReceived
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	k.Logger().Warn("======Processing LikesReceived query", "wallet", request.Wallet)
 	likesReceived, err := k.GetLikesReceived(sdkCtx, request.Wallet)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -748,4 +746,35 @@ func (k Querier) QueryFollowingTopics(goCtx context.Context, req *types.QueryFol
 	return &types.QueryFollowingTopicsResponse{
 		Topics: topicResponseList,
 	}, nil
+}
+
+// QueryUncategorizedTopics implements types.QueryServer.
+func (k Querier) QueryUncategorizedTopics(goCtx context.Context, req *types.QueryUncategorizedTopicsRequest) (*types.QueryUncategorizedTopicsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	address := req.Address
+	profile, _ := k.ProfileKeeper.GetProfile(ctx, address)
+	if profile.AdminLevel > 0 {
+		topics, response, _ := k.GetUncategorizedTopics(ctx, req.Page, req.Limit)
+		total := response.Total
+		var topicResponseList []*types.TopicResponse
+		for _, topicHash := range topics {
+			topic, _ := k.GetTopic(ctx, topicHash)
+			topicResponse := types.TopicResponse{
+				Id:      topic.Id,
+				Name:    topic.Name,
+				Avatar:  topic.Avatar,
+				Title:   topic.Title,
+				Summary: topic.Summary,
+				Score:   topic.Score,
+			}
+			topicResponseList = append(topicResponseList, &topicResponse)
+		}
+		return &types.QueryUncategorizedTopicsResponse{
+			Total:  total,
+			Topics: topicResponseList,
+		}, nil
+	} else {
+		return nil, errors.Wrapf(types.ErrRequestDenied, "request denied")
+	}
+
 }

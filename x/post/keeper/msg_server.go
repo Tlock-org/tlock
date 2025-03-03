@@ -1130,6 +1130,14 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string,
 
 						ms.k.SetPostCategoryMapping(ctx, categoryHash, postId)
 						ms.k.SetTopicCategoryMapping(ctx, topicHash, category)
+					} else {
+						isUncategorizedTopic := ms.k.IsUncategorizedTopic(ctx, topicHash)
+						if !isUncategorizedTopic {
+							ms.k.SetUncategorizedTopics(ctx, topicHash)
+							count, _ := ms.k.GetUncategorizedTopicsCount(ctx)
+							count += 1
+							ms.k.SetUncategorizedTopicsCount(ctx, uint64(count))
+						}
 					}
 				}
 			}
@@ -1334,4 +1342,26 @@ func (ms msgServer) UnfollowTopic(goCtx context.Context, msg *types.MsgUnfollowT
 	return &types.MsgUnfollowTopicResponse{
 		Status: true,
 	}, nil
+}
+
+// ClassifyUncategorizedTopic implements types.MsgServer.
+func (ms msgServer) ClassifyUncategorizedTopic(goCtx context.Context, msg *types.ClassifyUncategorizedTopicRequest) (*types.ClassifyUncategorizedTopicResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	creator := msg.Creator
+	profile, _ := ms.k.ProfileKeeper.GetProfile(ctx, creator)
+	adminLevel := profile.AdminLevel
+	if adminLevel > 0 {
+		operator, _ := ms.k.GetCategoryOperator(ctx)
+		if operator != "" {
+			operatorProfile, _ := ms.k.ProfileKeeper.GetProfile(ctx, operator)
+			if adminLevel < 4 && operatorProfile.AdminLevel > adminLevel {
+				return nil, errors.Wrapf(types.ErrRequestDenied, "request denied")
+			}
+			topic, _ := ms.k.GetTopic(ctx, msg.TopicId)
+			ms.addToCategoryTopics(ctx, msg.CategoryId, topic)
+			ms.k.RemoveFromUncategorizedTopics(ctx, msg.TopicId)
+			ms.k.SetCategoryOperator(ctx, creator)
+		}
+	}
+	return &types.ClassifyUncategorizedTopicResponse{Status: true}, nil
 }

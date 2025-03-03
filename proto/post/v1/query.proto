@@ -104,6 +104,10 @@ service Query {
   rpc QueryFollowingTopics(QueryFollowingTopicsRequest) returns (QueryFollowingTopicsResponse) {
     option (google.api.http).get = "/post/v1/following/topics/{address}";
   };
+
+  rpc QueryUncategorizedTopics(QueryUncategorizedTopicsRequest) returns (QueryUncategorizedTopicsResponse) {
+    option (google.api.http).get = "/post/v1/uncategorized/topics/{address}/{page}/{limit}";
+  }
 }
 
 // QueryResolveNameRequest grabs the name of a wallet.
@@ -279,4 +283,15 @@ message QueryFollowingTopicsRequest {
 
 message QueryFollowingTopicsResponse {
   repeated TopicResponse topics = 1;
+}
+
+message QueryUncategorizedTopicsRequest {
+  string address = 1;
+  int64 page = 2;
+  int64 limit = 3;
+}
+
+message QueryUncategorizedTopicsResponse {
+  uint64 total = 1;
+  repeated TopicResponse topics = 2;
 }

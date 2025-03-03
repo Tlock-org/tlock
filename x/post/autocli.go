@@ -184,6 +184,22 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "address"},
 					},
 				},
+				{
+					RpcMethod: "QueryUncategorizedTopics",
+					Use:       "uncategorized-topics",
+					Short:     "query uncategorized topics",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "address",
+						},
+						{
+							ProtoField: "page",
+						},
+						{
+							ProtoField: "limit",
+						},
+					},
+				},
 			},
 		},
 		Tx: &autocliv1.ServiceCommandDescriptor{
