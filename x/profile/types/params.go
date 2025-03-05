@@ -18,7 +18,7 @@ func DefaultParams() Params {
 	return Params{
 		SomeValue:      true,
 		AdminAddress:   "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p",
-		ChiefModerator: "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p",
+		ChiefModerator: "tlock1wfvjqmkekyuy59r535nm2ca3yjkf706nu8x49r",
 	}
 }
 
