@@ -555,7 +555,6 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	// add home posts
 	if post.PostType != types.PostType_COMMENT {
 		exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
-
 		ms.k.Logger().Warn("============exist:", "exist", exist)
 		if exist {
 			ms.updateHomePosts(ctx, post)
@@ -671,7 +670,7 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 	}
 
 	blockTime := ctx.BlockTime().Unix()
-	post.HomePostsUpdate = blockTime
+	post.Timestamp = blockTime
 	ms.k.SetPost(ctx, post)
 
 	// set saves I made

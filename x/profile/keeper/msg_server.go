@@ -129,8 +129,14 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	dbProfile.Website = profileJson.Website
 	dbProfile.CreationTime = blockTime
 
-	if msg.Creator == "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p" || msg.Creator == "tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg" {
+	if (msg.Creator == "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p" || msg.Creator == "tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg") && dbProfile.Level < 6 {
 		dbProfile.Level = 6
+	}
+	if msg.Creator == "tlock1qvmhf9qw5xhefm6jpqpggneahanjhkgw0szlzn" && dbProfile.Level < 5 {
+		dbProfile.Level = 5
+	}
+	if msg.Creator == "tlock1wfvjqmkekyuy59r535nm2ca3yjkf706nu8x49r" && dbProfile.Level < 4 {
+		dbProfile.Level = 4
 	}
 
 	ms.k.SetProfile(ctx, dbProfile)
@@ -262,14 +268,15 @@ func (ms msgServer) ManageAdmin(goCtx context.Context, msg *types.MsgManageAdmin
 	creator := msg.Creator
 	profile, _ := ms.k.GetProfile(ctx, creator)
 	json := msg.ManageJson
+	lineProfile, _ := ms.k.GetProfile(ctx, json.LineManager)
 	level := json.AdminLevel
 	moderator, _ := ms.k.GetChiefModerator(ctx)
-	if moderator == creator || (profile.AdminLevel > 2 && profile.AdminLevel > level) {
+	if moderator == creator || (profile.AdminLevel > 2 && profile.AdminLevel > lineProfile.AdminLevel && lineProfile.AdminLevel > level) {
 		action := msg.Action
 		address := json.AdminAddress
 		adminProfile, _ := ms.k.GetProfile(ctx, address)
 		if action == types.AdminActionAppoint {
-			supervisorAddr := json.SupervisorAddr
+			supervisorAddr := json.LineManager
 			adminProfile.SupervisorAddr = supervisorAddr
 			adminProfile.AdminLevel = level
 			ms.k.SetProfile(ctx, adminProfile)
