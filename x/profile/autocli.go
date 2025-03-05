@@ -25,12 +25,16 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-					RpcMethod: "QueryIsFollowing",
-					Use:       "isFollowing [user] [target]",
-					Short:     "get is following",
+					RpcMethod: "QueryFollowRelationship",
+					Use:       "follow-relationship [addressA] [addressB]",
+					Short:     "get follow relationship",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "user"},
-						{ProtoField: "target"},
+						{
+							ProtoField: "addressA",
+						},
+						{
+							ProtoField: "addressB",
+						},
 					},
 				},
 				{

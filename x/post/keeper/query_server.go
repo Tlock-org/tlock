@@ -748,6 +748,15 @@ func (k Querier) QueryFollowingTopics(goCtx context.Context, req *types.QueryFol
 	}, nil
 }
 
+// QueryIsFollowingTopic implements types.QueryServer.
+func (k Querier) QueryIsFollowingTopic(goCtx context.Context, req *types.QueryIsFollowingTopicRequest) (*types.QueryIsFollowingTopicResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	isFollowingTopic := k.IsFollowingTopic(ctx, req.Address, req.TopicId)
+	return &types.QueryIsFollowingTopicResponse{
+		IsFollowing: isFollowingTopic,
+	}, nil
+}
+
 // QueryUncategorizedTopics implements types.QueryServer.
 func (k Querier) QueryUncategorizedTopics(goCtx context.Context, req *types.QueryUncategorizedTopicsRequest) (*types.QueryUncategorizedTopicsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -777,4 +786,13 @@ func (k Querier) QueryUncategorizedTopics(goCtx context.Context, req *types.Quer
 		return nil, errors.Wrapf(types.ErrRequestDenied, "request denied")
 	}
 
+}
+
+// QueryVoteOption implements types.QueryServer.
+func (k Querier) QueryVoteOption(goCtx context.Context, req *types.QueryVoteOptionRequest) (*types.QueryVoteOptionResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	optionId, _ := k.GetPoll(ctx, req.PostId, req.Address)
+	return &types.QueryVoteOptionResponse{
+		OptionId: optionId,
+	}, nil
 }

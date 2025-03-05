@@ -19,16 +19,15 @@ service Query {
     option (google.api.http).get = "/profile/v1/get/{wallet_address}";
   }
 
-  rpc QueryIsFollowing(QueryIsFollowingRequest) returns (QueryIsFollowingResponse) {
-    option (google.api.http).get = "/profile/v1/isFlowing/{user}/{target}";
-  };
   rpc QueryFollowing(QueryFollowingRequest) returns (QueryFollowingResponse) {
-    option (google.api.http).get = "/profile/v1/flowing/{wallet_address}";
+    option (google.api.http).get = "/profile/v1/flowing/{wallet_address}/{page}/{limit}";
   };
   rpc QueryFollowers(QueryFollowersRequest) returns (QueryFollowersResponse) {
     option (google.api.http).get = "/profile/v1/flowers/{wallet_address}";
   };
-
+  rpc QueryFollowRelationship(QueryFollowRelationshipRequest) returns (QueryFollowRelationshipResponse) {
+    option (google.api.http).get = "/profile/v1/follow/relationship/{addressA}/{addressB}";
+  };
 //  rpc QueryActivitiesReceived(QueryActivitiesReceivedRequest) returns (QueryActivitiesReceivedResponse) {
 //    option (google.api.http).get = "/profile/v1/activites/received/{wallet_address}";
 //  };
@@ -62,17 +61,20 @@ message QueryProfileResponse {
   Profile profile = 1;
 }
 
-message QueryIsFollowingRequest {
-  string user = 1;
-  string target = 2;
+message QueryFollowRelationshipRequest {
+  string addressA = 1;
+  string addressB = 2;
 }
 
-message QueryIsFollowingResponse {
-  bool isFollowing = 1;
+//relationship: 0-No relationship; 1-A follows B; 2-B follows A; 3-Mutual follows
+message QueryFollowRelationshipResponse {
+  uint64 relationship = 1;
 }
 
 message QueryFollowingRequest {
   string wallet_address = 1;
+  uint64 page = 2;
+  uint64 limit = 3;
 }
 
 message QueryFollowingResponse {
@@ -108,7 +110,7 @@ message SearchUsersRequest {
 }
 
 message SearchUsersResponse {
-  repeated UserSearch users = 1;
+  repeated Profile users = 1;
 }
 
 message IsAdminRequest {
