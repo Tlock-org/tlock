@@ -271,13 +271,13 @@ func (ms msgServer) ManageAdmin(goCtx context.Context, msg *types.MsgManageAdmin
 	lineProfile, _ := ms.k.GetProfile(ctx, json.LineManager)
 	level := json.AdminLevel
 	moderator, _ := ms.k.GetChiefModerator(ctx)
-	if moderator == creator || (profile.AdminLevel > 2 && profile.AdminLevel > lineProfile.AdminLevel && lineProfile.AdminLevel > level) {
+	if moderator == creator || (profile.AdminLevel > 2 && profile.AdminLevel > lineProfile.AdminLevel && lineProfile.AdminLevel > level && lineProfile.LineManager == creator) {
 		action := msg.Action
 		address := json.AdminAddress
 		adminProfile, _ := ms.k.GetProfile(ctx, address)
 		if action == types.AdminActionAppoint {
 			supervisorAddr := json.LineManager
-			adminProfile.SupervisorAddr = supervisorAddr
+			adminProfile.LineManager = supervisorAddr
 			adminProfile.AdminLevel = level
 			ms.k.SetProfile(ctx, adminProfile)
 
@@ -289,7 +289,7 @@ func (ms msgServer) ManageAdmin(goCtx context.Context, msg *types.MsgManageAdmin
 				}
 			}
 		} else if action == types.AdminActionRemove {
-			adminProfile.SupervisorAddr = ""
+			adminProfile.LineManager = ""
 			adminProfile.AdminLevel = 0
 			ms.k.SetProfile(ctx, adminProfile)
 			editable := ms.k.IsEditableAdmin(ctx, address)
