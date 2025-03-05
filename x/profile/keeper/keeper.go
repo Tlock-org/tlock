@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -292,6 +293,24 @@ func (k Keeper) GetFollowing(ctx sdk.Context, address string) []string {
 		followings = append(followings, string(val))
 	}
 	return followings
+}
+func (k Keeper) GetFollowingPagination(ctx sdk.Context, address string, page uint64, limit uint64) ([]string, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowingPrefix+address+"/"))
+	first := page * limit
+	pagination := &query.PageRequest{}
+	pagination.Limit = limit
+	pagination.Offset = first
+	pagination.Reverse = true
+	var followings []string
+	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
+		followings = append(followings, string(value))
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+	return followings, pageRes, nil
 }
 
 // IsFollowing

@@ -184,6 +184,48 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						{ProtoField: "address"},
 					},
 				},
+				{
+					RpcMethod: "QueryIsFollowingTopic",
+					Use:       "isFollowing-topic [address] [topic_id]",
+					Short:     "query is following topic",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "address",
+						},
+						{
+							ProtoField: "topic_id",
+						},
+					},
+				},
+				{
+					RpcMethod: "QueryUncategorizedTopics",
+					Use:       "uncategorized-topics",
+					Short:     "query uncategorized topics",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "address",
+						},
+						{
+							ProtoField: "page",
+						},
+						{
+							ProtoField: "limit",
+						},
+					},
+				},
+				{
+					RpcMethod: "QueryVoteOption",
+					Use:       "vote-option",
+					Short:     "query vote option",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "address",
+						},
+						{
+							ProtoField: "post_id",
+						},
+					},
+				},
 			},
 		},
 		Tx: &autocliv1.ServiceCommandDescriptor{

@@ -104,6 +104,16 @@ service Query {
   rpc QueryFollowingTopics(QueryFollowingTopicsRequest) returns (QueryFollowingTopicsResponse) {
     option (google.api.http).get = "/post/v1/following/topics/{address}";
   };
+  rpc QueryIsFollowingTopic(QueryIsFollowingTopicRequest) returns (QueryIsFollowingTopicResponse) {
+    option (google.api.http).get = "/post/v1/isFollowing/topic/{address}/{topic_id}";
+  };
+
+  rpc QueryUncategorizedTopics(QueryUncategorizedTopicsRequest) returns (QueryUncategorizedTopicsResponse) {
+    option (google.api.http).get = "/post/v1/uncategorized/topics/{address}/{page}/{limit}";
+  }
+  rpc QueryVoteOption(QueryVoteOptionRequest) returns (QueryVoteOptionResponse) {
+    option (google.api.http).get = "/post/v1/vote/option/{address}/{post_id}";
+  }
 }
 
 // QueryResolveNameRequest grabs the name of a wallet.
@@ -279,4 +289,30 @@ message QueryFollowingTopicsRequest {
 
 message QueryFollowingTopicsResponse {
   repeated TopicResponse topics = 1;
+}
+message QueryIsFollowingTopicRequest {
+  string address = 1;
+  string topic_id = 2;
+}
+message QueryIsFollowingTopicResponse {
+  bool is_following = 1;
+}
+message QueryUncategorizedTopicsRequest {
+  string address = 1;
+  int64 page = 2;
+  int64 limit = 3;
+}
+
+message QueryUncategorizedTopicsResponse {
+  uint64 total = 1;
+  repeated TopicResponse topics = 2;
+}
+
+message QueryVoteOptionRequest {
+  string address = 1;
+  string post_id = 2;
+}
+
+message QueryVoteOptionResponse {
+  string option_id = 1;
 }

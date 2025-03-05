@@ -55,19 +55,21 @@ const (
 	TopicPostsPageSize         = 100
 	PostTopicsMappingKeyPrefix = "Post/topics/mapping/"
 
-	CategoryKeyPrefix             = "Post/category/"
-	CategoryWithIndexKeyPrefix    = "Post/category/index/"
-	CategoryIndexKeyPrefix        = "Post/category_index"
-	TopicKeyPrefix                = "Post/topic/"
-	TopicCategoryMappingKeyPrefix = "Post/topicCategoryMapping/"
-	CategoryTopicsKeyPrefix       = "Post/category/topics/"
-	HotTopics72KeyPrefix          = "Post/hot/topics/72/"
-	HotTopics72CountKeyPrefix     = "Post/hot_topics_72_count/"
-	HotTopics72Count              = 1000
-	HotTopics72PageSize           = 100
-	CategoryTopicsCountKeyPrefix  = "Post/category/topics/count/"
-	CategoryTopicsCount           = 10000
-	CategoryTopicsPageSize        = 20
+	CategoryKeyPrefix                 = "Post/category/"
+	CategoryWithIndexKeyPrefix        = "Post/category/index/"
+	CategoryIndexKeyPrefix            = "Post/category_index"
+	TopicKeyPrefix                    = "Post/topic/"
+	TopicCategoryMappingKeyPrefix     = "Post/topicCategoryMapping/"
+	CategoryTopicsKeyPrefix           = "Post/category/topics/"
+	UncategorizedTopicsKeyPrefix      = "Post/uncategorized/topics/"
+	UncategorizedTopicsCountKeyPrefix = "Post/uncategorized_topics_count/"
+	HotTopics72KeyPrefix              = "Post/hot/topics/72/"
+	HotTopics72CountKeyPrefix         = "Post/hot_topics_72_count/"
+	HotTopics72Count                  = 1000
+	HotTopics72PageSize               = 100
+	CategoryTopicsCountKeyPrefix      = "Post/category/topics/count/"
+	CategoryTopicsCount               = 10000
+	CategoryTopicsPageSize            = 20
 
 	CategoryPostsKeyPrefix       = "Post/posts/category/"
 	CategoryPostsCountKeyPrefix  = "Post/posts/topic/count/"
@@ -75,6 +77,7 @@ const (
 	CategoryPostsPageSize        = 100
 	CategorySearchKeyPrefix      = "Post/category/search/"
 	PostCategoryMappingKeyPrefix = "Post/category/mapping/"
+	CategoryOperatorKeyPrefix    = "Post/category/operator"
 
 	PollUserPrefix = "Post/poll/"
 

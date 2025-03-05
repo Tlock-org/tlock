@@ -60,7 +60,8 @@ service Msg {
   rpc FollowTopic(MsgFollowTopicRequest) returns (MsgFollowTopicResponse);
 
   rpc UnfollowTopic(MsgUnfollowTopicRequest) returns (MsgUnfollowTopicResponse);
-  //  rpc Mention(MsgMentionRequest) returns (MsgMentionResponse);
+
+  rpc ClassifyUncategorizedTopic(ClassifyUncategorizedTopicRequest) returns (ClassifyUncategorizedTopicResponse);
 
 }
 
@@ -344,12 +345,15 @@ message MsgUnfollowTopicResponse {
   bool status = 1;
 }
 
-message MsgMentionRequest {
+message ClassifyUncategorizedTopicRequest {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  MentionJson mention_json = 2;
+  string topic_id = 2;
+  string category_id = 3;
 }
 
-message MsgMentionResponse {
-
+message ClassifyUncategorizedTopicResponse {
+  bool status = 1;
 }
+
+

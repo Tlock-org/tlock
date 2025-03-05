@@ -45,21 +45,32 @@ func (k Querier) QueryProfile(goCtx context.Context, req *types.QueryProfileRequ
 	return &types.QueryProfileResponse{Profile: &profile}, nil
 }
 
-// QueryIsFollowing implements types.QueryServer.
-func (k Querier) QueryIsFollowing(goCtx context.Context, req *types.QueryIsFollowingRequest) (*types.QueryIsFollowingResponse, error) {
+// QueryFollowRelationship implements types.QueryServer.
+func (k Querier) QueryFollowRelationship(goCtx context.Context, req *types.QueryFollowRelationshipRequest) (*types.QueryFollowRelationshipResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	isFollowing := k.Keeper.IsFollowing(ctx, req.User, req.Target)
-
-	return &types.QueryIsFollowingResponse{
-		isFollowing,
+	aFollowsB := k.Keeper.IsFollowing(ctx, req.AddressA, req.AddressB)
+	bFollowsA := k.Keeper.IsFollowing(ctx, req.AddressB, req.AddressA)
+	relationship := uint64(0)
+	if aFollowsB {
+		if bFollowsA {
+			relationship = 3
+		} else {
+			relationship = 1
+		}
+	} else {
+		if bFollowsA {
+			relationship = 2
+		}
+	}
+	return &types.QueryFollowRelationshipResponse{
+		Relationship: relationship,
 	}, nil
 }
 
 // QueryFollowing implements types.QueryServer.
 func (k Querier) QueryFollowing(goCtx context.Context, req *types.QueryFollowingRequest) (*types.QueryFollowingResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	followings := k.Keeper.GetFollowing(ctx, req.WalletAddress)
-
+	followings, _, _ := k.Keeper.GetFollowingPagination(ctx, req.WalletAddress, req.Page, req.Limit)
 	var profiles []*types.Profile
 	for _, address := range followings {
 		profile, success := k.GetProfile(ctx, address)
@@ -172,9 +183,10 @@ func (k Querier) SearchUsers(goCtx context.Context, req *types.SearchUsersReques
 	}
 	users, _ := k.SearchUsersByMatching(ctx, matching)
 	//users, _ := k.SearchUsersByMatching(ctx, strings.ToLower(matching))
-	var list []*types.UserSearch
+	var list []*types.Profile
 	for _, user := range users {
-		list = append(list, &user)
+		profile, _ := k.GetProfile(ctx, user.WalletAddress)
+		list = append(list, &profile)
 	}
 	return &types.SearchUsersResponse{
 		Users: list,
