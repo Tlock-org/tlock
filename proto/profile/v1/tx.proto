@@ -111,7 +111,7 @@ message MsgRemoveAdminResponse {
 }
 
 message ManageOptions {
-  string supervisor_addr = 1;
+  string line_manager = 1;
   string admin_address = 2;
   uint64 admin_level = 3;
   bool editable = 4;
