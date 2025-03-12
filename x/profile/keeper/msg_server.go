@@ -129,14 +129,45 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	dbProfile.Website = profileJson.Website
 	dbProfile.CreationTime = blockTime
 
-	if (msg.Creator == "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p" || msg.Creator == "tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg") && dbProfile.Level < 6 {
-		dbProfile.Level = 6
+	if msg.Creator == "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p" {
+		if dbProfile.Level < 6 {
+			dbProfile.Level = 6
+		}
+		if dbProfile.AdminLevel < 5 {
+			dbProfile.AdminLevel = 5
+		}
 	}
-	if msg.Creator == "tlock1qvmhf9qw5xhefm6jpqpggneahanjhkgw0szlzn" && dbProfile.Level < 5 {
-		dbProfile.Level = 5
+	if msg.Creator == "tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg" {
+		if dbProfile.Level < 6 {
+			dbProfile.Level = 6
+		}
+		if dbProfile.AdminLevel < 3 {
+			dbProfile.AdminLevel = 3
+		}
 	}
-	if msg.Creator == "tlock1wfvjqmkekyuy59r535nm2ca3yjkf706nu8x49r" && dbProfile.Level < 4 {
-		dbProfile.Level = 4
+	if msg.Creator == "tlock1qvmhf9qw5xhefm6jpqpggneahanjhkgw0szlzn" {
+		if dbProfile.Level < 5 {
+			dbProfile.Level = 5
+		}
+		if dbProfile.AdminLevel < 4 {
+			dbProfile.AdminLevel = 4
+		}
+	}
+	if msg.Creator == "tlock16f7etm42yp5nup77q3027rvvkl73q2gr8wkjcm" {
+		if dbProfile.Level < 5 {
+			dbProfile.Level = 5
+		}
+		if dbProfile.AdminLevel < 3 {
+			dbProfile.AdminLevel = 3
+		}
+	}
+	if msg.Creator == "tlock1wfvjqmkekyuy59r535nm2ca3yjkf706nu8x49r" {
+		if dbProfile.Level < 4 {
+			dbProfile.Level = 4
+		}
+		if dbProfile.AdminLevel < 5 {
+			dbProfile.AdminLevel = 5
+		}
 	}
 
 	ms.k.SetProfile(ctx, dbProfile)
@@ -271,7 +302,7 @@ func (ms msgServer) ManageAdmin(goCtx context.Context, msg *types.MsgManageAdmin
 	lineProfile, _ := ms.k.GetProfile(ctx, json.LineManager)
 	level := json.AdminLevel
 	moderator, _ := ms.k.GetChiefModerator(ctx)
-	if moderator == creator || (profile.AdminLevel > 2 && profile.AdminLevel > lineProfile.AdminLevel && lineProfile.AdminLevel > level && lineProfile.LineManager == creator) {
+	if (profile.AdminLevel > 4 || moderator == creator) || (json.LineManager != creator && lineProfile.LineManager == creator && lineProfile.AdminLevel > 1 && lineProfile.AdminLevel < profile.AdminLevel) {
 		action := msg.Action
 		address := json.AdminAddress
 		adminProfile, _ := ms.k.GetProfile(ctx, address)
@@ -289,14 +320,16 @@ func (ms msgServer) ManageAdmin(goCtx context.Context, msg *types.MsgManageAdmin
 				}
 			}
 		} else if action == types.AdminActionRemove {
-			adminProfile.LineManager = ""
-			adminProfile.AdminLevel = 0
-			ms.k.SetProfile(ctx, adminProfile)
-			editable := ms.k.IsEditableAdmin(ctx, address)
-			if editable {
-				err := ms.k.RemoveEditableAdmin(ctx, address)
-				if err != nil {
-					return nil, err
+			if adminProfile.LineManager == lineProfile.WalletAddress && lineProfile.LineManager == profile.WalletAddress {
+				adminProfile.LineManager = ""
+				adminProfile.AdminLevel = 0
+				ms.k.SetProfile(ctx, adminProfile)
+				editable := ms.k.IsEditableAdmin(ctx, address)
+				if editable {
+					err := ms.k.RemoveEditableAdmin(ctx, address)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 		} else {
