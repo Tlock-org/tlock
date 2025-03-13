@@ -1367,6 +1367,11 @@ func (ms msgServer) ClassifyUncategorizedTopic(goCtx context.Context, msg *types
 			ms.addToCategoryTopics(ctx, msg.CategoryId, topic)
 			ms.k.RemoveFromUncategorizedTopics(ctx, msg.TopicId)
 			ms.k.SetCategoryOperator(ctx, creator)
+		} else {
+			topic, _ := ms.k.GetTopic(ctx, msg.TopicId)
+			ms.addToCategoryTopics(ctx, msg.CategoryId, topic)
+			ms.k.RemoveFromUncategorizedTopics(ctx, msg.TopicId)
+			ms.k.SetCategoryOperator(ctx, creator)
 		}
 	}
 	return &types.ClassifyUncategorizedTopicResponse{Status: true}, nil

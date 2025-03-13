@@ -526,6 +526,23 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 					},
 				},
+				{
+					RpcMethod: "ClassifyUncategorizedTopic",
+					Use:       "classify-uncategorized-topic [creator] [topic_id] [category_id]",
+					Short:     "unfollow topic",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+							Optional:   false,
+						},
+						{
+							ProtoField: "topic_id",
+						},
+						{
+							ProtoField: "category_id",
+						},
+					},
+				},
 				//{
 				//	RpcMethod: "Mention",
 				//	Use:       "mention [creator] [mention_json]",
