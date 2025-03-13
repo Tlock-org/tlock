@@ -199,7 +199,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryUncategorizedTopics",
-					Use:       "uncategorized-topics",
+					Use:       "uncategorized-topics [address] [page] [limit]",
 					Short:     "query uncategorized topics",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{

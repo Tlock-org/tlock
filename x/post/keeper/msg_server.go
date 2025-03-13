@@ -1088,7 +1088,6 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string,
 			return fmt.Errorf("topic list length can not be larger than 10")
 		}
 		var hashTopics []string
-		ms.k.Logger().Warn("==========topicList:", "topicList", topicList)
 		for _, topicName := range topicList {
 			topicHash := ms.k.sha256Generate(topicName)
 			// add topic
@@ -1137,6 +1136,14 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string,
 							count += 1
 							ms.k.SetUncategorizedTopicsCount(ctx, uint64(count))
 						}
+					}
+				} else {
+					isUncategorizedTopic := ms.k.IsUncategorizedTopic(ctx, topicHash)
+					if !isUncategorizedTopic {
+						ms.k.SetUncategorizedTopics(ctx, topicHash)
+						count, _ := ms.k.GetUncategorizedTopicsCount(ctx)
+						count += 1
+						ms.k.SetUncategorizedTopicsCount(ctx, uint64(count))
 					}
 				}
 			}

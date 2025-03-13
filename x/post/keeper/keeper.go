@@ -1518,6 +1518,7 @@ func (k Keeper) GetUncategorizedTopics(ctx sdk.Context, page, limit int64) ([]st
 	if err != nil {
 		return nil, nil, err
 	}
+	k.Logger().Warn("============topics:", "topics", topics)
 	return topics, pageRes, nil
 }
 
