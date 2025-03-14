@@ -89,6 +89,10 @@ service Query {
     option (google.api.http).get = "/post/v1/category/topics/{category_id}";
   };
 
+  rpc QueryCategoryByTopic(QueryCategoryByTopicRequest) returns (QueryCategoryByTopicResponse) {
+    option (google.api.http).get = "/post/v1/topic/category/{topic_id}";
+  };
+
   rpc QueryCategoryPosts(QueryCategoryPostsRequest) returns (QueryCategoryPostsResponse) {
     option (google.api.http).get = "/post/v1/category/posts/{category_id}";
   };
@@ -257,6 +261,15 @@ message QueryTopicsByCategoryRequest {
 
 message QueryTopicsByCategoryResponse {
   CategoryTopicResponse response = 1;
+}
+
+
+message QueryCategoryByTopicRequest {
+  string topic_id = 1;
+}
+
+message QueryCategoryByTopicResponse {
+  CategoryResponse category = 1;
 }
 
 message QueryCategoryPostsRequest {

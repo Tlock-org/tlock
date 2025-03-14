@@ -164,6 +164,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
+					RpcMethod: "QueryCategoryByTopic",
+					Use:       "topic-category [topic_id]",
+					Short:     "get category by topic",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "topic_id"},
+					},
+				},
+				{
 					RpcMethod: "QueryCategoryPosts",
 					Use:       "category-posts [category_id]",
 					Short:     "get posts by category",

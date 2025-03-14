@@ -579,6 +579,29 @@ func (k Querier) QueryTopicsByCategory(goCtx context.Context, req *types.QueryTo
 	}, nil
 }
 
+// QueryCategoryByTopic implements types.QueryServer.
+func (k Querier) QueryCategoryByTopic(goCtx context.Context, req *types.QueryCategoryByTopicRequest) (*types.QueryCategoryByTopicResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	topicHash := req.TopicId
+	categoryHash := k.getCategoryByTopicHash(ctx, topicHash)
+	if categoryHash != "" {
+		//categoryHash := k.sha256Generate(categoryDb)
+		category := k.GetCategory(ctx, categoryHash)
+		k.Logger().Error("==========category:", "category", category)
+		categoryResponse := types.CategoryResponse{
+			Id:     categoryHash,
+			Name:   category.Name,
+			Avatar: category.Avatar,
+			Index:  category.Index,
+		}
+		return &types.QueryCategoryByTopicResponse{
+			Category: &categoryResponse,
+		}, nil
+	} else {
+		return &types.QueryCategoryByTopicResponse{}, nil
+	}
+}
+
 // QueryCategoryPosts implements types.QueryServer.
 func (k Querier) QueryCategoryPosts(goCtx context.Context, req *types.QueryCategoryPostsRequest) (*types.QueryCategoryPostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
