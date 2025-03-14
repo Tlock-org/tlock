@@ -1113,9 +1113,9 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string,
 			categoryDb := ms.k.getCategoryByTopicHash(ctx, topicHash)
 			if categoryDb != "" {
 				//ms.k.SetCategorySearch(ctx, categoryDb)
-				categoryHash := ms.k.sha256Generate(categoryDb)
-				ms.addToCategoryPosts(ctx, categoryHash, postId)
-				ms.k.SetPostCategoryMapping(ctx, categoryHash, postId)
+				//categoryHash := ms.k.sha256Generate(categoryDb)
+				ms.addToCategoryPosts(ctx, categoryDb, postId)
+				ms.k.SetPostCategoryMapping(ctx, categoryDb, postId)
 			} else {
 				if category != "" {
 					categoryHash := ms.k.sha256Generate(category)
@@ -1127,7 +1127,8 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string,
 						ms.addToCategoryTopics(ctx, categoryHash, topic)
 
 						ms.k.SetPostCategoryMapping(ctx, categoryHash, postId)
-						ms.k.SetTopicCategoryMapping(ctx, topicHash, category)
+						//ms.k.SetTopicCategoryMapping(ctx, topicHash, category)
+						ms.k.SetTopicCategoryMapping(ctx, topicHash, categoryHash)
 					} else {
 						isUncategorizedTopic := ms.k.IsUncategorizedTopic(ctx, topicHash)
 						if !isUncategorizedTopic {
@@ -1367,11 +1368,13 @@ func (ms msgServer) ClassifyUncategorizedTopic(goCtx context.Context, msg *types
 			ms.addToCategoryTopics(ctx, msg.CategoryId, topic)
 			ms.k.RemoveFromUncategorizedTopics(ctx, msg.TopicId)
 			ms.k.SetCategoryOperator(ctx, creator)
+			ms.k.SetTopicCategoryMapping(ctx, msg.TopicId, msg.CategoryId)
 		} else {
 			topic, _ := ms.k.GetTopic(ctx, msg.TopicId)
 			ms.addToCategoryTopics(ctx, msg.CategoryId, topic)
 			ms.k.RemoveFromUncategorizedTopics(ctx, msg.TopicId)
 			ms.k.SetCategoryOperator(ctx, creator)
+			ms.k.SetTopicCategoryMapping(ctx, msg.TopicId, msg.CategoryId)
 		}
 	}
 	return &types.ClassifyUncategorizedTopicResponse{Status: true}, nil

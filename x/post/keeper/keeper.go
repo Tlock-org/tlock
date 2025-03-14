@@ -1327,11 +1327,10 @@ func (k Keeper) DeleteLastFromHotTopics72(ctx sdk.Context) {
 	earliestKey := iterator.Key()
 	store.Delete(earliestKey)
 }
-func (k Keeper) SetTopicCategoryMapping(ctx sdk.Context, topicHash string, category string) {
+func (k Keeper) SetTopicCategoryMapping(ctx sdk.Context, topicHash string, categoryHash string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicCategoryMappingKeyPrefix))
 	key := append([]byte(topicHash))
-	value, _ := json.Marshal(category)
-	store.Set(key, value)
+	store.Set(key, []byte(categoryHash))
 }
 func (k Keeper) getCategoryByTopicHash(ctx sdk.Context, topicHash string) string {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicCategoryMappingKeyPrefix))

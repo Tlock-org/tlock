@@ -296,22 +296,21 @@ func (ms msgServer) RemoveAdmin(goCtx context.Context, msg *types.MsgRemoveAdmin
 // AppointAdmin implements types.MsgServer.
 func (ms msgServer) ManageAdmin(goCtx context.Context, msg *types.MsgManageAdminRequest) (*types.MsgManageAdminResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	creator := msg.Creator
-	profile, _ := ms.k.GetProfile(ctx, creator)
-	json := msg.ManageJson
-	lineProfile, _ := ms.k.GetProfile(ctx, json.LineManager)
-	level := json.AdminLevel
 	moderator, _ := ms.k.GetChiefModerator(ctx)
-	if (profile.AdminLevel > 4 || moderator == creator) || (json.LineManager != creator && lineProfile.LineManager == creator && lineProfile.AdminLevel > 1 && lineProfile.AdminLevel < profile.AdminLevel) {
-		action := msg.Action
-		address := json.AdminAddress
-		adminProfile, _ := ms.k.GetProfile(ctx, address)
-		if action == types.AdminActionAppoint {
-			supervisorAddr := json.LineManager
-			adminProfile.LineManager = supervisorAddr
+	creator := msg.Creator
+	creatorProfile, _ := ms.k.GetProfile(ctx, creator)
+	json := msg.ManageJson
+	address := json.AdminAddress
+	adminProfile, _ := ms.k.GetProfile(ctx, address)
+	action := msg.Action
+	if action == types.AdminActionAppoint {
+		lineProfile, _ := ms.k.GetProfile(ctx, json.LineManager)
+		level := json.AdminLevel
+		if (creatorProfile.AdminLevel > 4 || moderator == creator) || (json.LineManager != creator && address != json.LineManager && lineProfile.LineManager == creator && lineProfile.AdminLevel > 1 && lineProfile.AdminLevel < creatorProfile.AdminLevel) {
+			lineAddr := json.LineManager
+			adminProfile.LineManager = lineAddr
 			adminProfile.AdminLevel = level
 			ms.k.SetProfile(ctx, adminProfile)
-
 			editable := json.Editable
 			if editable {
 				err := ms.k.AddEditableAdmin(ctx, address)
@@ -319,17 +318,22 @@ func (ms msgServer) ManageAdmin(goCtx context.Context, msg *types.MsgManageAdmin
 					return nil, err
 				}
 			}
-		} else if action == types.AdminActionRemove {
-			if adminProfile.LineManager == lineProfile.WalletAddress && lineProfile.LineManager == profile.WalletAddress {
-				adminProfile.LineManager = ""
-				adminProfile.AdminLevel = 0
-				ms.k.SetProfile(ctx, adminProfile)
-				editable := ms.k.IsEditableAdmin(ctx, address)
-				if editable {
-					err := ms.k.RemoveEditableAdmin(ctx, address)
-					if err != nil {
-						return nil, err
-					}
+		} else {
+			return &types.MsgManageAdminResponse{
+				Status: false,
+			}, errors.Wrapf(types.ErrRequestDenied, "request denied")
+		}
+	} else if action == types.AdminActionRemove {
+		lineProfile, _ := ms.k.GetProfile(ctx, adminProfile.LineManager)
+		if (creatorProfile.AdminLevel > 4 || moderator == creator) || lineProfile.LineManager == creator {
+			adminProfile.LineManager = ""
+			adminProfile.AdminLevel = 0
+			ms.k.SetProfile(ctx, adminProfile)
+			editable := ms.k.IsEditableAdmin(ctx, address)
+			if editable {
+				err := ms.k.RemoveEditableAdmin(ctx, address)
+				if err != nil {
+					return nil, err
 				}
 			}
 		} else {
@@ -337,13 +341,14 @@ func (ms msgServer) ManageAdmin(goCtx context.Context, msg *types.MsgManageAdmin
 				Status: false,
 			}, errors.Wrapf(types.ErrRequestDenied, "request denied")
 		}
-
-		return &types.MsgManageAdminResponse{
-			Status: true,
-		}, nil
 	} else {
 		return &types.MsgManageAdminResponse{
 			Status: false,
 		}, errors.Wrapf(types.ErrRequestDenied, "request denied")
 	}
+
+	return &types.MsgManageAdminResponse{
+		Status: true,
+	}, nil
+
 }
