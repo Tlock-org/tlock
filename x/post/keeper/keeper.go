@@ -1351,6 +1351,17 @@ func (k Keeper) SetCategoryTopics(ctx sdk.Context, topicScore uint64, categoryHa
 	key := buffer.Bytes()
 	store.Set(key, []byte(topicHash))
 }
+
+func (k Keeper) DeleteFromCategoryTopicsByCategoryAndTopicId(ctx sdk.Context, categoryHash string, topicHash string, topicScore uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryTopicsKeyPrefix+categoryHash))
+	bzScore := k.EncodeScore(topicScore)
+	var buffer bytes.Buffer
+	buffer.Write(bzScore)
+	buffer.WriteString(topicHash)
+	key := buffer.Bytes()
+	store.Delete(key)
+}
+
 func (k Keeper) DeleteLastPostFromCategoryTopics(ctx sdk.Context, categoryHash string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryTopicsKeyPrefix+categoryHash))
 	iterator := store.Iterator(nil, nil)

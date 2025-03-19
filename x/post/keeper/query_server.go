@@ -136,7 +136,6 @@ func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.Query
 func (k Querier) QueryTopicPosts(goCtx context.Context, req *types.QueryTopicPostsRequest) (*types.QueryTopicPostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	topicHash := req.TopicId
-	//topicHash := k.sha256Generate(topic)
 	postIDs, _, err := k.Keeper.GetTopicPosts(ctx, topicHash)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -224,23 +223,20 @@ func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (
 	}
 
 	postCopy := post
-	//posts = append(posts, &postCopy)
 
 	profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-	//k.Logger().Error("======nickName:{}", profile.Nickname)
-	//profileResponse := profileTypes.ProfileResponse{
-	//	UserHandle: profile.UserHandle,
-	//	Nickname:   profile.Nickname,
-	//	Avatar:     profile.Avatar,
-	//	Level:      profile.Level,
-	//	AdminLevel: profile.AdminLevel,
-	//}
 	profileResponseCopy := profile
 	postResponse := types.PostResponse{
 		Post:    &postCopy,
 		Profile: &profileResponseCopy,
 	}
 
+	if post.Quote != "" {
+		quotePost, _ := k.GetPost(ctx, post.Quote)
+		quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+		postResponse.QuotePost = &quotePost
+		postResponse.QuoteProfile = &quoteProfile
+	}
 	return &types.QueryPostResponse{Post: &postResponse}, nil
 }
 

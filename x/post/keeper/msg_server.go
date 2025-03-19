@@ -570,7 +570,6 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 		if categoryExist {
 			ms.updateCategoryPosts(ctx, post)
 		}
-
 	}
 
 	// update post
@@ -906,10 +905,8 @@ func (ms msgServer) addToTopicPosts(ctx sdk.Context, topicHash string, postId st
 
 func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExponent uint64) {
 	topics := ms.k.GetTopicsByPostId(ctx, post.Id)
-	ms.k.Logger().Warn("=======topics:", "topics", topics)
 	if len(topics) > 0 {
 		for _, topicHash := range topics {
-			ms.k.Logger().Warn("=======updateTopicPosts time:", "HomePostsUpdate", post.HomePostsUpdate)
 			ms.k.DeleteFromTopicPostsByTopicAndPostId(ctx, topicHash, post.Id, post.HomePostsUpdate)
 			ms.k.SetTopicPosts(ctx, topicHash, post.Id)
 			count, b := ms.k.GetTopicPostsCount(ctx, topicHash)
@@ -952,6 +949,11 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 					ms.k.SetHotTopics72Count(ctx, count)
 				}
 
+				categoryHash := ms.k.getCategoryByTopicHash(ctx, topicHash)
+				if categoryHash != "" {
+					ms.k.DeleteFromCategoryTopicsByCategoryAndTopicId(ctx, categoryHash, topicHash, oldScore)
+					ms.k.SetCategoryTopics(ctx, newScore, categoryHash, topicHash)
+				}
 			}
 		}
 	}
