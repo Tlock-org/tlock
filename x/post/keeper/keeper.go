@@ -194,15 +194,14 @@ func (k Keeper) IsPostInHomePosts(ctx sdk.Context, postId string, homePostsUpdat
 	return store.Has(key)
 }
 
-func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) ([]string, *query.PageResponse, error) {
+func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) ([]string, *query.PageResponse, uint64, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
-
 	homePostsCount, _ := k.GetHomePostsCount(ctx)
 	if homePostsCount == 0 {
 		return []string{}, &query.PageResponse{
 			NextKey: nil,
 			Total:   uint64(homePostsCount),
-		}, nil
+		}, uint64(0), nil
 	}
 
 	const pageSize = types.HomePostsPageSize
@@ -227,7 +226,7 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) 
 
 	const totalPosts = types.HomePostsCount
 	if first >= totalPosts {
-		return nil, nil, fmt.Errorf("offset exceeds total number of home posts")
+		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of home posts")
 	}
 
 	pagination := &query.PageRequest{}
@@ -244,19 +243,19 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) 
 	})
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, uint64(0), err
 	}
-	return postIDs, pageRes, nil
+	return postIDs, pageRes, uint64(pageIndex + 1), nil
 }
 
-func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context) ([]string, *query.PageResponse, error) {
+func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context) ([]string, *query.PageResponse, uint64, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
 	homePostsCount, _ := k.GetHomePostsCount(ctx)
 	if homePostsCount == 0 {
 		return []string{}, &query.PageResponse{
 			NextKey: nil,
 			Total:   uint64(homePostsCount),
-		}, nil
+		}, uint64(0), nil
 	}
 
 	const pageSize = types.HomePostsPageSize
@@ -283,9 +282,9 @@ func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context) ([]string, *query.PageRes
 	})
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, uint64(0), err
 	}
-	return postIDs, pageRes, nil
+	return postIDs, pageRes, uint64(1), nil
 }
 
 func (k Keeper) DeleteLastPostFromHomePosts(ctx sdk.Context) {
@@ -360,7 +359,7 @@ func (k Keeper) SearchTopicMatches(ctx sdk.Context, query string) ([]string, err
 	return matchedTopics, nil
 }
 
-func (k Keeper) GetTopicPosts(ctx sdk.Context, topic string) ([]string, *query.PageResponse, error) {
+func (k Keeper) GetTopicPosts(ctx sdk.Context, topic string, page uint64) ([]string, *query.PageResponse, uint64, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix+topic))
 
 	topicPostsCount, _ := k.GetTopicPostsCount(ctx, topic)
@@ -368,37 +367,20 @@ func (k Keeper) GetTopicPosts(ctx sdk.Context, topic string) ([]string, *query.P
 		return []string{}, &query.PageResponse{
 			NextKey: nil,
 			Total:   uint64(topicPostsCount),
-		}, nil
+		}, uint64(0), nil
+	}
+
+	if page < 1 {
+		page = 1
 	}
 
 	const pageSize = types.TopicPostsPageSize
-	totalPages := topicPostsCount / pageSize
-	if topicPostsCount%pageSize != 0 {
-		totalPages += 1
-	}
-
-	if totalPages == 0 {
-		totalPages = 1
-	}
-
-	currentTime := time.Now()
-	unixMilli := currentTime.Unix()
-	lastTwoDigits := unixMilli % 100
-
-	pageIndex := lastTwoDigits % totalPages
-	// 00-99  10000 00:1-100 01:101-200 02:201-300
-	//first := lastTwoDigits * 100
-	first := pageIndex * pageSize
-
-	const totalPosts = types.TopicPostsCount
-	if first >= totalPosts {
-		return nil, nil, fmt.Errorf("offset exceeds total number of topic posts")
-	}
-
 	pagination := &query.PageRequest{}
 
+	first := (page - 1) * pageSize
+
 	pagination.Limit = pageSize
-	pagination.Offset = uint64(first)
+	pagination.Offset = first
 	pagination.Reverse = true
 
 	var postIDs []string
@@ -409,9 +391,9 @@ func (k Keeper) GetTopicPosts(ctx sdk.Context, topic string) ([]string, *query.P
 	})
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, uint64(0), err
 	}
-	return postIDs, pageRes, nil
+	return postIDs, pageRes, page, nil
 }
 
 func (k Keeper) SetTopicPosts(ctx sdk.Context, topic string, postId string) {
@@ -519,7 +501,7 @@ func (k Keeper) DeleteLastPostFromUserCreated(ctx sdk.Context, creator string) {
 	k.Logger().Info("Deleted earliest user created post", "post_id", earliestPostID)
 }
 
-func (k Keeper) GetUserCreatedPosts(ctx sdk.Context, creator string) ([]string, *query.PageResponse, error) {
+func (k Keeper) GetUserCreatedPosts(ctx sdk.Context, creator string, page uint64) ([]string, *query.PageResponse, uint64, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserCreatedPostsKeyPrefix+creator))
 
 	userCreatedPostsCount, _ := k.GetUserCreatedPostsCount(ctx, creator)
@@ -527,7 +509,7 @@ func (k Keeper) GetUserCreatedPosts(ctx sdk.Context, creator string) ([]string, 
 		return []string{}, &query.PageResponse{
 			NextKey: nil,
 			Total:   uint64(userCreatedPostsCount),
-		}, nil
+		}, uint64(0), nil
 	}
 
 	const pageSize = types.UserCreatedPostsPageSize
@@ -540,16 +522,20 @@ func (k Keeper) GetUserCreatedPosts(ctx sdk.Context, creator string) ([]string, 
 		totalPages = 1
 	}
 
-	currentTime := time.Now()
-	unixMilli := currentTime.Unix()
-	lastTwoDigits := unixMilli % 10
-
-	pageIndex := lastTwoDigits % totalPages
-	first := pageIndex * pageSize
+	if page < 1 {
+		page = 1
+	}
+	//currentTime := time.Now()
+	//unixMilli := currentTime.Unix()
+	//lastTwoDigits := unixMilli % 10
+	//
+	//pageIndex := lastTwoDigits % totalPages
+	//first := pageIndex * pageSize
+	first := (page - 1) * pageSize
 
 	const totalPosts = types.UserCreatedPostsCount
 	if first >= totalPosts {
-		return nil, nil, fmt.Errorf("offset exceeds total number of home posts")
+		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of home posts")
 	}
 
 	pagination := &query.PageRequest{}
@@ -566,9 +552,9 @@ func (k Keeper) GetUserCreatedPosts(ctx sdk.Context, creator string) ([]string, 
 	})
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, uint64(0), err
 	}
-	return postIDs, pageRes, nil
+	return postIDs, pageRes, page, nil
 }
 
 func (k Keeper) GetLastPostsByAddress(ctx sdk.Context, address string, limit int) ([]string, *query.PageResponse, error) {
@@ -1020,7 +1006,7 @@ func (k Keeper) DeleteLastPostFromCategoryPosts(ctx sdk.Context, categoryHash st
 	earliestKey := iterator.Key()
 	store.Delete(earliestKey)
 }
-func (k Keeper) GetCategoryPosts(ctx sdk.Context, categoryHash string) ([]string, *query.PageResponse, error) {
+func (k Keeper) GetCategoryPosts(ctx sdk.Context, categoryHash string, page uint64) ([]string, *query.PageResponse, uint64, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsKeyPrefix+categoryHash))
 
 	categoryPostsCount, _ := k.GetTopicPostsCount(ctx, categoryHash)
@@ -1028,7 +1014,7 @@ func (k Keeper) GetCategoryPosts(ctx sdk.Context, categoryHash string) ([]string
 		return []string{}, &query.PageResponse{
 			NextKey: nil,
 			Total:   uint64(categoryPostsCount),
-		}, nil
+		}, uint64(0), nil
 	}
 
 	const pageSize = types.CategoryPostsPageSize
@@ -1041,24 +1027,27 @@ func (k Keeper) GetCategoryPosts(ctx sdk.Context, categoryHash string) ([]string
 		totalPages = 1
 	}
 
-	currentTime := time.Now()
-	unixMilli := currentTime.Unix()
-	lastTwoDigits := unixMilli % 100
-
-	pageIndex := lastTwoDigits % totalPages
+	//currentTime := time.Now()
+	//unixMilli := currentTime.Unix()
+	//lastTwoDigits := unixMilli % 100
+	//
+	//pageIndex := lastTwoDigits % totalPages
 	// 00-99  10000 00:1-100 01:101-200 02:201-300
 	//first := lastTwoDigits * 100
-	first := pageIndex * pageSize
-
+	//first := pageIndex * pageSize
+	if page < 1 {
+		page = 1
+	}
+	first := (page - 1) * pageSize
 	const totalPosts = types.CategoryPostsCount
 	if first >= totalPosts {
-		return nil, nil, fmt.Errorf("offset exceeds total number of category posts")
+		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of category posts")
 	}
 
 	pagination := &query.PageRequest{}
 
 	pagination.Limit = pageSize
-	pagination.Offset = uint64(first)
+	pagination.Offset = first
 	pagination.Reverse = true
 
 	var postIDs []string
@@ -1069,9 +1058,9 @@ func (k Keeper) GetCategoryPosts(ctx sdk.Context, categoryHash string) ([]string
 	})
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, uint64(0), err
 	}
-	return postIDs, pageRes, nil
+	return postIDs, pageRes, page, nil
 }
 func (k Keeper) GetCategoryPostsCount(ctx sdk.Context, category string) (int64, bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryPostsCountKeyPrefix))
@@ -1250,7 +1239,7 @@ func (k Keeper) deleteFormHotTopics72(ctx sdk.Context, topicHash string, topicSc
 	key := buffer.Bytes()
 	store.Delete(key)
 }
-func (k Keeper) GetHotTopics72(ctx sdk.Context) ([]string, *query.PageResponse, error) {
+func (k Keeper) GetHotTopics72(ctx sdk.Context, page uint64) ([]string, *query.PageResponse, uint64, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72KeyPrefix))
 
 	hotTopics72Count, _ := k.GetHotTopics72Count(ctx)
@@ -1258,9 +1247,12 @@ func (k Keeper) GetHotTopics72(ctx sdk.Context) ([]string, *query.PageResponse, 
 		return []string{}, &query.PageResponse{
 			NextKey: nil,
 			Total:   uint64(hotTopics72Count),
-		}, nil
+		}, uint64(0), nil
 	}
 
+	if page < 1 {
+		page = 1
+	}
 	const pageSize = types.HotTopics72PageSize
 	totalPages := hotTopics72Count / pageSize
 	if hotTopics72Count%pageSize != 0 {
@@ -1271,24 +1263,23 @@ func (k Keeper) GetHotTopics72(ctx sdk.Context) ([]string, *query.PageResponse, 
 		totalPages = 1
 	}
 
-	currentTime := time.Now()
-	unixMilli := currentTime.Unix()
-	lastTwoDigits := unixMilli % 100
+	//currentTime := time.Now()
+	//unixMilli := currentTime.Unix()
+	//lastTwoDigits := unixMilli % 100
 
-	pageIndex := lastTwoDigits % totalPages
+	//pageIndex := lastTwoDigits % totalPages
 	// 00-99  10000 00:1-100 01:101-200 02:201-300
-	//first := lastTwoDigits * 100
-	first := pageIndex * pageSize
+	first := (page - 1) * pageSize
 
 	const totalTopics = types.HotTopics72Count
 	if first >= totalTopics {
-		return nil, nil, fmt.Errorf("offset exceeds total number of hot topics")
+		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of hot topics")
 	}
 
 	pagination := &query.PageRequest{}
 
 	pagination.Limit = pageSize
-	pagination.Offset = uint64(first)
+	pagination.Offset = first
 	pagination.Reverse = true
 
 	var postIDs []string
@@ -1298,9 +1289,9 @@ func (k Keeper) GetHotTopics72(ctx sdk.Context) ([]string, *query.PageResponse, 
 		return nil
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, uint64(0), err
 	}
-	return postIDs, pageRes, nil
+	return postIDs, pageRes, page, nil
 }
 func (k Keeper) SetHotTopics72Count(ctx sdk.Context, count int64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72CountKeyPrefix))
@@ -1369,7 +1360,7 @@ func (k Keeper) DeleteLastPostFromCategoryTopics(ctx sdk.Context, categoryHash s
 	earliestKey := iterator.Key()
 	store.Delete(earliestKey)
 }
-func (k Keeper) GetCategoryTopics(ctx sdk.Context, categoryHash string) ([]string, *query.PageResponse, error) {
+func (k Keeper) GetCategoryTopics(ctx sdk.Context, categoryHash string, page uint64) ([]string, *query.PageResponse, uint64, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryTopicsKeyPrefix+categoryHash))
 
 	categoryTopicsCount, _ := k.GetCategoryTopicsCount(ctx, categoryHash)
@@ -1377,9 +1368,12 @@ func (k Keeper) GetCategoryTopics(ctx sdk.Context, categoryHash string) ([]strin
 		return []string{}, &query.PageResponse{
 			NextKey: nil,
 			Total:   uint64(categoryTopicsCount),
-		}, nil
+		}, uint64(0), nil
 	}
 
+	if page < 1 {
+		page = 1
+	}
 	const pageSize = types.CategoryTopicsPageSize
 	totalPages := categoryTopicsCount / pageSize
 	if categoryTopicsCount%pageSize != 0 {
@@ -1390,23 +1384,24 @@ func (k Keeper) GetCategoryTopics(ctx sdk.Context, categoryHash string) ([]strin
 		totalPages = 1
 	}
 
-	currentTime := time.Now()
-	unixMilli := currentTime.Unix()
-	lastTwoDigits := unixMilli % 100
+	//currentTime := time.Now()
+	//unixMilli := currentTime.Unix()
+	//lastTwoDigits := unixMilli % 100
 
-	pageIndex := lastTwoDigits % totalPages
+	//pageIndex := lastTwoDigits % totalPages
 	// 00-99  10000 00:1-100 01:101-200 02:201-300
 	//first := lastTwoDigits * 100
-	first := pageIndex * pageSize
+	//first := pageIndex * pageSize
+	first := (page - 1) * pageSize
 	const totalTopics = types.CategoryTopicsCount
 	if first >= totalTopics {
-		return nil, nil, fmt.Errorf("offset exceeds total number of category posts")
+		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of category posts")
 	}
 
 	pagination := &query.PageRequest{}
 
 	pagination.Limit = pageSize
-	pagination.Offset = uint64(first)
+	pagination.Offset = first
 	pagination.Reverse = true
 
 	var topics []string
@@ -1417,9 +1412,9 @@ func (k Keeper) GetCategoryTopics(ctx sdk.Context, categoryHash string) ([]strin
 	})
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, uint64(0), err
 	}
-	return topics, pageRes, nil
+	return topics, pageRes, page, nil
 }
 
 func (k Keeper) SetCategoryTopicsCount(ctx sdk.Context, categoryHash string, count int64) {

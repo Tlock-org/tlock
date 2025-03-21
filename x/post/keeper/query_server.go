@@ -59,7 +59,7 @@ func (k Querier) ResolveName(goCtx context.Context, req *types.QueryResolveNameR
 func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePostsRequest) (*types.QueryHomePostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	postIDs, _, err := k.Keeper.GetHomePosts(ctx, req)
+	postIDs, _, page, err := k.Keeper.GetHomePosts(ctx, req)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -91,6 +91,7 @@ func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePosts
 	}
 
 	return &types.QueryHomePostsResponse{
+		Page:  page,
 		Posts: postResponses,
 	}, nil
 }
@@ -99,7 +100,7 @@ func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePosts
 func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.QueryFirstPageHomePostsRequest) (*types.QueryFirstPageHomePostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	postIDs, _, err := k.Keeper.GetFirstPageHomePosts(ctx)
+	postIDs, _, page, err := k.Keeper.GetFirstPageHomePosts(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -128,6 +129,7 @@ func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.Query
 		postResponses = append(postResponses, &postResponse)
 	}
 	return &types.QueryFirstPageHomePostsResponse{
+		Page:  page,
 		Posts: postResponses,
 	}, nil
 }
@@ -136,7 +138,8 @@ func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.Query
 func (k Querier) QueryTopicPosts(goCtx context.Context, req *types.QueryTopicPostsRequest) (*types.QueryTopicPostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	topicHash := req.TopicId
-	postIDs, _, err := k.Keeper.GetTopicPosts(ctx, topicHash)
+	page := req.Page
+	postIDs, _, page, err := k.Keeper.GetTopicPosts(ctx, topicHash, page)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -167,6 +170,7 @@ func (k Querier) QueryTopicPosts(goCtx context.Context, req *types.QueryTopicPos
 		postResponses = append(postResponses, &postResponse)
 	}
 	return &types.QueryTopicPostsResponse{
+		Page:  page,
 		Posts: postResponses,
 	}, nil
 }
@@ -175,7 +179,7 @@ func (k Querier) QueryTopicPosts(goCtx context.Context, req *types.QueryTopicPos
 func (k Querier) QueryUserCreatedPosts(goCtx context.Context, req *types.QueryUserCreatedPostsRequest) (*types.QueryUserCreatedPostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	postIDs, _, err := k.Keeper.GetUserCreatedPosts(ctx, req.Wallet)
+	postIDs, _, page, err := k.Keeper.GetUserCreatedPosts(ctx, req.Wallet, req.Page)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -205,6 +209,7 @@ func (k Querier) QueryUserCreatedPosts(goCtx context.Context, req *types.QueryUs
 		postResponses = append(postResponses, &postResponse)
 	}
 	return &types.QueryUserCreatedPostsResponse{
+		Page:  page,
 		Posts: postResponses,
 	}, nil
 }
@@ -542,7 +547,7 @@ func (k Querier) QueryTopicsByCategory(goCtx context.Context, req *types.QueryTo
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	category := k.GetCategory(ctx, req.CategoryId)
-	topics, _, err := k.GetCategoryTopics(ctx, req.CategoryId)
+	topics, _, page, err := k.GetCategoryTopics(ctx, req.CategoryId, req.Page)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -571,6 +576,7 @@ func (k Querier) QueryTopicsByCategory(goCtx context.Context, req *types.QueryTo
 	}
 
 	return &types.QueryTopicsByCategoryResponse{
+		Page:     page,
 		Response: &categoryTopicResponse,
 	}, nil
 }
@@ -602,7 +608,7 @@ func (k Querier) QueryCategoryByTopic(goCtx context.Context, req *types.QueryCat
 func (k Querier) QueryCategoryPosts(goCtx context.Context, req *types.QueryCategoryPostsRequest) (*types.QueryCategoryPostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	category := k.GetCategory(ctx, req.CategoryId)
-	posts, _, err := k.Keeper.GetCategoryPosts(ctx, req.CategoryId)
+	posts, _, page, err := k.Keeper.GetCategoryPosts(ctx, req.CategoryId, req.Page)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get posts by category %s: %w", req.CategoryId, err)
 	}
@@ -633,6 +639,7 @@ func (k Querier) QueryCategoryPosts(goCtx context.Context, req *types.QueryCateg
 	}
 
 	return &types.QueryCategoryPostsResponse{
+		Page:     page,
 		Response: &categoryPostsResponse,
 	}, nil
 }
@@ -640,7 +647,7 @@ func (k Querier) QueryCategoryPosts(goCtx context.Context, req *types.QueryCateg
 // QueryHotTopics72 implements types.QueryServer.
 func (k Querier) QueryHotTopics72(goCtx context.Context, req *types.QueryHotTopics72Request) (*types.QueryHotTopics72Response, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	topics72, _, err := k.GetHotTopics72(ctx)
+	topics72, _, page, err := k.GetHotTopics72(ctx, req.Page)
 	if err != nil {
 		return &types.QueryHotTopics72Response{}, nil
 	}
@@ -658,6 +665,7 @@ func (k Querier) QueryHotTopics72(goCtx context.Context, req *types.QueryHotTopi
 		topicResponseList = append(topicResponseList, &topicResponse)
 	}
 	return &types.QueryHotTopics72Response{
+		Page:   page,
 		Topics: topicResponseList,
 	}, nil
 }

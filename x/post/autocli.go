@@ -36,10 +36,15 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryTopicPosts",
-					Use:       "topic-posts [topic_id]",
+					Use:       "topic-posts [page] [topic_id]",
 					Short:     "query topic posts",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "topic_id"},
+						{
+							ProtoField: "page",
+						},
+						{
+							ProtoField: "topic_id",
+						},
 					},
 				},
 				{
@@ -157,10 +162,15 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryTopicsByCategory",
-					Use:       "category-topics [category_id]",
+					Use:       "category-topics [category_id] [page]",
 					Short:     "get topics by category",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "category_id"},
+						{
+							ProtoField: "category_id",
+						},
+						{
+							ProtoField: "page",
+						},
 					},
 				},
 				{
@@ -173,16 +183,26 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryCategoryPosts",
-					Use:       "category-posts [category_id]",
+					Use:       "category-posts [category_id] [page]",
 					Short:     "get posts by category",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "category_id"},
+						{
+							ProtoField: "category_id",
+						},
+						{
+							ProtoField: "page",
+						},
 					},
 				},
 				{
 					RpcMethod: "QueryHotTopics72",
-					Use:       "hot-topics",
+					Use:       "hot-topics [page]",
 					Short:     "get hot topics",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "page",
+						},
+					},
 				},
 				{
 					RpcMethod: "QueryFollowingTopics",
