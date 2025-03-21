@@ -32,7 +32,7 @@ const (
 	UserCreatedPostsKeyPrefix      = "Post/posts/user/created/"
 	UserCreatedPostsCountKeyPrefix = "Post/posts/user/created/count/"
 	UserCreatedPostsCount          = 100
-	UserCreatedPostsPageSize       = 20
+	UserCreatedPostsPageSize       = 10
 
 	CommentListKeyPrefix = "Post/comment/list/"
 
@@ -46,13 +46,13 @@ const (
 	CommentsReceivedPrefix = "Post/comments/received/"
 
 	HomePostsCount    = 1000
-	HomePostsPageSize = 100
+	HomePostsPageSize = 10
 
 	TopicSearchKeyPrefix       = "Post/topic/search/"
 	TopicPostsKeyPrefix        = "Post/posts/topic/"
 	TopicPostsCountKeyPrefix   = "Post/posts/topic/count/"
 	TopicPostsCount            = 1000
-	TopicPostsPageSize         = 100
+	TopicPostsPageSize         = 10
 	PostTopicsMappingKeyPrefix = "Post/topics/mapping/"
 
 	CategoryKeyPrefix                 = "Post/category/"
@@ -66,15 +66,15 @@ const (
 	HotTopics72KeyPrefix              = "Post/hot/topics/72/"
 	HotTopics72CountKeyPrefix         = "Post/hot_topics_72_count/"
 	HotTopics72Count                  = 1000
-	HotTopics72PageSize               = 100
+	HotTopics72PageSize               = 10
 	CategoryTopicsCountKeyPrefix      = "Post/category/topics/count/"
 	CategoryTopicsCount               = 10000
-	CategoryTopicsPageSize            = 20
+	CategoryTopicsPageSize            = 10
 
 	CategoryPostsKeyPrefix       = "Post/posts/category/"
 	CategoryPostsCountKeyPrefix  = "Post/posts/topic/count/"
 	CategoryPostsCount           = 10000
-	CategoryPostsPageSize        = 100
+	CategoryPostsPageSize        = 10
 	CategorySearchKeyPrefix      = "Post/category/search/"
 	PostCategoryMappingKeyPrefix = "Post/category/mapping/"
 	CategoryOperatorKeyPrefix    = "Post/category/operator"
