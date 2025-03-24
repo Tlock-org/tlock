@@ -541,7 +541,7 @@ func (k Keeper) GetUserCreatedPosts(ctx sdk.Context, creator string, page uint64
 	pagination := &query.PageRequest{}
 
 	pagination.Limit = pageSize
-	pagination.Offset = uint64(first)
+	pagination.Offset = first
 	pagination.Reverse = true
 
 	var postIDs []string
@@ -559,7 +559,6 @@ func (k Keeper) GetUserCreatedPosts(ctx sdk.Context, creator string, page uint64
 
 func (k Keeper) GetLastPostsByAddress(ctx sdk.Context, address string, limit int) ([]string, *query.PageResponse, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserCreatedPostsKeyPrefix+address))
-
 	userCreatedPostsCount, _ := k.GetUserCreatedPostsCount(ctx, address)
 	if userCreatedPostsCount == 0 {
 		return []string{}, &query.PageResponse{
@@ -567,15 +566,11 @@ func (k Keeper) GetLastPostsByAddress(ctx sdk.Context, address string, limit int
 			Total:   uint64(userCreatedPostsCount),
 		}, nil
 	}
-
 	pagination := &query.PageRequest{}
-
 	pagination.Limit = uint64(limit)
 	pagination.Offset = uint64(0)
 	pagination.Reverse = true
-
 	var postIDs []string
-
 	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
 		postIDs = append(postIDs, string(value))
 		return nil
@@ -599,22 +594,32 @@ func (k Keeper) AddToCommentList(ctx sdk.Context, postId string, commentId strin
 	store.Set(key, []byte(commentId))
 }
 
-func (k Keeper) GetCommentsByParentId(ctx sdk.Context, parentId string) []string {
+func (k Keeper) GetCommentsByParentId(ctx sdk.Context, parentId string, page uint64) ([]string, *query.PageResponse, uint64, error) {
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * types.PageSize
+	pageRequest := &query.PageRequest{
+		Offset:     offset,
+		Limit:      types.PageSize,
+		CountTotal: true,
+		Reverse:    true,
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CommentListKeyPrefix))
 	commentStore := prefix.NewStore(store, []byte(parentId))
-	iterator := commentStore.ReverseIterator(nil, nil)
-	defer func(iterator kvtypes.Iterator) {
-		err := iterator.Close()
-		if err != nil {
-			k.logger.Error("GetCommentsByParentId iterator error")
-		}
-	}(iterator)
+
 	var ids []string
-	for ; iterator.Valid(); iterator.Next() {
-		id := string(iterator.Value())
+
+	pageResponse, err := query.Paginate(commentStore, pageRequest, func(key []byte, value []byte) error {
+		id := string(value)
 		ids = append(ids, id)
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, uint64(0), err
 	}
-	return ids
+	return ids, pageResponse, page, nil
 }
 
 func (k Keeper) DeleteFromCommentList(ctx sdk.Context, postId string, commentId string, score uint64) {
@@ -635,16 +640,31 @@ func (k Keeper) SetCommentsReceived(ctx sdk.Context, creator string, commentId s
 	store.Set(key, []byte(commentId))
 }
 
-func (k Keeper) GetCommentsReceived(ctx sdk.Context, creator string) ([]string, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CommentsReceivedPrefix+creator+"/"))
-	iterator := store.ReverseIterator(nil, nil)
-	defer iterator.Close()
-	var list []string
-	for ; iterator.Valid(); iterator.Next() {
-		id := string(iterator.Value())
-		list = append(list, id)
+func (k Keeper) GetCommentsReceived(ctx sdk.Context, creator string, page uint64) ([]string, *query.PageResponse, uint64, error) {
+	if page < 1 {
+		page = 1
 	}
-	return list, nil
+	offset := (page - 1) * types.PageSize
+	pageRequest := &query.PageRequest{
+		Offset:     offset,
+		Limit:      types.PageSize,
+		CountTotal: true,
+		Reverse:    true,
+	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CommentsReceivedPrefix+creator+"/"))
+
+	var list []string
+
+	pageResponse, err := query.Paginate(store, pageRequest, func(key []byte, value []byte) error {
+		id := string(value)
+		list = append(list, id)
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, uint64(0), err
+	}
+	return list, pageResponse, page, nil
 }
 
 func (k Keeper) SetFollowedPosts(ctx sdk.Context, postId string) {
@@ -678,24 +698,33 @@ func (k Keeper) SetLikesIMade(ctx sdk.Context, likesIMade types.LikesIMade, send
 }
 
 // GetLikesIMade retrieves the list of likes made by a specific sender, ordered by blockTime in descending order.
-func (k Keeper) GetLikesIMade(ctx sdk.Context, sender string) ([]*types.LikesIMade, error) {
+func (k Keeper) GetLikesIMade(ctx sdk.Context, sender string, page uint64) ([]*types.LikesIMade, *query.PageResponse, uint64, error) {
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * types.PageSize
+	pageRequest := &query.PageRequest{
+		Offset:     offset,
+		Limit:      types.PageSize,
+		CountTotal: true,
+		Reverse:    true,
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix+sender+"/"))
-
-	iterator := store.ReverseIterator(nil, nil)
-	defer iterator.Close()
-
 	var likesList []*types.LikesIMade
 
-	for ; iterator.Valid(); iterator.Next() {
+	pageResponse, err := query.Paginate(store, pageRequest, func(key []byte, value []byte) error {
 		var like types.LikesIMade
-		err := k.cdc.Unmarshal(iterator.Value(), &like)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal LikesIMade: %w", err)
+		if err := k.cdc.Unmarshal(value, &like); err != nil {
+			return err
 		}
-		likeCopy := like
-		likesList = append(likesList, &likeCopy)
+		likesList = append(likesList, &like)
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, uint64(0), err
 	}
-	return likesList, nil
+	return likesList, pageResponse, page, nil
 }
 
 func (k Keeper) GetLikesIMadePaginated(ctx sdk.Context, sender string, offset, limit int) ([]types.LikesIMade, error) {
@@ -788,24 +817,34 @@ func (k Keeper) RemoveFromSavesIMade(ctx sdk.Context, sender string, postId stri
 	return fmt.Errorf("like not found for sender %s and postId %s", sender, postId)
 }
 
-func (k Keeper) GetSavesIMade(ctx sdk.Context, sender string) ([]*types.LikesIMade, error) {
+func (k Keeper) GetSavesIMade(ctx sdk.Context, sender string, page uint64) ([]*types.LikesIMade, *query.PageResponse, uint64, error) {
+
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * types.PageSize
+	pageRequest := &query.PageRequest{
+		Offset:     offset,
+		Limit:      types.PageSize,
+		CountTotal: true,
+		Reverse:    true,
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.SavesIMadePrefix+sender+"/"))
-
-	iterator := store.ReverseIterator(nil, nil)
-	defer iterator.Close()
-
 	var savesList []*types.LikesIMade
 
-	for ; iterator.Valid(); iterator.Next() {
+	pageResponse, err := query.Paginate(store, pageRequest, func(key []byte, value []byte) error {
 		var save types.LikesIMade
-		err := k.cdc.Unmarshal(iterator.Value(), &save)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal SavesIMade: %w", err)
+		if err := k.cdc.Unmarshal(value, &save); err != nil {
+			return err
 		}
-		saveCopy := save
-		savesList = append(savesList, &saveCopy)
+		savesList = append(savesList, &save)
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, uint64(0), err
 	}
-	return savesList, nil
+	return savesList, pageResponse, page, nil
 }
 
 func (k Keeper) SetLikesReceived(ctx sdk.Context, likesReceived types.LikesReceived, creator string) {
@@ -818,24 +857,34 @@ func (k Keeper) SetLikesReceived(ctx sdk.Context, likesReceived types.LikesRecei
 	store.Set(key, bz)
 }
 
-func (k Keeper) GetLikesReceived(ctx sdk.Context, creator string) ([]*types.LikesReceived, error) {
+func (k Keeper) GetLikesReceived(ctx sdk.Context, creator string, page uint64) ([]*types.LikesReceived, *query.PageResponse, uint64, error) {
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * types.PageSize
+	pageRequest := &query.PageRequest{
+		Offset:     offset,
+		Limit:      types.PageSize,
+		CountTotal: true,
+		Reverse:    true,
+	}
+
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.LikesReceivedPrefix+creator+"/"))
-
-	iterator := store.ReverseIterator(nil, nil)
-	defer iterator.Close()
-
 	var list []*types.LikesReceived
 
-	for ; iterator.Valid(); iterator.Next() {
+	pageResponse, err := query.Paginate(store, pageRequest, func(key []byte, value []byte) error {
 		var received types.LikesReceived
-		err := k.cdc.Unmarshal(iterator.Value(), &received)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal LikesReceived: %w", err)
+		if err := k.cdc.Unmarshal(value, &received); err != nil {
+			return err
 		}
-		receivedCopy := received
-		list = append(list, &receivedCopy)
+		list = append(list, &received)
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, uint64(0), err
 	}
-	return list, nil
+	return list, pageResponse, page, nil
 }
 
 func (k Keeper) RemoveFromLikesReceived(ctx sdk.Context, creator string, sender string, postId string) error {
@@ -1561,16 +1610,32 @@ func (k Keeper) FollowTopic(ctx sdk.Context, address string, topicHash string) {
 	store.Set(key, []byte(topicHash))
 }
 
-func (k Keeper) GetFollowingTopics(ctx sdk.Context, address string) []string {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowTopicPrefix+address+"/"))
-	iterator := store.ReverseIterator(nil, nil)
-	defer iterator.Close()
-	var followingTopics []string
-	for ; iterator.Valid(); iterator.Next() {
-		val := iterator.Value()
-		followingTopics = append(followingTopics, string(val))
+func (k Keeper) GetFollowingTopics(ctx sdk.Context, address string, page uint64) ([]string, *query.PageResponse, uint64, error) {
+	if page < 1 {
+		page = 1
 	}
-	return followingTopics
+	offset := (page - 1) * types.PageSize
+	pageRequest := &query.PageRequest{
+		Offset:     offset,
+		Limit:      types.PageSize,
+		CountTotal: true,
+		Reverse:    true,
+	}
+
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.FollowTopicPrefix+address+"/"))
+	var followingTopics []string
+
+	pageResponse, err := query.Paginate(store, pageRequest, func(key []byte, value []byte) error {
+		var topicHash string
+		topicHash = string(value)
+		followingTopics = append(followingTopics, topicHash)
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, uint64(0), err
+	}
+	return followingTopics, pageResponse, page, nil
 }
 
 func (k Keeper) IsFollowingTopic(ctx sdk.Context, follower string, topicHash string) bool {

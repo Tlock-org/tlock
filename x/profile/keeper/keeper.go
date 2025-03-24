@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
@@ -400,23 +399,34 @@ func (k Keeper) SetActivitiesReceived(ctx sdk.Context, activitiesReceived types.
 	store.Set(key, bz)
 }
 
-func (k Keeper) GetActivitiesReceived(ctx sdk.Context, wallet string) []*types.ActivitiesReceived {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ActivitiesReceivedPrefix+wallet+"/"))
-	iterator := store.ReverseIterator(nil, nil)
-	defer iterator.Close()
-
-	var list []*types.ActivitiesReceived
-
-	for ; iterator.Valid(); iterator.Next() {
-		var received types.ActivitiesReceived
-		err := k.cdc.Unmarshal(iterator.Value(), &received)
-		if err != nil {
-			return nil
-		}
-		receivedCopy := received
-		list = append(list, &receivedCopy)
+func (k Keeper) GetActivitiesReceived(ctx sdk.Context, address string, page uint64) ([]*types.ActivitiesReceived, *query.PageResponse, uint64, error) {
+	if page < 1 {
+		page = 1
 	}
-	return list
+	offset := (page - 1) * types.PageSize
+
+	pageRequest := &query.PageRequest{
+		Offset:     offset,
+		Limit:      types.PageSize,
+		CountTotal: true,
+	}
+
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ActivitiesReceivedPrefix+address+"/"))
+	var activitiesList []*types.ActivitiesReceived
+
+	pageResponse, err := query.Paginate(store, pageRequest, func(key []byte, value []byte) error {
+		var activity types.ActivitiesReceived
+		if err := k.cdc.Unmarshal(value, &activity); err != nil {
+			return err
+		}
+		activitiesList = append(activitiesList, &activity)
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, uint64(0), err
+	}
+	return activitiesList, pageResponse, page, nil
 }
 
 func (k Keeper) DeleteLastActivitiesReceived(ctx sdk.Context, wallet string) {

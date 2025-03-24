@@ -42,14 +42,10 @@ func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*type
 
 // ResolveName implements types.QueryServer.
 func (k Querier) ResolveName(goCtx context.Context, req *types.QueryResolveNameRequest) (*types.QueryResolveNameResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(goCtx)
-	//panic("ResolveName is unimplemented")
-	//return &types.QueryResolveNameResponse{}, nil
-	v, err := k.Keeper.NameMapping.Get(goCtx, req.Wallet)
+	v, err := k.Keeper.NameMapping.Get(goCtx, req.Address)
 	if err != nil {
 		return nil, err
 	}
-
 	return &types.QueryResolveNameResponse{
 		Name: v,
 	}, nil
@@ -179,7 +175,7 @@ func (k Querier) QueryTopicPosts(goCtx context.Context, req *types.QueryTopicPos
 func (k Querier) QueryUserCreatedPosts(goCtx context.Context, req *types.QueryUserCreatedPostsRequest) (*types.QueryUserCreatedPostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	postIDs, _, page, err := k.Keeper.GetUserCreatedPosts(ctx, req.Wallet, req.Page)
+	postIDs, _, page, err := k.Keeper.GetUserCreatedPosts(ctx, req.Address, req.Page)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -275,7 +271,7 @@ func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeReques
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	likes, err := k.GetLikesIMade(sdkCtx, request.Wallet)
+	likes, _, page, err := k.GetLikesIMade(sdkCtx, request.Address, request.Page)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -288,16 +284,9 @@ func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeReques
 			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
 		}
 		postCopy := post
-		//posts = append(posts, &postCopy)
 
 		profile, _ := k.ProfileKeeper.GetProfile(sdkCtx, post.Creator)
-		//profileResponse := profileTypes.ProfileResponse{
-		//	UserHandle: profile.UserHandle,
-		//	Nickname:   profile.Nickname,
-		//	Avatar:     profile.Avatar,
-		//	Level:      profile.Level,
-		//	AdminLevel: profile.AdminLevel,
-		//}
+
 		profileResponseCopy := profile
 		postResponse := types.PostResponse{
 			Post:    &postCopy,
@@ -306,35 +295,8 @@ func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeReques
 
 		postResponses = append(postResponses, &postResponse)
 	}
-
-	//var likesList []*types.LikesIMade
-	//pageRes, err := query.Paginate(
-	//	prefix.NewStore(sdkCtx.KVStore(k.storeKey), []byte(types.LikesIMadePrefix+request.Wallet+"/")),
-	//	request.Pagination,
-	//	func(key []byte, value []byte) error {
-	//		var like types.LikesIMade
-	//		if err := k.cdc.Unmarshal(value, &like); err != nil {
-	//			return err
-	//		}
-	//		likeCopy := like
-	//		likesList = append(likesList, &likeCopy)
-	//		return nil
-	//	},
-	//)
-	//
-	//if err != nil {
-	//	return nil, status.Error(codes.Internal, err.Error())
-	//}
-
-	//return &types.LikesIMadeResponse{
-	//	LikesMade:  likesList,
-	//	Pagination: pageRes,
-	//}, nil
-	//var likesList []*types.LikesIMade
-	//var like types.LikesIMade
-	//likeCopy := like
-	//likesList = append(likesList, &likeCopy)
 	return &types.LikesIMadeResponse{
+		Page:  page,
 		Posts: postResponses,
 	}, nil
 }
@@ -346,7 +308,7 @@ func (k Querier) SavesIMade(ctx context.Context, request *types.SavesIMadeReques
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	saves, err := k.GetSavesIMade(sdkCtx, request.Wallet)
+	saves, _, page, err := k.GetSavesIMade(sdkCtx, request.Address, request.Page)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -379,6 +341,7 @@ func (k Querier) SavesIMade(ctx context.Context, request *types.SavesIMadeReques
 	}
 
 	return &types.SavesIMadeResponse{
+		Page:  page,
 		Posts: postResponses,
 	}, nil
 }
@@ -390,11 +353,12 @@ func (k Querier) LikesReceived(ctx context.Context, request *types.LikesReceived
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	likesReceived, err := k.GetLikesReceived(sdkCtx, request.Wallet)
+	likesReceived, _, page, err := k.GetLikesReceived(sdkCtx, request.Address, request.Page)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return &types.LikesReceivedResponse{
+		Page:          page,
 		LikesReceived: likesReceived,
 	}, nil
 }
@@ -402,7 +366,7 @@ func (k Querier) LikesReceived(ctx context.Context, request *types.LikesReceived
 // QueryComments implements types.QueryServer.
 func (k Querier) QueryComments(goCtx context.Context, req *types.QueryCommentsRequest) (*types.QueryCommentsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	ids := k.Keeper.GetCommentsByParentId(ctx, req.Id)
+	ids, _, page, _ := k.Keeper.GetCommentsByParentId(ctx, req.Id, req.Page)
 
 	var commentResponses []*types.CommentResponse
 	for _, commentId := range ids {
@@ -428,6 +392,7 @@ func (k Querier) QueryComments(goCtx context.Context, req *types.QueryCommentsRe
 		commentResponses = append(commentResponses, &commentResponse)
 	}
 	return &types.QueryCommentsResponse{
+		Page:     page,
 		Comments: commentResponses,
 	}, nil
 }
@@ -435,9 +400,9 @@ func (k Querier) QueryComments(goCtx context.Context, req *types.QueryCommentsRe
 // QueryCommentsReceived implements types.QueryServer.
 func (k Querier) QueryCommentsReceived(goCtx context.Context, req *types.QueryCommentsReceivedRequest) (*types.QueryCommentsReceivedResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	ids, err := k.Keeper.GetCommentsReceived(ctx, req.Wallet)
+	ids, _, page, err := k.Keeper.GetCommentsReceived(ctx, req.Address, req.Page)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get comments received %s: %w", req.Wallet, err)
+		return nil, fmt.Errorf("failed to get comments received %s: %w", req.Address, err)
 	}
 
 	var commentReceivedResponses []*types.CommentReceivedResponse
@@ -456,6 +421,7 @@ func (k Querier) QueryCommentsReceived(goCtx context.Context, req *types.QueryCo
 		commentReceivedResponses = append(commentReceivedResponses, &CommentReceivedResponse)
 	}
 	return &types.QueryCommentsReceivedResponse{
+		Page:     page,
 		Comments: commentReceivedResponses,
 	}, nil
 }
@@ -464,7 +430,7 @@ func (k Querier) QueryCommentsReceived(goCtx context.Context, req *types.QueryCo
 func (k Querier) QueryActivitiesReceived(goCtx context.Context, req *types.QueryActivitiesReceivedRequest) (*types.QueryActivitiesReceivedResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	list := k.ProfileKeeper.GetActivitiesReceived(ctx, req.Address)
+	list, _, page, _ := k.ProfileKeeper.GetActivitiesReceived(ctx, req.Address, req.Page)
 	var activitiesReceivedList []*types.ActivitiesReceivedResponse
 	for _, activitiesReceived := range list {
 		activitiesReceivedResponse := types.ActivitiesReceivedResponse{
@@ -508,7 +474,8 @@ func (k Querier) QueryActivitiesReceived(goCtx context.Context, req *types.Query
 		activitiesReceivedList = append(activitiesReceivedList, &activitiesReceivedResponse)
 	}
 	return &types.QueryActivitiesReceivedResponse{
-		activitiesReceivedList,
+		Page:               page,
+		ActivitiesReceived: activitiesReceivedList,
 	}, nil
 }
 
@@ -754,7 +721,7 @@ func select50Users(followingList []string) []string {
 // QueryFollowingTopics implements types.QueryServer.
 func (k Querier) QueryFollowingTopics(goCtx context.Context, req *types.QueryFollowingTopicsRequest) (*types.QueryFollowingTopicsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	topicIds := k.GetFollowingTopics(ctx, req.Address)
+	topicIds, _, page, _ := k.GetFollowingTopics(ctx, req.Address, req.Page)
 	var topicResponseList []*types.TopicResponse
 	if len(topicIds) > 0 {
 		for _, topicHash := range topicIds {
@@ -771,6 +738,7 @@ func (k Querier) QueryFollowingTopics(goCtx context.Context, req *types.QueryFol
 		}
 	}
 	return &types.QueryFollowingTopicsResponse{
+		Page:   page,
 		Topics: topicResponseList,
 	}, nil
 }

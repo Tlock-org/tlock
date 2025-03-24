@@ -35,6 +35,8 @@ const (
 	ActivitiesReceivedCount = 100
 	AdminActionAppoint      = "appoint"
 	AdminActionRemove       = "remove"
+
+	PageSize = 10
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{
