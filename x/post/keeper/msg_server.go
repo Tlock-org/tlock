@@ -779,7 +779,7 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 
 	oldScore := post.Score
 	// Score Accumulation
-	uintExponent := ms.ScoreAccumulation(ctx, msg.Creator, post, 3)
+	uintExponent := ms.ScoreAccumulation(ctx, msg.Creator, post, 1)
 	if uintExponent >= 1 {
 		newScore := oldScore + uintExponent
 		post.Score = newScore

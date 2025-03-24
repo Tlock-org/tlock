@@ -22,6 +22,8 @@ const (
 
 	PostKeyPrefix = "Post/content/"
 
+	PageSize = 10
+
 	MaxPostContentLength          = 300
 	MaxPostWithTitleContentLength = 10000
 

@@ -18,10 +18,10 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "ResolveName",
-					Use:       "resolve [wallet]",
-					Short:     "Resolve the name of a wallet address",
+					Use:       "resolve [address]",
+					Short:     "Resolve the name of a address",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "wallet"},
+						{ProtoField: "address"},
 					},
 				},
 				{
@@ -36,23 +36,28 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryTopicPosts",
-					Use:       "topic-posts [page] [topic_id]",
+					Use:       "topic-posts [topic_id] [page]",
 					Short:     "query topic posts",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
-							ProtoField: "page",
+							ProtoField: "topic_id",
 						},
 						{
-							ProtoField: "topic_id",
+							ProtoField: "page",
 						},
 					},
 				},
 				{
 					RpcMethod: "QueryUserCreatedPosts",
-					Use:       "user-created-posts [wallet]",
+					Use:       "user-created-posts [address] [page]",
 					Short:     "query user created posts",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "wallet"},
+						{
+							ProtoField: "address",
+						},
+						{
+							ProtoField: "page",
+						},
 					},
 				},
 				{
@@ -73,27 +78,40 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryComments",
-					Use:       "query-comments",
+					Use:       "query-comments [id] [page]",
 					Short:     "query commends",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "id"},
+						{
+							ProtoField: "id",
+						},
+						{
+							ProtoField: "page",
+						},
 					},
 				},
 				{
 					RpcMethod: "QueryCommentsReceived",
-					Use:       "query-comments-received",
+					Use:       "query-comments-received [address] [page]",
 					Short:     "query comments received",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "wallet"},
+						{
+							ProtoField: "address",
+						},
+						{
+							ProtoField: "page",
+						},
 					},
 				},
 				{
 					RpcMethod: "LikesIMade",
-					Use:       "likes-i-made [wallet]",
-					Short:     "Query the list of likes made by a specific wallet",
+					Use:       "likes-i-made [address] [page]",
+					Short:     "Query the list of likes made by a specific address",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
-							ProtoField: "wallet",
+							ProtoField: "address",
+						},
+						{
+							ProtoField: "page",
 						},
 					},
 					//FlagOptions: map[string]*autocliv1.FlagOptions{
@@ -121,30 +139,41 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "SavesIMade",
-					Use:       "saves-i-made [wallet]",
+					Use:       "saves-i-made [address] [page]",
 					Short:     "Query the list of save made by a specific wallet",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
-							ProtoField: "wallet",
+							ProtoField: "address",
+						},
+						{
+							ProtoField: "page",
 						},
 					},
 				},
 				{
 					RpcMethod: "LikesReceived",
-					Use:       "likes-received [wallet]",
+					Use:       "likes-received [address] [page]",
 					Short:     "Query the list of likes received by a specific wallet",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
-							ProtoField: "wallet",
+							ProtoField: "address",
+						},
+						{
+							ProtoField: "page",
 						},
 					},
 				},
 				{
 					RpcMethod: "QueryActivitiesReceived",
-					Use:       "activities-received [address]",
+					Use:       "activities-received [address] [page]",
 					Short:     "get list of activitiesReceived",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "address"},
+						{
+							ProtoField: "address",
+						},
+						{
+							ProtoField: "page",
+						},
 					},
 				},
 				//{
@@ -206,10 +235,15 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryFollowingTopics",
-					Use:       "following-topics [address]",
+					Use:       "following-topics [address] [page]",
 					Short:     "get following topics",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "address"},
+						{
+							ProtoField: "address",
+						},
+						{
+							ProtoField: "page",
+						},
 					},
 				},
 				{

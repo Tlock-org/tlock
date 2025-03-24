@@ -25,7 +25,7 @@ service Query {
 
   // ResolveName allows a user to resolve the name of an account.
   rpc ResolveName(QueryResolveNameRequest) returns (QueryResolveNameResponse) {
-    option (google.api.http).get = "/post/v1/name/{wallet}";
+    option (google.api.http).get = "/post/v1/name/{address}";
   }
 
   rpc QueryHomePosts(QueryHomePostsRequest) returns (QueryHomePostsResponse) {
@@ -50,31 +50,31 @@ service Query {
   }
 
   rpc QueryUserCreatedPosts(QueryUserCreatedPostsRequest) returns (QueryUserCreatedPostsResponse) {
-    option (google.api.http).get = "/post/v1/user/created/{wallet}";
+    option (google.api.http).get = "/post/v1/user/created/{address}/{page}";
   }
 
   rpc LikesIMade(LikesIMadeRequest) returns (LikesIMadeResponse) {
-    option (google.api.http).get = "/post/v1/likes/i/made/{wallet}";
+    option (google.api.http).get = "/post/v1/likes/i/made/{address}/{page}";
   }
 
   rpc SavesIMade(SavesIMadeRequest) returns (SavesIMadeResponse) {
-    option (google.api.http).get = "/post/v1/saves/i/made/{wallet}";
+    option (google.api.http).get = "/post/v1/saves/i/made/{address}/{page}";
   }
 
   rpc LikesReceived(LikesReceivedRequest) returns (LikesReceivedResponse) {
-    option (google.api.http).get = "/post/v1/likes/received/{wallet}";
+    option (google.api.http).get = "/post/v1/likes/received/{address}/{page}";
   }
 
   rpc QueryComments(QueryCommentsRequest) returns (QueryCommentsResponse) {
-    option (google.api.http).get = "/post/v1/comments/{id}";
+    option (google.api.http).get = "/post/v1/comments/{id}/{page}";
   }
 
   rpc QueryCommentsReceived(QueryCommentsReceivedRequest) returns (QueryCommentsReceivedResponse) {
-    option (google.api.http).get = "/post/v1/comments/received/{wallet}";
+    option (google.api.http).get = "/post/v1/comments/received/{address}/{page}";
   }
 
   rpc QueryActivitiesReceived(QueryActivitiesReceivedRequest) returns (QueryActivitiesReceivedResponse) {
-    option (google.api.http).get = "/post/v1/activites/received/{address}";
+    option (google.api.http).get = "/post/v1/activites/received/{address}/{page}";
   };
 
 //  rpc QueryCategoryExists(QueryCategoryExistsRequest) returns (QueryCategoryExistsResponse) {
@@ -102,11 +102,11 @@ service Query {
   };
 
   rpc QueryFollowingPosts(QueryFollowingPostsRequest) returns (QueryFollowingPostsResponse) {
-    option (google.api.http).get = "/post/v1/following/posts/{address}";
+    option (google.api.http).get = "/post/v1/following/posts/{address}/{page}";
   };
 
   rpc QueryFollowingTopics(QueryFollowingTopicsRequest) returns (QueryFollowingTopicsResponse) {
-    option (google.api.http).get = "/post/v1/following/topics/{address}";
+    option (google.api.http).get = "/post/v1/following/topics/{address}/{page}";
   };
   rpc QueryIsFollowingTopic(QueryIsFollowingTopicRequest) returns (QueryIsFollowingTopicResponse) {
     option (google.api.http).get = "/post/v1/isFollowing/topic/{address}/{topic_id}";
@@ -122,7 +122,7 @@ service Query {
 
 // QueryResolveNameRequest grabs the name of a wallet.
 message QueryResolveNameRequest {
-  string wallet = 1;
+  string address = 1;
 }
 
 // QueryResolveNameResponse grabs the wallet linked to a name.
@@ -165,7 +165,7 @@ message QueryFirstPageHomePostsResponse {
 }
 
 message QueryUserCreatedPostsRequest {
-  string wallet = 1;
+  string address = 1;
   uint64 page = 2;
 }
 
@@ -185,48 +185,55 @@ message QueryPostResponse {
 }
 
 message LikesIMadeRequest {
-  string wallet = 1;
-//  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+  string address = 1;
+  uint64 page = 2;
 }
 
 message LikesIMadeResponse {
-//  repeated LikesIMade likes_made = 1;
-  repeated PostResponse posts = 1;
-//  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  uint64 page = 1;
+  repeated PostResponse posts = 2;
 }
 
 message SavesIMadeRequest {
-  string wallet = 1;
+  string address = 1;
+  uint64 page = 2;
 }
 
 message SavesIMadeResponse {
-  repeated PostResponse posts = 1;
+  uint64 page = 1;
+  repeated PostResponse posts = 2;
 }
 
 message LikesReceivedRequest {
-  string wallet = 1;
+  string address = 1;
+  uint64 page = 2;
 }
 
 message LikesReceivedResponse {
-  repeated LikesReceived likes_received = 1;
+  uint64 page = 1;
+  repeated LikesReceived likes_received = 2;
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
 message QueryCommentsRequest {
   string id = 1;
+  uint64 page = 2;
 }
 
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryCommentsResponse {
-  repeated CommentResponse comments = 1;
+  uint64 page = 1;
+  repeated CommentResponse comments = 2;
 }
 
 message QueryCommentsReceivedRequest {
-  string wallet = 1;
+  string address = 1;
+  uint64 page = 2;
 }
 
 message QueryCommentsReceivedResponse {
-  repeated CommentReceivedResponse comments = 1;
+  uint64 page = 1;
+  repeated CommentReceivedResponse comments = 2;
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -240,10 +247,12 @@ message QueryParamsResponse {
 
 message QueryActivitiesReceivedRequest {
   string address = 1;
+  uint64 page = 2;
 }
 
 message QueryActivitiesReceivedResponse {
-  repeated ActivitiesReceivedResponse activitiesReceived = 1;
+  uint64 page = 1;
+  repeated ActivitiesReceivedResponse activitiesReceived = 2;
 }
 
 message QueryCategoryExistsRequest {
@@ -301,18 +310,22 @@ message QueryHotTopics72Response {
 
 message QueryFollowingPostsRequest {
   string address = 1;
+  uint64 page = 2;
 }
 
 message QueryFollowingPostsResponse {
-  repeated PostResponse posts = 1;
+  uint64 page = 1;
+  repeated PostResponse posts = 2;
 }
 
 message QueryFollowingTopicsRequest {
   string address = 1;
+  uint64 page = 2;
 }
 
 message QueryFollowingTopicsResponse {
-  repeated TopicResponse topics = 1;
+  uint64 page = 1;
+  repeated TopicResponse topics = 2;
 }
 message QueryIsFollowingTopicRequest {
   string address = 1;
