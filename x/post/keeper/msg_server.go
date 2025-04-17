@@ -462,7 +462,7 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
 	parentPost, _ := ms.k.GetPost(ctx, msg.Quote)
-	parentPost.LikeCount += 1
+	parentPost.RepostCount += 1
 	ms.k.SetPost(ctx, parentPost)
 
 	// mentions add to activitiesReceived
@@ -669,6 +669,7 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 	}
 
 	blockTime := ctx.BlockTime().Unix()
+	post.SaveCount += 1
 	post.Timestamp = blockTime
 	ms.k.SetPost(ctx, post)
 

@@ -31,9 +31,14 @@ message Post {
   uint64 like_count = 12;
   uint64 comment_count = 13;
   uint64 repost_count = 14;
-  uint64 score = 15;
-  int64 homePostsUpdate = 16;
-  Poll poll = 17;
+  uint64 save_count = 15;
+  uint64 score = 16;
+  int64 homePostsUpdate = 17;
+  Poll poll = 18;
+//  int64 report_status = 19;
+//  uint64 report_count = 20;
+//  uint64 report_score = 21;
+//  uint64 initial_report_reason = 22;
 }
 
 message Poll {
