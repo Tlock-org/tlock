@@ -68,19 +68,19 @@ func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePosts
 		}
 		postCopy := post
 
-		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-
-		profileResponseCopy := profile
+		//profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		//
+		//profileResponseCopy := profile
 
 		postResponse := types.PostResponse{
-			Post:    &postCopy,
-			Profile: &profileResponseCopy,
+			Post: &postCopy,
+			//Profile: &profileResponseCopy,
 		}
 		if post.Quote != "" {
 			quotePost, _ := k.GetPost(ctx, post.Quote)
-			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			//quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
 			postResponse.QuotePost = &quotePost
-			postResponse.QuoteProfile = &quoteProfile
+			//postResponse.QuoteProfile = &quoteProfile
 		}
 
 		postResponses = append(postResponses, &postResponse)
@@ -95,8 +95,8 @@ func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePosts
 // QueryFirstPageHomePosts implements types.QueryServer.
 func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.QueryFirstPageHomePostsRequest) (*types.QueryFirstPageHomePostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	postIDs, _, page, err := k.Keeper.GetFirstPageHomePosts(ctx)
+	page := req.Page
+	postIDs, _, page, err := k.Keeper.GetFirstPageHomePosts(ctx, page)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -109,18 +109,18 @@ func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.Query
 		}
 		postCopy := post
 
-		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-		profileResponseCopy := profile
+		//profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		//profileResponseCopy := profile
 		postResponse := types.PostResponse{
-			Post:    &postCopy,
-			Profile: &profileResponseCopy,
+			Post: &postCopy,
+			//Profile: &profileResponseCopy,
 		}
 
 		if post.Quote != "" {
 			quotePost, _ := k.GetPost(ctx, post.Quote)
-			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			//quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
 			postResponse.QuotePost = &quotePost
-			postResponse.QuoteProfile = &quoteProfile
+			//postResponse.QuoteProfile = &quoteProfile
 		}
 		postResponses = append(postResponses, &postResponse)
 	}
@@ -148,19 +148,19 @@ func (k Querier) QueryTopicPosts(goCtx context.Context, req *types.QueryTopicPos
 		}
 		postCopy := post
 
-		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		//profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
 
-		profileResponseCopy := profile
+		//profileResponseCopy := profile
 
 		postResponse := types.PostResponse{
-			Post:    &postCopy,
-			Profile: &profileResponseCopy,
+			Post: &postCopy,
+			//Profile: &profileResponseCopy,
 		}
 		if post.Quote != "" {
 			quotePost, _ := k.GetPost(ctx, post.Quote)
-			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			//quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
 			postResponse.QuotePost = &quotePost
-			postResponse.QuoteProfile = &quoteProfile
+			//postResponse.QuoteProfile = &quoteProfile
 		}
 
 		postResponses = append(postResponses, &postResponse)
@@ -189,18 +189,18 @@ func (k Querier) QueryUserCreatedPosts(goCtx context.Context, req *types.QueryUs
 		postCopy := post
 		//posts = append(posts, &postCopy)
 
-		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-		profileResponseCopy := profile
+		//profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		//profileResponseCopy := profile
 		postResponse := types.PostResponse{
-			Post:    &postCopy,
-			Profile: &profileResponseCopy,
+			Post: &postCopy,
+			//Profile: &profileResponseCopy,
 		}
 
 		if post.Quote != "" {
 			quotePost, _ := k.GetPost(ctx, post.Quote)
-			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			//quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
 			postResponse.QuotePost = &quotePost
-			postResponse.QuoteProfile = &quoteProfile
+			//postResponse.QuoteProfile = &quoteProfile
 		}
 		postResponses = append(postResponses, &postResponse)
 	}
@@ -225,18 +225,18 @@ func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (
 
 	postCopy := post
 
-	profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-	profileResponseCopy := profile
+	//profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+	//profileResponseCopy := profile
 	postResponse := types.PostResponse{
-		Post:    &postCopy,
-		Profile: &profileResponseCopy,
+		Post: &postCopy,
+		//Profile: &profileResponseCopy,
 	}
 
 	if post.Quote != "" {
 		quotePost, _ := k.GetPost(ctx, post.Quote)
-		quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+		//quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
 		postResponse.QuotePost = &quotePost
-		postResponse.QuoteProfile = &quoteProfile
+		//postResponse.QuoteProfile = &quoteProfile
 	}
 	return &types.QueryPostResponse{Post: &postResponse}, nil
 }
@@ -321,16 +321,9 @@ func (k Querier) SavesIMade(ctx context.Context, request *types.SavesIMadeReques
 			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
 		}
 		postCopy := post
-		//posts = append(posts, &postCopy)
 
 		profile, _ := k.ProfileKeeper.GetProfile(sdkCtx, post.Creator)
-		//profileResponse := profileTypes.ProfileResponse{
-		//	UserHandle: profile.UserHandle,
-		//	Nickname:   profile.Nickname,
-		//	Avatar:     profile.Avatar,
-		//	Level:      profile.Level,
-		//	AdminLevel: profile.AdminLevel,
-		//}
+
 		profileResponseCopy := profile
 		postResponse := types.PostResponse{
 			Post:    &postCopy,

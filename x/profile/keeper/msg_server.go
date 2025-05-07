@@ -240,21 +240,28 @@ func (ms msgServer) Follow(ctx context.Context, msg *types.MsgFollowRequest) (*t
 // Unfollow implements types.MsgServer.
 func (ms msgServer) Unfollow(ctx context.Context, msg *types.MsgUnfollowRequest) (*types.MsgUnfollowResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	time, _ := ms.k.GetFollowTime(sdkCtx, msg.Creator, msg.TargetAddr)
-	ms.k.Unfollow(sdkCtx, msg.Creator, time, msg.TargetAddr)
-	ms.k.DeleteFollowTime(sdkCtx, msg.Creator, msg.TargetAddr)
+	isFollowing := ms.k.IsFollowing(sdkCtx, msg.Creator, msg.TargetAddr)
+	if isFollowing {
+		time, _ := ms.k.GetFollowTime(sdkCtx, msg.Creator, msg.TargetAddr)
+		ms.k.Unfollow(sdkCtx, msg.Creator, time, msg.TargetAddr)
+		ms.k.DeleteFollowTime(sdkCtx, msg.Creator, msg.TargetAddr)
 
-	profileFollower, _ := ms.k.GetProfile(sdkCtx, msg.Creator)
-	following := profileFollower.Following
-	following -= 1
-	profileFollower.Following = following
-	ms.k.SetProfile(sdkCtx, profileFollower)
+		profileFollower, _ := ms.k.GetProfile(sdkCtx, msg.Creator)
+		following := profileFollower.Following
+		if following > 0 {
+			following -= 1
+			profileFollower.Following = following
+			ms.k.SetProfile(sdkCtx, profileFollower)
+		}
 
-	profileTarget, _ := ms.k.GetProfile(sdkCtx, msg.TargetAddr)
-	followers := profileTarget.Followers
-	followers -= 1
-	profileTarget.Followers = followers
-	ms.k.SetProfile(sdkCtx, profileTarget)
+		profileTarget, _ := ms.k.GetProfile(sdkCtx, msg.TargetAddr)
+		followers := profileTarget.Followers
+		if followers > 0 {
+			followers -= 1
+			profileTarget.Followers = followers
+			ms.k.SetProfile(sdkCtx, profileTarget)
+		}
+	}
 
 	return &types.MsgUnfollowResponse{}, nil
 }

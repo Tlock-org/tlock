@@ -33,7 +33,7 @@ service Query {
   }
 
   rpc QueryFirstPageHomePosts(QueryFirstPageHomePostsRequest) returns (QueryFirstPageHomePostsResponse) {
-    option (google.api.http).get = "/post/v1/firstPageHomePosts";
+    option (google.api.http).get = "/post/v1/firstPageHomePosts/{page}";
   }
 
   rpc SearchTopics(SearchTopicsRequest) returns (SearchTopicsResponse) {
@@ -157,6 +157,7 @@ message QueryTopicPostsResponse {
 }
 
 message QueryFirstPageHomePostsRequest {
+  uint64 page = 1;
 }
 
 message QueryFirstPageHomePostsResponse {

@@ -59,9 +59,9 @@ from_scratch () {
     mnemonic=$2
     echo $mnemonic | BINARY keys add $key --keyring-backend $KEYRING --algo $KEYALGO --recover
   }
-  # tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg
-  add_key $KEY "decorate bright ozone fork gallery riot bus exhaust worth way bone indoor calm squirrel merry zero scheme cotton until shop any excess stage laundry"
   # tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p
+  add_key $KEY "decorate bright ozone fork gallery riot bus exhaust worth way bone indoor calm squirrel merry zero scheme cotton until shop any excess stage laundry"
+  # tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg
   add_key $KEY1 "wealth flavor believe regret funny network recall kiss grape useless pepper cram hint member few certain unveil rather brick bargain curious require crowd raise"
   # tlock1wfvjqmkekyuy59r535nm2ca3yjkf706nu8x49r
   add_key $KEY2 "bacon yellow display height impulse skill camera dolphin fantasy scan clinic cage dish stairs obscure brown police energy sibling false spoil cost boy scout"

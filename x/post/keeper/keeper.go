@@ -248,7 +248,7 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) 
 	return postIDs, pageRes, uint64(pageIndex + 1), nil
 }
 
-func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context) ([]string, *query.PageResponse, uint64, error) {
+func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context, page uint64) ([]string, *query.PageResponse, uint64, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
 	homePostsCount, _ := k.GetHomePostsCount(ctx)
 	if homePostsCount == 0 {
@@ -256,6 +256,10 @@ func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context) ([]string, *query.PageRes
 			NextKey: nil,
 			Total:   uint64(homePostsCount),
 		}, uint64(0), nil
+	}
+
+	if page < 1 {
+		page = 1
 	}
 
 	const pageSize = types.HomePostsPageSize
@@ -267,11 +271,12 @@ func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context) ([]string, *query.PageRes
 	if totalPages == 0 {
 		totalPages = 1
 	}
-
 	pagination := &query.PageRequest{}
 
+	first := (page - 1) * pageSize
+
 	pagination.Limit = pageSize
-	pagination.Offset = uint64(0)
+	pagination.Offset = first
 	pagination.Reverse = true
 
 	var postIDs []string
@@ -284,7 +289,7 @@ func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context) ([]string, *query.PageRes
 	if err != nil {
 		return nil, nil, uint64(0), err
 	}
-	return postIDs, pageRes, uint64(1), nil
+	return postIDs, pageRes, page, nil
 }
 
 func (k Keeper) DeleteLastPostFromHomePosts(ctx sdk.Context) {
