@@ -123,7 +123,9 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 
 	dbProfile.WalletAddress = msg.Creator
 	dbProfile.Nickname = profileJson.Nickname
-	dbProfile.Avatar = profileJson.Avatar
+	if profileJson.Avatar != "" {
+		dbProfile.Avatar = profileJson.Avatar
+	}
 	dbProfile.Bio = profileJson.Bio
 	dbProfile.Location = profileJson.Location
 	dbProfile.Website = profileJson.Website

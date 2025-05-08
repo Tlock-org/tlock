@@ -28,9 +28,12 @@ func ValidateUserHandle(userHandle string) (bool, error) {
 }
 
 func ValidateNickName(nickName string) (bool, error) {
-	validNickname := regexp.MustCompile(`^[\p{L}\p{N}_ ]+$`)
+	//validNickname := regexp.MustCompile(`^[\p{L}\p{N}_ ]+$`)
+	validNickname := regexp.MustCompile(`^[^@#$]+$`)
 	if !validNickname.MatchString(nickName) {
-		return false, fmt.Errorf("nickName must contain only letters, numbers, underscores (_), or spaces")
+		//return false, fmt.Errorf("nickName must contain only letters, numbers, underscores (_), or spaces")
+		return false, fmt.Errorf("nickName cannot contain '@', '#', or '$' characters")
+
 	}
 	if strings.Contains(nickName, "  ") || strings.Contains(nickName, "__") {
 		return false, fmt.Errorf("nickname cannot contain consecutive spaces or underscores")
