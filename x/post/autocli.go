@@ -33,6 +33,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					RpcMethod: "QueryFirstPageHomePosts",
 					Use:       "first-home-posts",
 					Short:     "query first home posts",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "page",
+						},
+					},
 				},
 				{
 					RpcMethod: "QueryTopicPosts",

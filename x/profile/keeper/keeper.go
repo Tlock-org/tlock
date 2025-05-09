@@ -409,6 +409,7 @@ func (k Keeper) GetActivitiesReceived(ctx sdk.Context, address string, page uint
 		Offset:     offset,
 		Limit:      types.PageSize,
 		CountTotal: true,
+		Reverse:    true,
 	}
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ActivitiesReceivedPrefix+address+"/"))
