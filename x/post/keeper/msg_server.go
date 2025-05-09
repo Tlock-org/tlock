@@ -936,6 +936,10 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 				//createTime := topic.CreateTime
 				blockTime := ctx.BlockTime().Unix()
 				hours72Time := topic.GetHours_72Time()
+				hotTopics72Count, b := ms.k.GetHotTopics72Count(ctx)
+				if !b {
+					panic("GetHotTopics72Count error")
+				}
 				if hours72Time > 0 {
 					ms.k.deleteFormHotTopics72(ctx, topicHash, old72Score)
 					isWithin72 := isWithin72Hours(hours72Time, blockTime)
@@ -943,11 +947,13 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 						ms.k.addToHotTopics72(ctx, topicHash, new72Score)
 						topic.Hours_72Score = new72Score
 					} else {
+						hotTopics72Count -= 1
 						topic.Hours_72Score = 0
 						topic.Hours_72Time = 0
 					}
 				} else {
 					ms.k.addToHotTopics72(ctx, topicHash, new72Score)
+					hotTopics72Count += 1
 					topic.Hours_72Score = new72Score
 					topic.Hours_72Time = blockTime
 				}
@@ -957,17 +963,14 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 				//if isWithin72 {
 				//	ms.k.addToHotTopics72(ctx, topicHash, newScore)
 				//}
-				hotTopics72Count, b := ms.k.GetHotTopics72Count(ctx)
-				if !b {
-					panic("GetHotTopics72Count error")
-				}
-				hotTopics72Count += 1
+
 				if hotTopics72Count > types.HotTopics72Count {
 					ms.k.DeleteLastFromHotTopics72(ctx)
+					hotTopics72Count -= 1
 					topic.Hours_72Score = 0
 					topic.Hours_72Time = 0
 				} else {
-					ms.k.SetHotTopics72Count(ctx, count)
+					ms.k.SetHotTopics72Count(ctx, hotTopics72Count)
 				}
 
 				categoryHash := ms.k.getCategoryByTopicHash(ctx, topicHash)
