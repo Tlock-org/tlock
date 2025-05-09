@@ -20,6 +20,9 @@ message Topic {
   uint64 like_count = 11;
   int64 create_time = 12;
   int64 update_time = 13;
+
+  int64 hours_72_time = 14;
+  uint64 hours_72_score = 15;
 }
 
 

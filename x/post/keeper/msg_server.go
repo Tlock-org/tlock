@@ -922,23 +922,41 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 
 			//update topic
 			topic, _ := ms.k.GetTopic(ctx, topicHash)
-			oldScore := topic.Score
 
 			if topic.Id != "" {
+				oldScore := topic.Score
 				newScore := oldScore + uintExponent
+				old72Score := topic.GetHours_72Score()
+				new72Score := oldScore + uintExponent
 				topic.Score = newScore
 				topic.LikeCount += 1
-				ms.k.AddTopic(ctx, topic)
 
 				ms.k.Logger().Warn("==========score:", "old", oldScore, "new", newScore)
 				// update hotTopics72
-				createTime := topic.CreateTime
+				//createTime := topic.CreateTime
 				blockTime := ctx.BlockTime().Unix()
-				isWithin72 := isWithin72Hours(createTime, blockTime)
-				ms.k.deleteFormHotTopics72(ctx, topicHash, oldScore)
-				if isWithin72 {
-					ms.k.addToHotTopics72(ctx, topicHash, newScore)
+				hours72Time := topic.GetHours_72Time()
+				if hours72Time > 0 {
+					ms.k.deleteFormHotTopics72(ctx, topicHash, old72Score)
+					isWithin72 := isWithin72Hours(hours72Time, blockTime)
+					if isWithin72 {
+						ms.k.addToHotTopics72(ctx, topicHash, new72Score)
+						topic.Hours_72Score = new72Score
+					} else {
+						topic.Hours_72Score = 0
+						topic.Hours_72Time = 0
+					}
+				} else {
+					ms.k.addToHotTopics72(ctx, topicHash, new72Score)
+					topic.Hours_72Score = new72Score
+					topic.Hours_72Time = blockTime
 				}
+
+				//isWithin72 := isWithin72Hours(createTime, blockTime)
+				//ms.k.deleteFormHotTopics72(ctx, topicHash, oldScore)
+				//if isWithin72 {
+				//	ms.k.addToHotTopics72(ctx, topicHash, newScore)
+				//}
 				hotTopics72Count, b := ms.k.GetHotTopics72Count(ctx)
 				if !b {
 					panic("GetHotTopics72Count error")
@@ -946,6 +964,8 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 				hotTopics72Count += 1
 				if hotTopics72Count > types.HotTopics72Count {
 					ms.k.DeleteLastFromHotTopics72(ctx)
+					topic.Hours_72Score = 0
+					topic.Hours_72Time = 0
 				} else {
 					ms.k.SetHotTopics72Count(ctx, count)
 				}
@@ -955,6 +975,8 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 					ms.k.DeleteFromCategoryTopicsByCategoryAndTopicId(ctx, categoryHash, topicHash, oldScore)
 					ms.k.SetCategoryTopics(ctx, newScore, categoryHash, topicHash)
 				}
+
+				ms.k.AddTopic(ctx, topic)
 			}
 		}
 	}
