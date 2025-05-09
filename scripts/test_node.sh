@@ -10,6 +10,16 @@ export KEY2="node2"
 export KEY3="node3"
 export KEY4="node4"
 export KEY5="node5"
+export U_KEY1="u1"
+export U_KEY2="u2"
+export U_KEY3="u3"
+export U_KEY4="u4"
+export U_KEY5="u5"
+export U_KEY6="u6"
+export U_KEY7="u7"
+export U_KEY8="u8"
+export U_KEY9="u9"
+export U_KEY10="u10"
 export CHAIN_ID=${CHAIN_ID:-10889}
 export MONIKER="tlock"
 export KEYALGO="secp256k1"
@@ -71,6 +81,28 @@ from_scratch () {
   add_key $KEY4 "rice erode juice enact audit refuse joke grid lake tomorrow north cup cry pride nothing clerk canal onion side sort off uniform cancel review"
   # tlock1h0g7hntn53awu7ewzw9l2s30qm8j3xg6xzr3gy
   add_key $KEY5 "average fancy evolve merit ripple actress moral orient dirt label alley motion remain stamp anxiety govern price pet manage sample target helmet close just"
+
+  # u1: tlock17a8553c94wy9q38ppmetx3f9gl4rp7qh7e5knx
+  add_key $U_KEY1 "evil broccoli pink assume abuse skill clog south minor oblige unfair palm end title cabbage siren unaware gossip deer naive topic minimum weapon social"
+  # u2: tlock1dpe2cmv8uahndy5rz8lkp0fvu46c9uls5kqz4q
+  add_key $U_KEY2 "chat bronze fly siren decline engine concert increase aerobic defense material style dish bar conduct carry lyrics swear example file reunion addict figure question"
+  # u3: tlock19qs3ldj4rvfgv5s73zjh2knj5jscvr9awpct6d
+  add_key $U_KEY3 "boat ranch ask fire welcome toilet cable response success slab happy use annual decorate fame state profit lyrics again leaf ecology cash fault setup"
+  # u4: tlock1zcts2px3h9dhdgvtp8w3uf9du9qnecfl78tfp6
+  add_key $U_KEY4 "cage jazz bring web youth exchange position sail wheel price random vanish speak wheat purpose famous emotion ocean civil space level truck auction situate"
+  # u5: tlock1y037hez2c5d206nktj0ffl87smg0y24tdwl85s
+  add_key $U_KEY5 "furnace orbit train tone fame woman comic soccer palm note access brand parrot vague eye cause barely canal quick wine mom town income risk"
+  # u6: tlock1mh6sc4t7gqhru78ndnw63ngxzsgp7q4yga4emw
+  add_key $U_KEY6 "pencil retreat truly calm forget drip illegal road rather museum tuna riot inch fork old buffalo misery girl erase style remember fee twist wrong"
+  # u7: tlock10c5vxm6crtf0q3yqdt22s44ww8wdptszq0ajr8
+  add_key $U_KEY7 "insane grocery spoon oppose tower charge bubble force abuse cannon pole result magic common spike snack act seminar fruit achieve roast kid pistol neutral"
+  # u8: tlock1k2vsd5tj34gms3jdssru8ksrqx3gmhjmxnm4z4
+  add_key $U_KEY8 "garage human destroy regular crisp crater unlock hole keen ladder rose trial dose zone shiver arena hair gloom raven bonus close wet tourist basic"
+  # u9: tlock143elfmf479sj9x4tzgx50cvspaexwsehedhgts
+  add_key $U_KEY9 "case gossip vibrant trap that slice file velvet click tide mountain hungry lawsuit repair nest jar reopen affair nation true rug advice endless cricket"
+  # u10: tlock140ywnzsvj0np3mvv7cemcve55zp2z3tt4tlgv5
+  add_key $U_KEY10 "flag angry illegal success today north aspect author verb soft prize horn cost style wrestle fabric circle cost valley one thumb easily inform reject"
+
   # chain initial setup
   BINARY init $MONIKER --chain-id $CHAIN_ID --default-denom $DENOM
   update_test_genesis () {
@@ -119,6 +151,17 @@ from_scratch () {
   BINARY genesis add-genesis-account $KEY3 100000000000000000$DENOM --keyring-backend $KEYRING --append
   BINARY genesis add-genesis-account $KEY4 100000000000000000$DENOM --keyring-backend $KEYRING --append
   BINARY genesis add-genesis-account $KEY5 100000000000000000$DENOM --keyring-backend $KEYRING --append
+
+  BINARY genesis add-genesis-account $U_KEY1 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY2 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY3 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY4 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY5 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY6 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY7 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY8 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY9 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY10 100000000000000000$DENOM --keyring-backend $KEYRING --append
 
   # Sign genesis transaction
   BINARY genesis gentx $KEY 1000000$DENOM --keyring-backend $KEYRING --chain-id $CHAIN_ID
