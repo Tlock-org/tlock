@@ -322,6 +322,25 @@ func (k Keeper) SetPostTopicsMapping(ctx sdk.Context, topics []string, postId st
 	value, _ := json.Marshal(topics)
 	store.Set(key, value)
 }
+func (k Keeper) GetTopicsByPostId(ctx sdk.Context, postId string) []string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostTopicsMappingKeyPrefix))
+	key := append([]byte(postId))
+	bz := store.Get(key)
+	if bz == nil {
+		return nil
+	}
+	var topics []string
+	err := json.Unmarshal(bz, &topics)
+	if err != nil {
+		return nil
+	}
+	return topics
+}
+func (k Keeper) IsPostInTopics(ctx sdk.Context, postId string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostTopicsMappingKeyPrefix))
+	key := append([]byte(postId))
+	return store.Has(key)
+}
 
 func (k Keeper) SetTopicSearch(ctx sdk.Context, topic string) {
 	topicLower := strings.ToLower(topic)
@@ -407,25 +426,7 @@ func (k Keeper) SetTopicPosts(ctx sdk.Context, topic string, postId string) {
 	key := append(blockTime, []byte(postId)...)
 	store.Set(key, []byte(postId))
 }
-func (k Keeper) IsPostInTopics(ctx sdk.Context, postId string) bool {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostTopicsMappingKeyPrefix))
-	key := append([]byte(postId))
-	return store.Has(key)
-}
-func (k Keeper) GetTopicsByPostId(ctx sdk.Context, postId string) []string {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostTopicsMappingKeyPrefix))
-	key := append([]byte(postId))
-	bz := store.Get(key)
-	if bz == nil {
-		return nil
-	}
-	var topics []string
-	err := json.Unmarshal(bz, &topics)
-	if err != nil {
-		return nil
-	}
-	return topics
-}
+
 func (k Keeper) DeleteFromTopicPostsByTopicAndPostId(ctx sdk.Context, topic string, postId string, homePostsUpdate int64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsKeyPrefix+topic))
 	bzBlockTime := make([]byte, 8)
@@ -1275,9 +1276,9 @@ func (k Keeper) TopicExists(ctx sdk.Context, topicHash string) bool {
 	return store.Has(key)
 }
 
-func (k Keeper) addToHotTopics72(ctx sdk.Context, topicHash string, topicScore uint64) {
+func (k Keeper) addToHotTopics72(ctx sdk.Context, topicHash string, score uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72KeyPrefix))
-	bzScore := k.EncodeScore(topicScore)
+	bzScore := k.EncodeScore(score)
 	var buffer bytes.Buffer
 	buffer.Write(bzScore)
 	buffer.WriteString(topicHash)
@@ -1362,15 +1363,17 @@ func (k Keeper) GetHotTopics72Count(ctx sdk.Context) (int64, bool) {
 	count := int64(binary.BigEndian.Uint64(bz))
 	return count, true
 }
-func (k Keeper) DeleteLastFromHotTopics72(ctx sdk.Context) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72CountKeyPrefix))
+func (k Keeper) DeleteLastFromHotTopics72(ctx sdk.Context) string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72KeyPrefix))
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 	if !iterator.Valid() {
 		panic("hotTopics72Count exceeds 1000 but no posts found")
 	}
 	earliestKey := iterator.Key()
+	bz := store.Get(earliestKey)
 	store.Delete(earliestKey)
+	return string(bz)
 }
 func (k Keeper) SetTopicCategoryMapping(ctx sdk.Context, topicHash string, categoryHash string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicCategoryMappingKeyPrefix))
@@ -1697,4 +1700,19 @@ func (k Keeper) GetCategoryOperator(ctx sdk.Context) (string, bool) {
 		return "", true
 	}
 	return string(bz), true
+}
+
+func (k Keeper) SetTopicAvatar(ctx sdk.Context, topicHash string, avatar string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicAvatarPrefix))
+	key := []byte(topicHash)
+	store.Set(key, []byte(avatar))
+}
+func (k Keeper) GetAvatarByTopic(ctx sdk.Context, topicHash string) string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicAvatarPrefix))
+	key := []byte(topicHash)
+	bz := store.Get(key)
+	if bz == nil {
+		return ""
+	}
+	return string(bz)
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/rollchains/tlock/x/post/types"
 	profiletypes "github.com/rollchains/tlock/x/profile/types"
 	"math"
+	"strings"
 )
 
 const MaxImageSize = 500 * 1024 // 500 KB
@@ -530,10 +531,10 @@ func (ms msgServer) Repost(goCtx context.Context, msg *types.MsgRepostRequest) (
 // LikePost implements types.MsgServer.
 func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*types.MsgLikeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	hasLiked := ms.k.HasUserLikedPost(ctx, msg.Sender, msg.Id)
-	if hasLiked {
-		return nil, errors.Wrap(types.ErrAlreadyLiked, "user has already liked this post")
-	}
+	//hasLiked := ms.k.HasUserLikedPost(ctx, msg.Sender, msg.Id)
+	//if hasLiked {
+	//	return nil, errors.Wrap(types.ErrAlreadyLiked, "user has already liked this post")
+	//}
 	post, found := ms.k.GetPost(ctx, msg.Id)
 	if !found {
 		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
@@ -965,10 +966,13 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 				//}
 
 				if hotTopics72Count > types.HotTopics72Count {
-					ms.k.DeleteLastFromHotTopics72(ctx)
+					earliestTopicHash := ms.k.DeleteLastFromHotTopics72(ctx)
 					hotTopics72Count -= 1
-					topic.Hours_72Score = 0
-					topic.Hours_72Time = 0
+					earliestTopic, _ := ms.k.GetTopic(ctx, earliestTopicHash)
+
+					earliestTopic.Hours_72Score = 0
+					earliestTopic.Hours_72Time = 0
+					ms.k.AddTopic(ctx, earliestTopic)
 				} else {
 					ms.k.SetHotTopics72Count(ctx, hotTopics72Count)
 				}
@@ -1117,7 +1121,7 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string,
 		}
 		var hashTopics []string
 		for _, topicName := range topicList {
-			topicHash := ms.k.sha256Generate(topicName)
+			topicHash := ms.k.sha256Generate(strings.ToLower(topicName))
 			// add topic
 			exists := ms.k.TopicExists(ctx, topicHash)
 			if !exists {
@@ -1128,8 +1132,7 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string,
 					UpdateTime: blockTime,
 				}
 				ms.k.AddTopic(ctx, topic)
-
-				ms.k.addToHotTopics72(ctx, topicHash, 0)
+				//ms.k.addToHotTopics72(ctx, topicHash, 0)
 			}
 
 			// add topic search
@@ -1340,11 +1343,14 @@ func (ms msgServer) UpdateTopic(goCtx context.Context, msg *types.UpdateTopicReq
 		json := msg.TopicJson
 		id := json.Id
 		topic, _ := ms.k.GetTopic(ctx, id)
-		ms.k.deleteFormHotTopics72(ctx, id, topic.Score)
+		//ms.k.deleteFormHotTopics72(ctx, id, topic.Score)
 		topic.Score = json.Score
-		topic.Avatar = json.Avatar
+		if json.Avatar != "" {
+			//topic.Avatar = json.Avatar
+			ms.k.SetTopicAvatar(ctx, id, json.Avatar)
+		}
 		ms.k.AddTopic(ctx, topic)
-		ms.k.addToHotTopics72(ctx, id, topic.Score)
+		//ms.k.addToHotTopics72(ctx, id, topic.Score)
 	}
 	return &types.UpdateTopicResponse{}, nil
 }

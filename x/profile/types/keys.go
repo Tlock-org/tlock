@@ -22,6 +22,7 @@ const (
 	AuthorityEditableAdminKeyPrefix = "Authority/editable/admin/"
 
 	ProfileKeyPrefix           = "Profile/value/"
+	ProfileAvatarPrefix        = "Profile/avatar/"
 	ProfileUserHandleKeyPrefix = "Profile/userHandle/"
 	ProfileUserSearchKeyPrefix = "Profile/userSearch/"
 

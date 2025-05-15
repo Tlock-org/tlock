@@ -19,6 +19,10 @@ service Query {
     option (google.api.http).get = "/profile/v1/get/{wallet_address}";
   }
 
+  rpc QueryProfileAvatar(QueryProfileAvatarRequest) returns (QueryProfileAvatarResponse) {
+    option (google.api.http).get = "/profile/v1/avatar/{address}";
+  }
+
   rpc QueryFollowing(QueryFollowingRequest) returns (QueryFollowingResponse) {
     option (google.api.http).get = "/profile/v1/flowing/{wallet_address}/{page}/{limit}";
   };
@@ -61,6 +65,12 @@ message QueryProfileResponse {
   Profile profile = 1;
 }
 
+message QueryProfileAvatarRequest {
+  string address = 1;
+}
+message QueryProfileAvatarResponse {
+  string avatar = 1;
+}
 message QueryFollowRelationshipRequest {
   string addressA = 1;
   string addressB = 2;

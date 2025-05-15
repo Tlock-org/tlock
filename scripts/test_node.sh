@@ -145,23 +145,23 @@ from_scratch () {
     ]'
 
   # Allocate genesis accounts
-  BINARY genesis add-genesis-account $KEY 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $KEY1 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $KEY2 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $KEY3 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $KEY4 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $KEY5 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY1 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY2 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY3 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY4 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $KEY5 10000000000000000000$DENOM --keyring-backend $KEYRING --append
 
-  BINARY genesis add-genesis-account $U_KEY1 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $U_KEY2 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $U_KEY3 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $U_KEY4 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $U_KEY5 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $U_KEY6 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $U_KEY7 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $U_KEY8 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $U_KEY9 100000000000000000$DENOM --keyring-backend $KEYRING --append
-  BINARY genesis add-genesis-account $U_KEY10 100000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY1 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY2 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY3 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY4 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY5 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY6 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY7 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY8 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY9 10000000000000000000$DENOM --keyring-backend $KEYRING --append
+  BINARY genesis add-genesis-account $U_KEY10 10000000000000000000$DENOM --keyring-backend $KEYRING --append
 
   # Sign genesis transaction
   BINARY genesis gentx $KEY 1000000$DENOM --keyring-backend $KEYRING --chain-id $CHAIN_ID

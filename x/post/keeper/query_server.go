@@ -68,19 +68,19 @@ func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePosts
 		}
 		postCopy := post
 
-		//profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-		//
-		//profileResponseCopy := profile
+		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+
+		profileResponseCopy := profile
 
 		postResponse := types.PostResponse{
-			Post: &postCopy,
-			//Profile: &profileResponseCopy,
+			Post:    &postCopy,
+			Profile: &profileResponseCopy,
 		}
 		if post.Quote != "" {
 			quotePost, _ := k.GetPost(ctx, post.Quote)
-			//quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
 			postResponse.QuotePost = &quotePost
-			//postResponse.QuoteProfile = &quoteProfile
+			postResponse.QuoteProfile = &quoteProfile
 		}
 
 		postResponses = append(postResponses, &postResponse)
@@ -109,18 +109,18 @@ func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.Query
 		}
 		postCopy := post
 
-		//profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-		//profileResponseCopy := profile
+		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		profileResponseCopy := profile
 		postResponse := types.PostResponse{
-			Post: &postCopy,
-			//Profile: &profileResponseCopy,
+			Post:    &postCopy,
+			Profile: &profileResponseCopy,
 		}
 
 		if post.Quote != "" {
 			quotePost, _ := k.GetPost(ctx, post.Quote)
-			//quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
 			postResponse.QuotePost = &quotePost
-			//postResponse.QuoteProfile = &quoteProfile
+			postResponse.QuoteProfile = &quoteProfile
 		}
 		postResponses = append(postResponses, &postResponse)
 	}
@@ -148,19 +148,18 @@ func (k Querier) QueryTopicPosts(goCtx context.Context, req *types.QueryTopicPos
 		}
 		postCopy := post
 
-		//profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-
-		//profileResponseCopy := profile
+		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		profileResponseCopy := profile
 
 		postResponse := types.PostResponse{
-			Post: &postCopy,
-			//Profile: &profileResponseCopy,
+			Post:    &postCopy,
+			Profile: &profileResponseCopy,
 		}
 		if post.Quote != "" {
 			quotePost, _ := k.GetPost(ctx, post.Quote)
-			//quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
 			postResponse.QuotePost = &quotePost
-			//postResponse.QuoteProfile = &quoteProfile
+			postResponse.QuoteProfile = &quoteProfile
 		}
 
 		postResponses = append(postResponses, &postResponse)
@@ -189,18 +188,18 @@ func (k Querier) QueryUserCreatedPosts(goCtx context.Context, req *types.QueryUs
 		postCopy := post
 		//posts = append(posts, &postCopy)
 
-		//profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-		//profileResponseCopy := profile
+		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+		profileResponseCopy := profile
 		postResponse := types.PostResponse{
-			Post: &postCopy,
-			//Profile: &profileResponseCopy,
+			Post:    &postCopy,
+			Profile: &profileResponseCopy,
 		}
 
 		if post.Quote != "" {
 			quotePost, _ := k.GetPost(ctx, post.Quote)
-			//quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
 			postResponse.QuotePost = &quotePost
-			//postResponse.QuoteProfile = &quoteProfile
+			postResponse.QuoteProfile = &quoteProfile
 		}
 		postResponses = append(postResponses, &postResponse)
 	}
@@ -222,23 +221,43 @@ func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (
 	if !found {
 		return nil, types.ErrPostNotFound
 	}
-
 	postCopy := post
 
-	//profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-	//profileResponseCopy := profile
+	profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
+	profileResponseCopy := profile
 	postResponse := types.PostResponse{
-		Post: &postCopy,
-		//Profile: &profileResponseCopy,
+		Post:    &postCopy,
+		Profile: &profileResponseCopy,
+	}
+
+	topics := k.Keeper.GetTopicsByPostId(ctx, post.Id)
+	var topicResponses []*types.TopicResponse
+	if len(topics) > 0 {
+		for _, topicHash := range topics {
+			topic, _ := k.Keeper.GetTopic(ctx, topicHash)
+			topicResponse := types.TopicResponse{
+				Id:            topic.Id,
+				Name:          topic.Name,
+				Avatar:        topic.Avatar,
+				Title:         topic.Title,
+				Summary:       topic.Summary,
+				Score:         topic.Score,
+				Hours_72Score: topic.Hours_72Score,
+			}
+			topicResponses = append(topicResponses, &topicResponse)
+		}
 	}
 
 	if post.Quote != "" {
 		quotePost, _ := k.GetPost(ctx, post.Quote)
-		//quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
+		quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
 		postResponse.QuotePost = &quotePost
-		//postResponse.QuoteProfile = &quoteProfile
+		postResponse.QuoteProfile = &quoteProfile
 	}
-	return &types.QueryPostResponse{Post: &postResponse}, nil
+	return &types.QueryPostResponse{
+		Post:   &postResponse,
+		Topics: topicResponses,
+	}, nil
 }
 
 // SearchTopic implements types.QueryServer.
@@ -250,12 +269,13 @@ func (k Querier) SearchTopics(goCtx context.Context, req *types.SearchTopicsRequ
 		topicHash := k.sha256Generate(topicOriginal)
 		topic, _ := k.GetTopic(ctx, topicHash)
 		topicResponse := types.TopicResponse{
-			Id:      topic.Id,
-			Name:    topic.Name,
-			Avatar:  topic.Avatar,
-			Title:   topic.Title,
-			Summary: topic.Summary,
-			Score:   topic.Score,
+			Id:            topic.Id,
+			Name:          topic.Name,
+			Avatar:        topic.Avatar,
+			Title:         topic.Title,
+			Summary:       topic.Summary,
+			Score:         topic.Score,
+			Hours_72Score: topic.Hours_72Score,
 		}
 		topicResponses = append(topicResponses, &topicResponse)
 	}
@@ -521,12 +541,13 @@ func (k Querier) QueryTopicsByCategory(goCtx context.Context, req *types.QueryTo
 	for _, topicHash := range topics {
 		topic, _ := k.GetTopic(ctx, topicHash)
 		topicResponse := types.TopicResponse{
-			Id:      topic.Id,
-			Name:    topic.Name,
-			Avatar:  topic.Avatar,
-			Title:   topic.Title,
-			Summary: topic.Summary,
-			Score:   topic.Score,
+			Id:            topic.Id,
+			Name:          topic.Name,
+			Avatar:        topic.Avatar,
+			Title:         topic.Title,
+			Summary:       topic.Summary,
+			Score:         topic.Score,
+			Hours_72Score: topic.Hours_72Score,
 		}
 		TopicResponseList = append(TopicResponseList, &topicResponse)
 	}
@@ -615,12 +636,13 @@ func (k Querier) QueryHotTopics72(goCtx context.Context, req *types.QueryHotTopi
 	for _, topicHash := range topics72 {
 		topic, _ := k.GetTopic(ctx, topicHash)
 		topicResponse := types.TopicResponse{
-			Id:      topic.Id,
-			Name:    topic.Name,
-			Avatar:  topic.Avatar,
-			Title:   topic.Title,
-			Summary: topic.Summary,
-			Score:   topic.Score,
+			Id:            topic.Id,
+			Name:          topic.Name,
+			Avatar:        topic.Avatar,
+			Title:         topic.Title,
+			Summary:       topic.Summary,
+			Score:         topic.Score,
+			Hours_72Score: topic.Hours_72Score,
 		}
 		topicResponseList = append(topicResponseList, &topicResponse)
 	}
@@ -720,12 +742,13 @@ func (k Querier) QueryFollowingTopics(goCtx context.Context, req *types.QueryFol
 		for _, topicHash := range topicIds {
 			topic, _ := k.GetTopic(ctx, topicHash)
 			topicResponse := types.TopicResponse{
-				Id:      topic.Id,
-				Name:    topic.Name,
-				Avatar:  topic.Avatar,
-				Title:   topic.Title,
-				Summary: topic.Summary,
-				Score:   topic.Score,
+				Id:            topic.Id,
+				Name:          topic.Name,
+				Avatar:        topic.Avatar,
+				Title:         topic.Title,
+				Summary:       topic.Summary,
+				Score:         topic.Score,
+				Hours_72Score: topic.Hours_72Score,
 			}
 			topicResponseList = append(topicResponseList, &topicResponse)
 		}
@@ -757,12 +780,13 @@ func (k Querier) QueryUncategorizedTopics(goCtx context.Context, req *types.Quer
 		for _, topicHash := range topics {
 			topic, _ := k.GetTopic(ctx, topicHash)
 			topicResponse := types.TopicResponse{
-				Id:      topic.Id,
-				Name:    topic.Name,
-				Avatar:  topic.Avatar,
-				Title:   topic.Title,
-				Summary: topic.Summary,
-				Score:   topic.Score,
+				Id:            topic.Id,
+				Name:          topic.Name,
+				Avatar:        topic.Avatar,
+				Title:         topic.Title,
+				Summary:       topic.Summary,
+				Score:         topic.Score,
+				Hours_72Score: topic.Hours_72Score,
 			}
 			topicResponseList = append(topicResponseList, &topicResponse)
 		}
@@ -782,5 +806,14 @@ func (k Querier) QueryVoteOption(goCtx context.Context, req *types.QueryVoteOpti
 	optionId, _ := k.GetPoll(ctx, req.PostId, req.Address)
 	return &types.QueryVoteOptionResponse{
 		OptionId: optionId,
+	}, nil
+}
+
+// QueryTopicAvatar implements types.QueryServer.
+func (k Querier) QueryTopicAvatar(goCtx context.Context, req *types.QueryTopicAvatarRequest) (*types.QueryTopicAvatarResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	avatar := k.GetAvatarByTopic(ctx, req.TopicId)
+	return &types.QueryTopicAvatarResponse{
+		Avatar: avatar,
 	}, nil
 }
