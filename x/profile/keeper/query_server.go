@@ -31,16 +31,18 @@ func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*type
 
 // QueryProfile implements types.QueryServer.
 func (k Querier) QueryProfile(goCtx context.Context, req *types.QueryProfileRequest) (*types.QueryProfileResponse, error) {
-	//ctx := sdk.UnwrapSDKContext(goCtx)
-	//if req == nil {
-	//	return nil, types.ErrInvalidRequest
-	//}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if req == nil {
+		return nil, types.ErrInvalidRequest
+	}
 
 	// Retrieve the post from the state
 	profile, _ := k.Keeper.GetProfile(sdk.UnwrapSDKContext(goCtx), req.WalletAddress)
 	//if !found {
 	//	return nil, types.ErrPostNotFound
 	//}
+	avatar := k.Keeper.GetAvatarByAddress(ctx, req.WalletAddress)
+	profile.Avatar = avatar
 
 	return &types.QueryProfileResponse{Profile: &profile}, nil
 }
