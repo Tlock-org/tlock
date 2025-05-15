@@ -61,6 +61,7 @@ const (
 	CategoryWithIndexKeyPrefix        = "Post/category/index/"
 	CategoryIndexKeyPrefix            = "Post/category_index"
 	TopicKeyPrefix                    = "Post/topic/"
+	TopicAvatarPrefix                 = "Post/topic/avatar/"
 	TopicCategoryMappingKeyPrefix     = "Post/topicCategoryMapping/"
 	CategoryTopicsKeyPrefix           = "Post/category/topics/"
 	UncategorizedTopicsKeyPrefix      = "Post/uncategorized/topics/"

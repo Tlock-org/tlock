@@ -25,6 +25,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
+					RpcMethod: "QueryProfileAvatar",
+					Use:       "avatar [address]",
+					Short:     "get the avatar by address",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "address"},
+					},
+				},
+				{
 					RpcMethod: "QueryFollowRelationship",
 					Use:       "follow-relationship [addressA] [addressB]",
 					Short:     "get follow relationship",

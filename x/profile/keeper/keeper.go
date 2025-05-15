@@ -184,7 +184,20 @@ func (k Keeper) GetProfile(ctx sdk.Context, address string) (types.Profile, bool
 	k.cdc.MustUnmarshal(bz, &profile)
 	return profile, true
 }
-
+func (k Keeper) SetProfileAvatar(ctx sdk.Context, address string, avatar string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileAvatarPrefix))
+	key := []byte(address)
+	store.Set(key, []byte(avatar))
+}
+func (k Keeper) GetAvatarByAddress(ctx sdk.Context, address string) string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileAvatarPrefix))
+	key := []byte(address)
+	bz := store.Get(key)
+	if bz == nil {
+		return ""
+	}
+	return string(bz)
+}
 func (k Keeper) AddToUserHandleList(ctx sdk.Context, userHandle string, address string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserHandleKeyPrefix))
 	key := append([]byte(userHandle))
@@ -434,6 +447,9 @@ func (k Keeper) DeleteLastActivitiesReceived(ctx sdk.Context, wallet string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ActivitiesReceivedPrefix+wallet+"/"))
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
+	if !iterator.Valid() {
+		return
+	}
 	earliestKey := iterator.Key()
 	store.Delete(earliestKey)
 }

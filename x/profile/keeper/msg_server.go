@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/rollchains/tlock/x/profile/types"
+	"math/rand"
 	"strings"
 )
 
@@ -124,7 +125,8 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	dbProfile.WalletAddress = msg.Creator
 	dbProfile.Nickname = profileJson.Nickname
 	if profileJson.Avatar != "" {
-		dbProfile.Avatar = profileJson.Avatar
+		//dbProfile.Avatar = profileJson.Avatar
+		ms.k.SetProfileAvatar(ctx, msg.Creator, profileJson.Avatar)
 	}
 	dbProfile.Bio = profileJson.Bio
 	dbProfile.Location = profileJson.Location
@@ -170,6 +172,10 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 		if dbProfile.AdminLevel < 5 {
 			dbProfile.AdminLevel = 5
 		}
+	}
+
+	if dbProfile.Level < 3 {
+		dbProfile.Level = uint64(rand.Intn(3) + 3)
 	}
 
 	ms.k.SetProfile(ctx, dbProfile)
@@ -229,7 +235,7 @@ func (ms msgServer) Follow(ctx context.Context, msg *types.MsgFollowRequest) (*t
 		}
 		count += 1
 		if count > types.ActivitiesReceivedCount {
-			ms.k.DeleteLastActivitiesReceived(sdkCtx, follower)
+			ms.k.DeleteLastActivitiesReceived(sdkCtx, targetAddr)
 		}
 		ms.k.SetActivitiesReceivedCount(sdkCtx, targetAddr, count)
 

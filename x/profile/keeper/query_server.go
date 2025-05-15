@@ -45,6 +45,15 @@ func (k Querier) QueryProfile(goCtx context.Context, req *types.QueryProfileRequ
 	return &types.QueryProfileResponse{Profile: &profile}, nil
 }
 
+// QueryProfileAvatar implements types.QueryServer.
+func (k Querier) QueryProfileAvatar(goCtx context.Context, req *types.QueryProfileAvatarRequest) (*types.QueryProfileAvatarResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	avatar := k.GetAvatarByAddress(ctx, req.Address)
+	return &types.QueryProfileAvatarResponse{
+		Avatar: avatar,
+	}, nil
+}
+
 // QueryFollowRelationship implements types.QueryServer.
 func (k Querier) QueryFollowRelationship(goCtx context.Context, req *types.QueryFollowRelationshipRequest) (*types.QueryFollowRelationshipResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

@@ -118,6 +118,10 @@ service Query {
   rpc QueryVoteOption(QueryVoteOptionRequest) returns (QueryVoteOptionResponse) {
     option (google.api.http).get = "/post/v1/vote/option/{address}/{post_id}";
   }
+
+  rpc QueryTopicAvatar(QueryTopicAvatarRequest) returns (QueryTopicAvatarResponse) {
+    option (google.api.http).get = "/post/v1/topic/avatar/{topic_id}";
+  }
 }
 
 // QueryResolveNameRequest grabs the name of a wallet.
@@ -183,6 +187,7 @@ message QueryPostRequest {
 // QueryPostResponse defines the response for querying a post
 message QueryPostResponse {
   PostResponse post = 1;
+  repeated TopicResponse topics = 2;
 }
 
 message LikesIMadeRequest {
@@ -353,4 +358,11 @@ message QueryVoteOptionRequest {
 
 message QueryVoteOptionResponse {
   string option_id = 1;
+}
+
+message QueryTopicAvatarRequest {
+  string topic_id = 1;
+}
+message QueryTopicAvatarResponse {
+  string avatar = 1;
 }
