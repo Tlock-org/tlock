@@ -294,9 +294,9 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-					RpcMethod: "QueryTopicAvatar",
-					Use:       "topic avatar [topic_id]",
-					Short:     "get the avatar by topic",
+					RpcMethod: "QueryTopicImage",
+					Use:       "topic-image [topic_id]",
+					Short:     "get the image by topic",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "topic_id"},
 					},

@@ -8,7 +8,7 @@ option go_package = "github.com/rollchains/tlock/x/post/types";
 message Topic {
   string id = 1;
   string name = 2;
-  string avatar = 3;
+  string image = 3;
   string title = 4;
   // Brief summary or description of the topic.
   string summary = 5;
@@ -23,6 +23,9 @@ message Topic {
 
   int64 hours_72_time = 14;
   uint64 hours_72_score = 15;
+
+  string category_id = 16;
+  string creator = 17;
 }
 
 

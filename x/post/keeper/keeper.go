@@ -344,7 +344,7 @@ func (k Keeper) IsPostInTopics(ctx sdk.Context, postId string) bool {
 
 func (k Keeper) SetTopicSearch(ctx sdk.Context, topic string) {
 	topicLower := strings.ToLower(topic)
-	topicHash := k.sha256Generate(topic)
+	topicHash := k.sha256Generate(topicLower)
 	key := fmt.Sprintf("%s%s%s%s", types.TopicSearchKeyPrefix, topicLower, ":", topicHash)
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
 	if !store.Has([]byte(key)) {
@@ -1285,9 +1285,9 @@ func (k Keeper) addToHotTopics72(ctx sdk.Context, topicHash string, score uint64
 	key := buffer.Bytes()
 	store.Set(key, []byte(topicHash))
 }
-func (k Keeper) deleteFormHotTopics72(ctx sdk.Context, topicHash string, topicScore uint64) {
+func (k Keeper) deleteFormHotTopics72(ctx sdk.Context, topicHash string, score uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72KeyPrefix))
-	bzScore := k.EncodeScore(topicScore)
+	bzScore := k.EncodeScore(score)
 	var buffer bytes.Buffer
 	buffer.Write(bzScore)
 	buffer.WriteString(topicHash)
@@ -1580,7 +1580,7 @@ func (k Keeper) GetUncategorizedTopics(ctx sdk.Context, page, limit int64) ([]st
 	if err != nil {
 		return nil, nil, err
 	}
-	k.Logger().Warn("============topics:", "topics", topics)
+	//k.Logger().Warn("============topics:", "topics", topics)
 	return topics, pageRes, nil
 }
 
@@ -1702,15 +1702,17 @@ func (k Keeper) GetCategoryOperator(ctx sdk.Context) (string, bool) {
 	return string(bz), true
 }
 
-func (k Keeper) SetTopicAvatar(ctx sdk.Context, topicHash string, avatar string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicAvatarPrefix))
+func (k Keeper) SetTopicImage(ctx sdk.Context, topicHash string, avatar string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicImagePrefix))
 	key := []byte(topicHash)
+	//k.Logger().Warn("============avatar:", "key", key, "topicHash", topicHash)
 	store.Set(key, []byte(avatar))
 }
-func (k Keeper) GetAvatarByTopic(ctx sdk.Context, topicHash string) string {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicAvatarPrefix))
+func (k Keeper) GetImageByTopic(ctx sdk.Context, topicHash string) string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicImagePrefix))
 	key := []byte(topicHash)
 	bz := store.Get(key)
+	//k.Logger().Warn("============bz:", "key", key, "bz", string(bz))
 	if bz == nil {
 		return ""
 	}

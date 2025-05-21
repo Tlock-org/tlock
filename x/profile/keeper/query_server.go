@@ -115,6 +115,35 @@ func (k Querier) QueryFollowers(goCtx context.Context, req *types.QueryFollowers
 	}, nil
 }
 
+// GetMentionSuggestions implements types.QueryServer.
+func (k Querier) GetMentionSuggestions(goCtx context.Context, req *types.QueryGetMentionSuggestionsRequest) (*types.QueryGetMentionSuggestionsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	var profiles []*types.Profile
+	addedAddresses := make(map[string]bool)
+	addresses, _ := k.Keeper.GetFollowingSearch(ctx, req.Address, req.Matching)
+	if len(addresses) < 10 {
+		users, _ := k.SearchUsersLimitByMatching(ctx, req.Matching, 10-len(addresses))
+		for _, address := range users {
+			addresses = append(addresses, address)
+		}
+	}
+	for _, address := range addresses {
+		if addedAddresses[address] {
+			continue
+		}
+		profile, success := k.GetProfile(ctx, address)
+		if !success {
+			return nil, fmt.Errorf("failed to get profile %s: %w", profile, success)
+		}
+		profileCopy := profile
+		profiles = append(profiles, &profileCopy)
+		addedAddresses[address] = true
+	}
+	return &types.QueryGetMentionSuggestionsResponse{
+		Profiles: profiles,
+	}, nil
+}
+
 // QueryActivitiesReceived implements types.QueryServer.
 //func (k Querier) QueryActivitiesReceived(goCtx context.Context, req *types.QueryActivitiesReceivedRequest) (*types.QueryActivitiesReceivedResponse, error) {
 //	ctx := sdk.UnwrapSDKContext(goCtx)

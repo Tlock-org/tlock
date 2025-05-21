@@ -50,7 +50,15 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Use:       "following [wallet_address]",
 					Short:     "get list of following",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "wallet_address"},
+						{
+							ProtoField: "wallet_address",
+						},
+						{
+							ProtoField: "page",
+						},
+						{
+							ProtoField: "limit",
+						},
 					},
 				},
 				{
@@ -58,7 +66,22 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Use:       "followers [wallet_address]",
 					Short:     "get list of followers",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "wallet_address"},
+						{
+							ProtoField: "wallet_address",
+						},
+					},
+				},
+				{
+					RpcMethod: "GetMentionSuggestions",
+					Use:       "get-mention-suggestions [address] [matching]",
+					Short:     "get list of mention suggestions",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "address",
+						},
+						{
+							ProtoField: "matching",
+						},
 					},
 				},
 				//{
