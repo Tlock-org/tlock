@@ -238,7 +238,7 @@ func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (
 			topicResponse := types.TopicResponse{
 				Id:            topic.Id,
 				Name:          topic.Name,
-				Avatar:        topic.Avatar,
+				Avatar:        topic.Image,
 				Title:         topic.Title,
 				Summary:       topic.Summary,
 				Score:         topic.Score,
@@ -271,7 +271,7 @@ func (k Querier) SearchTopics(goCtx context.Context, req *types.SearchTopicsRequ
 		topicResponse := types.TopicResponse{
 			Id:            topic.Id,
 			Name:          topic.Name,
-			Avatar:        topic.Avatar,
+			Avatar:        topic.Image,
 			Title:         topic.Title,
 			Summary:       topic.Summary,
 			Score:         topic.Score,
@@ -543,7 +543,7 @@ func (k Querier) QueryTopicsByCategory(goCtx context.Context, req *types.QueryTo
 		topicResponse := types.TopicResponse{
 			Id:            topic.Id,
 			Name:          topic.Name,
-			Avatar:        topic.Avatar,
+			Avatar:        topic.Image,
 			Title:         topic.Title,
 			Summary:       topic.Summary,
 			Score:         topic.Score,
@@ -638,7 +638,7 @@ func (k Querier) QueryHotTopics72(goCtx context.Context, req *types.QueryHotTopi
 		topicResponse := types.TopicResponse{
 			Id:            topic.Id,
 			Name:          topic.Name,
-			Avatar:        topic.Avatar,
+			Avatar:        topic.Image,
 			Title:         topic.Title,
 			Summary:       topic.Summary,
 			Score:         topic.Score,
@@ -744,7 +744,7 @@ func (k Querier) QueryFollowingTopics(goCtx context.Context, req *types.QueryFol
 			topicResponse := types.TopicResponse{
 				Id:            topic.Id,
 				Name:          topic.Name,
-				Avatar:        topic.Avatar,
+				Avatar:        topic.Image,
 				Title:         topic.Title,
 				Summary:       topic.Summary,
 				Score:         topic.Score,
@@ -782,7 +782,7 @@ func (k Querier) QueryUncategorizedTopics(goCtx context.Context, req *types.Quer
 			topicResponse := types.TopicResponse{
 				Id:            topic.Id,
 				Name:          topic.Name,
-				Avatar:        topic.Avatar,
+				Avatar:        topic.Image,
 				Title:         topic.Title,
 				Summary:       topic.Summary,
 				Score:         topic.Score,
@@ -810,10 +810,10 @@ func (k Querier) QueryVoteOption(goCtx context.Context, req *types.QueryVoteOpti
 }
 
 // QueryTopicAvatar implements types.QueryServer.
-func (k Querier) QueryTopicAvatar(goCtx context.Context, req *types.QueryTopicAvatarRequest) (*types.QueryTopicAvatarResponse, error) {
+func (k Querier) QueryTopicImage(goCtx context.Context, req *types.QueryTopicImageRequest) (*types.QueryTopicImageResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	avatar := k.GetAvatarByTopic(ctx, req.TopicId)
-	return &types.QueryTopicAvatarResponse{
-		Avatar: avatar,
+	image := k.GetImageByTopic(ctx, req.TopicId)
+	return &types.QueryTopicImageResponse{
+		Image: image,
 	}, nil
 }

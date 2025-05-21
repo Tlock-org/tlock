@@ -311,8 +311,11 @@ message DeleteCategoryResponse {
 
 message UpdateTopicJson {
   string id = 1;
-  string avatar = 2;
-  uint64 score = 3;
+  string image = 2;
+  string title = 3;
+  string summary = 4;
+  uint64 score = 5;
+  string category_id = 6;
 }
 
 message UpdateTopicRequest {

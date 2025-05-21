@@ -119,8 +119,8 @@ service Query {
     option (google.api.http).get = "/post/v1/vote/option/{address}/{post_id}";
   }
 
-  rpc QueryTopicAvatar(QueryTopicAvatarRequest) returns (QueryTopicAvatarResponse) {
-    option (google.api.http).get = "/post/v1/topic/avatar/{topic_id}";
+  rpc QueryTopicImage(QueryTopicImageRequest) returns (QueryTopicImageResponse) {
+    option (google.api.http).get = "/post/v1/topic/image/{topic_id}";
   }
 }
 
@@ -360,9 +360,9 @@ message QueryVoteOptionResponse {
   string option_id = 1;
 }
 
-message QueryTopicAvatarRequest {
+message QueryTopicImageRequest {
   string topic_id = 1;
 }
-message QueryTopicAvatarResponse {
-  string avatar = 1;
+message QueryTopicImageResponse {
+  string image = 1;
 }

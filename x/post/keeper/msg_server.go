@@ -137,7 +137,7 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 
 	topicList := msg.Topic
 	category := msg.Category
-	err = ms.handleCategoryTopicPost(ctx, topicList, category, blockTime, postId)
+	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +228,7 @@ func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFr
 
 	topicList := msg.Topic
 	category := msg.Category
-	err = ms.handleCategoryTopicPost(ctx, topicList, category, blockTime, postId)
+	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 
 	topicList := msg.Topic
 	category := msg.Category
-	err = ms.handleCategoryTopicPost(ctx, topicList, category, blockTime, postId)
+	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
 	if err != nil {
 		return nil, err
 	}
@@ -397,7 +397,7 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 
 	topicList := msg.Topic
 	category := msg.Category
-	err = ms.handleCategoryTopicPost(ctx, topicList, category, blockTime, postId)
+	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
 	if err != nil {
 		return nil, err
 	}
@@ -482,7 +482,7 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 
 	topicList := msg.Topic
 	category := msg.Category
-	err = ms.handleCategoryTopicPost(ctx, topicList, category, blockTime, postId)
+	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
 	if err != nil {
 		return nil, err
 	}
@@ -928,7 +928,7 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 				oldScore := topic.Score
 				newScore := oldScore + uintExponent
 				old72Score := topic.GetHours_72Score()
-				new72Score := oldScore + uintExponent
+				new72Score := old72Score + uintExponent
 				topic.Score = newScore
 				topic.LikeCount += 1
 
@@ -990,7 +990,7 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 }
 
 func isWithin72Hours(createTime int64, blockTime int64) bool {
-	const seventyTwoHoursInSeconds int64 = 72 * 3600 // 259200秒
+	const seventyTwoHoursInSeconds int64 = 48 * 3600 // 259200秒
 	timeDifference := blockTime - createTime
 	if timeDifference < 0 {
 		return false
@@ -1114,7 +1114,7 @@ func (ms msgServer) addActivitiesReceived(sdkCtx sdk.Context, parentPost types.P
 	ms.k.ProfileKeeper.SetActivitiesReceivedCount(sdkCtx, target, count)
 }
 
-func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string, category string, blockTime int64, postId string) error {
+func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, creator string, topicList []string, category string, blockTime int64, postId string) error {
 	if len(topicList) > 0 {
 		if len(topicList) > 10 {
 			return fmt.Errorf("topic list length can not be larger than 10")
@@ -1122,17 +1122,29 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string,
 		var hashTopics []string
 		for _, topicName := range topicList {
 			topicHash := ms.k.sha256Generate(strings.ToLower(topicName))
+			categoryDb := ms.k.getCategoryByTopicHash(ctx, topicHash)
 			// add topic
 			exists := ms.k.TopicExists(ctx, topicHash)
 			if !exists {
 				topic := types.Topic{
 					Id:         topicHash,
 					Name:       topicName,
+					Creator:    creator,
 					CreateTime: blockTime,
 					UpdateTime: blockTime,
 				}
+				if categoryDb != "" {
+					topic.CategoryId = categoryDb
+				} else {
+					if category != "" {
+						categoryHash := ms.k.sha256Generate(category)
+						exists := ms.k.CategoryExists(ctx, categoryHash)
+						if exists {
+							topic.CategoryId = categoryHash
+						}
+					}
+				}
 				ms.k.AddTopic(ctx, topic)
-				//ms.k.addToHotTopics72(ctx, topicHash, 0)
 			}
 
 			// add topic search
@@ -1141,7 +1153,6 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, topicList []string,
 			hashTopics = append(hashTopics, topicHash)
 
 			// add category posts
-			categoryDb := ms.k.getCategoryByTopicHash(ctx, topicHash)
 			if categoryDb != "" {
 				//ms.k.SetCategorySearch(ctx, categoryDb)
 				//categoryHash := ms.k.sha256Generate(categoryDb)
@@ -1337,21 +1348,40 @@ func (ms msgServer) DeleteCategory(ctx context.Context, msg *types.DeleteCategor
 // UpdateTopic implements types.MsgServer.
 func (ms msgServer) UpdateTopic(goCtx context.Context, msg *types.UpdateTopicRequest) (*types.UpdateTopicResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	creator := msg.Creator
-	isAdmin := ms.k.ProfileKeeper.IsAdmin(ctx, creator)
-	if isAdmin {
-		json := msg.TopicJson
-		id := json.Id
-		topic, _ := ms.k.GetTopic(ctx, id)
-		//ms.k.deleteFormHotTopics72(ctx, id, topic.Score)
-		topic.Score = json.Score
-		if json.Avatar != "" {
-			//topic.Avatar = json.Avatar
-			ms.k.SetTopicAvatar(ctx, id, json.Avatar)
-		}
-		ms.k.AddTopic(ctx, topic)
-		//ms.k.addToHotTopics72(ctx, id, topic.Score)
+	//creator := msg.Creator
+	//isAdmin := ms.k.ProfileKeeper.IsAdmin(ctx, creator)
+	//if isAdmin {
+	//	json := msg.TopicJson
+	//	id := json.Id
+	//	topic, _ := ms.k.GetTopic(ctx, id)
+	//	//ms.k.deleteFormHotTopics72(ctx, id, topic.Score)
+	//	topic.Score = json.Score
+	//	if json.Avatar != "" {
+	//		//topic.Avatar = json.Avatar
+	//		ms.k.SetTopicAvatar(ctx, id, json.Avatar)
+	//	}
+	//	ms.k.AddTopic(ctx, topic)
+	//	//ms.k.addToHotTopics72(ctx, id, topic.Score)
+	//}
+	json := msg.TopicJson
+	id := json.Id
+	topic, _ := ms.k.GetTopic(ctx, id)
+	topic.Title = json.Title
+	topic.Summary = json.Summary
+	topic.Score = json.Score
+	categoryId := json.CategoryId
+	if categoryId != "" && topic.CategoryId == "" {
+		topic.CategoryId = categoryId
+
+		ms.k.SetCategoryTopics(ctx, topic.Score, categoryId, id)
+		ms.k.SetTopicCategoryMapping(ctx, id, categoryId)
 	}
+	ms.k.AddTopic(ctx, topic)
+
+	if json.Image != "" {
+		ms.k.SetTopicImage(ctx, id, json.Image)
+	}
+
 	return &types.UpdateTopicResponse{}, nil
 }
 

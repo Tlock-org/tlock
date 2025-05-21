@@ -26,9 +26,10 @@ const (
 	ProfileUserHandleKeyPrefix = "Profile/userHandle/"
 	ProfileUserSearchKeyPrefix = "Profile/userSearch/"
 
-	ProfileFollowingPrefix  = "Profile/following/"
-	ProfileFollowersPrefix  = "Profile/followers/"
-	ProfileFollowTimePrefix = "Profile/follow/time/"
+	ProfileFollowingPrefix       = "Profile/following/"
+	ProfileFollowingSearchPrefix = "Profile/following/search/"
+	ProfileFollowersPrefix       = "Profile/followers/"
+	ProfileFollowTimePrefix      = "Profile/follow/time/"
 
 	ActivitiesReceivedPrefix      = "Activities/received/"
 	ActivitiesReceivedCountPrefix = "Activities/received/count/"

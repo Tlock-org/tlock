@@ -32,6 +32,9 @@ service Query {
   rpc QueryFollowRelationship(QueryFollowRelationshipRequest) returns (QueryFollowRelationshipResponse) {
     option (google.api.http).get = "/profile/v1/follow/relationship/{addressA}/{addressB}";
   };
+  rpc GetMentionSuggestions(QueryGetMentionSuggestionsRequest) returns (QueryGetMentionSuggestionsResponse) {
+    option (google.api.http).get = "/profile/v1/getMentionSuggestions/{address}/{matching}";
+  };
 //  rpc QueryActivitiesReceived(QueryActivitiesReceivedRequest) returns (QueryActivitiesReceivedResponse) {
 //    option (google.api.http).get = "/profile/v1/activites/received/{wallet_address}";
 //  };
@@ -96,6 +99,15 @@ message QueryFollowersRequest {
 }
 
 message QueryFollowersResponse {
+  repeated Profile Profiles = 1;
+}
+
+message QueryGetMentionSuggestionsRequest {
+  string address = 1;
+  string matching = 2;
+}
+
+message QueryGetMentionSuggestionsResponse {
   repeated Profile Profiles = 1;
 }
 

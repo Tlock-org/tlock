@@ -222,6 +222,8 @@ func (ms msgServer) Follow(ctx context.Context, msg *types.MsgFollowRequest) (*t
 		profileTarget.Followers = followers
 		ms.k.SetProfile(sdkCtx, profileTarget)
 
+		ms.k.AddToFollowingSearch(sdkCtx, follower, profileTarget)
+
 		activitiesReceived := types.ActivitiesReceived{
 			Address:        follower,
 			TargetAddress:  targetAddr,
@@ -248,13 +250,15 @@ func (ms msgServer) Follow(ctx context.Context, msg *types.MsgFollowRequest) (*t
 // Unfollow implements types.MsgServer.
 func (ms msgServer) Unfollow(ctx context.Context, msg *types.MsgUnfollowRequest) (*types.MsgUnfollowResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	isFollowing := ms.k.IsFollowing(sdkCtx, msg.Creator, msg.TargetAddr)
+	follower := msg.Creator
+	targetAddr := msg.TargetAddr
+	isFollowing := ms.k.IsFollowing(sdkCtx, follower, targetAddr)
 	if isFollowing {
-		time, _ := ms.k.GetFollowTime(sdkCtx, msg.Creator, msg.TargetAddr)
-		ms.k.Unfollow(sdkCtx, msg.Creator, time, msg.TargetAddr)
-		ms.k.DeleteFollowTime(sdkCtx, msg.Creator, msg.TargetAddr)
+		time, _ := ms.k.GetFollowTime(sdkCtx, follower, targetAddr)
+		ms.k.Unfollow(sdkCtx, follower, time, targetAddr)
+		ms.k.DeleteFollowTime(sdkCtx, follower, targetAddr)
 
-		profileFollower, _ := ms.k.GetProfile(sdkCtx, msg.Creator)
+		profileFollower, _ := ms.k.GetProfile(sdkCtx, follower)
 		following := profileFollower.Following
 		if following > 0 {
 			following -= 1
@@ -262,13 +266,14 @@ func (ms msgServer) Unfollow(ctx context.Context, msg *types.MsgUnfollowRequest)
 			ms.k.SetProfile(sdkCtx, profileFollower)
 		}
 
-		profileTarget, _ := ms.k.GetProfile(sdkCtx, msg.TargetAddr)
+		profileTarget, _ := ms.k.GetProfile(sdkCtx, targetAddr)
 		followers := profileTarget.Followers
 		if followers > 0 {
 			followers -= 1
 			profileTarget.Followers = followers
 			ms.k.SetProfile(sdkCtx, profileTarget)
 		}
+		ms.k.DeleteFromFollowingSearch(sdkCtx, follower, profileTarget)
 	}
 
 	return &types.MsgUnfollowResponse{}, nil
