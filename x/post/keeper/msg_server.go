@@ -556,7 +556,6 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	// add home posts
 	if post.PostType != types.PostType_COMMENT {
 		exist := ms.k.IsPostInHomePosts(ctx, post.Id, post.HomePostsUpdate)
-		ms.k.Logger().Warn("============exist:", "exist", exist)
 		if exist {
 			ms.updateHomePosts(ctx, post)
 		} else {
@@ -927,60 +926,54 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 			if topic.Id != "" {
 				oldScore := topic.Score
 				newScore := oldScore + uintExponent
-				old72Score := topic.GetHours_72Score()
-				new72Score := old72Score + uintExponent
+				oldKeywordsScore := topic.GetTrendingKeywordsScore()
+				newKeywordsScore := oldKeywordsScore + uintExponent
 				topic.Score = newScore
 				topic.LikeCount += 1
 
-				ms.k.Logger().Warn("==========score:", "old", oldScore, "new", newScore)
-				// update hotTopics72
 				//createTime := topic.CreateTime
-				blockTime := ctx.BlockTime().Unix()
-				hours72Time := topic.GetHours_72Time()
-				hotTopics72Count, b := ms.k.GetHotTopics72Count(ctx)
-				if !b {
-					panic("GetHotTopics72Count error")
-				}
-				if hours72Time > 0 {
-					ms.k.deleteFormHotTopics72(ctx, topicHash, old72Score)
-					isWithin72 := isWithin72Hours(hours72Time, blockTime)
-					if isWithin72 {
-						ms.k.addToHotTopics72(ctx, topicHash, new72Score)
-						topic.Hours_72Score = new72Score
-					} else {
-						hotTopics72Count -= 1
-						topic.Hours_72Score = 0
-						topic.Hours_72Time = 0
-					}
-				} else {
-					ms.k.addToHotTopics72(ctx, topicHash, new72Score)
-					hotTopics72Count += 1
-					topic.Hours_72Score = new72Score
-					topic.Hours_72Time = blockTime
-				}
-
-				//isWithin72 := isWithin72Hours(createTime, blockTime)
-				//ms.k.deleteFormHotTopics72(ctx, topicHash, oldScore)
-				//if isWithin72 {
-				//	ms.k.addToHotTopics72(ctx, topicHash, newScore)
+				topic = ms.trendingKeywordsUpdate(ctx, topic, oldKeywordsScore, newKeywordsScore)
+				//blockTime := ctx.BlockTime().Unix()
+				//trendingKeywordsTime := topic.GetTrendingKeywordsTime()
+				//hotKeywordsCount, b := ms.k.GetTrendingKeywordsCount(ctx)
+				//if !b {
+				//	panic("GetTrendingKeywordsCount error")
 				//}
-
-				if hotTopics72Count > types.HotTopics72Count {
-					earliestTopicHash := ms.k.DeleteLastFromHotTopics72(ctx)
-					hotTopics72Count -= 1
-					earliestTopic, _ := ms.k.GetTopic(ctx, earliestTopicHash)
-
-					earliestTopic.Hours_72Score = 0
-					earliestTopic.Hours_72Time = 0
-					ms.k.AddTopic(ctx, earliestTopic)
-				} else {
-					ms.k.SetHotTopics72Count(ctx, hotTopics72Count)
-				}
+				//if trendingKeywordsTime > 0 {
+				//	ms.k.deleteFormTrendingKeywords(ctx, topicHash, oldKeywordsScore)
+				//	isWithin72 := isWithin72Hours(trendingKeywordsTime, blockTime)
+				//	if isWithin72 {
+				//		ms.k.addToTrendingKeywords(ctx, topicHash, newKeywordsScore)
+				//		topic.TrendingKeywordsScore = newKeywordsScore
+				//	} else {
+				//		hotKeywordsCount -= 1
+				//		topic.TrendingKeywordsScore = 0
+				//		topic.TrendingKeywordsTime = 0
+				//	}
+				//} else {
+				//	ms.k.addToTrendingKeywords(ctx, topicHash, newKeywordsScore)
+				//	hotKeywordsCount += 1
+				//	topic.TrendingKeywordsScore = newKeywordsScore
+				//	topic.TrendingKeywordsTime = blockTime
+				//}
+				//
+				//if hotKeywordsCount > types.TrendingKeywordsCount {
+				//	earliestTopicHash := ms.k.DeleteLastFromTrendingKeywords(ctx)
+				//	hotKeywordsCount -= 1
+				//	earliestTopic, _ := ms.k.GetTopic(ctx, earliestTopicHash)
+				//
+				//	earliestTopic.TrendingKeywordsScore = 0
+				//	earliestTopic.TrendingKeywordsTime = 0
+				//	ms.k.AddTopic(ctx, earliestTopic)
+				//} else {
+				//	ms.k.SetTrendingKeywordsCount(ctx, hotKeywordsCount)
+				//}
+				ms.trendingTopicsUpdate(ctx, topic, oldScore, newScore)
 
 				categoryHash := ms.k.getCategoryByTopicHash(ctx, topicHash)
 				if categoryHash != "" {
 					ms.k.DeleteFromCategoryTopicsByCategoryAndTopicId(ctx, categoryHash, topicHash, oldScore)
-					ms.k.SetCategoryTopics(ctx, newScore, categoryHash, topicHash)
+					ms.k.SetCategoryTopics(ctx, categoryHash, topicHash, newScore)
 				}
 
 				ms.k.AddTopic(ctx, topic)
@@ -989,13 +982,84 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 	}
 }
 
-func isWithin72Hours(createTime int64, blockTime int64) bool {
-	const seventyTwoHoursInSeconds int64 = 48 * 3600 // 259200秒
+func (ms msgServer) trendingKeywordsUpdate(ctx sdk.Context, topic types.Topic, oldKeywordsScore uint64, newKeywordsScore uint64) types.Topic {
+	blockTime := ctx.BlockTime().Unix()
+	trendingKeywordsTime := topic.GetTrendingKeywordsTime()
+	trendingKeywordsCount, b := ms.k.GetTrendingKeywordsCount(ctx)
+	if !b {
+		panic("GetTrendingKeywordsCount error")
+	}
+	if trendingKeywordsTime > 0 {
+		ms.k.deleteFormTrendingKeywords(ctx, topic.Id, oldKeywordsScore)
+		withinSpecifiedHours := isWithinHours(trendingKeywordsTime, blockTime, 48)
+		if withinSpecifiedHours {
+			ms.k.addToTrendingKeywords(ctx, topic.Id, newKeywordsScore)
+			topic.TrendingKeywordsScore = newKeywordsScore
+		} else {
+			trendingKeywordsCount -= 1
+			topic.TrendingKeywordsScore = 0
+			topic.TrendingKeywordsTime = 0
+		}
+	} else {
+		ms.k.addToTrendingKeywords(ctx, topic.Id, newKeywordsScore)
+		trendingKeywordsCount += 1
+		topic.TrendingKeywordsScore = newKeywordsScore
+		topic.TrendingKeywordsTime = blockTime
+	}
+
+	if trendingKeywordsCount > types.TrendingKeywordsCount {
+		earliestTopicHash := ms.k.DeleteLastFromTrendingKeywords(ctx)
+		trendingKeywordsCount -= 1
+		earliestTopic, _ := ms.k.GetTopic(ctx, earliestTopicHash)
+
+		earliestTopic.TrendingKeywordsScore = 0
+		earliestTopic.TrendingKeywordsTime = 0
+		ms.k.AddTopic(ctx, earliestTopic)
+	} else {
+		ms.k.SetTrendingKeywordsCount(ctx, trendingKeywordsCount)
+	}
+	return topic
+}
+
+func (ms msgServer) trendingTopicsUpdate(ctx sdk.Context, topic types.Topic, oldTopicScore uint64, newTopicScore uint64) {
+	blockTime := ctx.BlockTime().Unix()
+	createTime := topic.GetCreateTime()
+	trendingTopicsCount, b := ms.k.GetTrendingTopicsCount(ctx)
+	if !b {
+		panic("GetTrendingKeywordsCount error")
+	}
+
+	withinSpecifiedHours := isWithinHours(createTime, blockTime, 72)
+	isWithinTrendingTopics := ms.k.isWithinTrendingTopics(ctx, topic.Id, oldTopicScore)
+
+	if withinSpecifiedHours {
+		if isWithinTrendingTopics {
+			ms.k.deleteFormTrendingTopics(ctx, topic.Id, oldTopicScore)
+			trendingTopicsCount -= 1
+		}
+		ms.k.addToTrendingTopics(ctx, topic.Id, newTopicScore)
+		trendingTopicsCount += 1
+	} else {
+		if isWithinTrendingTopics {
+			ms.k.deleteFormTrendingTopics(ctx, topic.Id, oldTopicScore)
+			trendingTopicsCount -= 1
+		}
+	}
+
+	if trendingTopicsCount > types.TrendingTopicsCount {
+		ms.k.DeleteLastFromTrendingTopics(ctx)
+		trendingTopicsCount -= 1
+	} else {
+		ms.k.SetTrendingTopicsCount(ctx, trendingTopicsCount)
+	}
+}
+
+func isWithinHours(createTime int64, blockTime int64, hours int64) bool {
 	timeDifference := blockTime - createTime
 	if timeDifference < 0 {
 		return false
 	}
-	return timeDifference <= seventyTwoHoursInSeconds
+	return timeDifference <= hours*3600
 }
 
 func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post types.Post, num int64) uint64 {
@@ -1124,8 +1188,8 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, creator string, top
 			topicHash := ms.k.sha256Generate(strings.ToLower(topicName))
 			categoryDb := ms.k.getCategoryByTopicHash(ctx, topicHash)
 			// add topic
-			exists := ms.k.TopicExists(ctx, topicHash)
-			if !exists {
+			topicExists := ms.k.TopicExists(ctx, topicHash)
+			if !topicExists {
 				topic := types.Topic{
 					Id:         topicHash,
 					Name:       topicName,
@@ -1138,8 +1202,8 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, creator string, top
 				} else {
 					if category != "" {
 						categoryHash := ms.k.sha256Generate(category)
-						exists := ms.k.CategoryExists(ctx, categoryHash)
-						if exists {
+						categoryExists := ms.k.CategoryExists(ctx, categoryHash)
+						if categoryExists {
 							topic.CategoryId = categoryHash
 						}
 					}
@@ -1161,8 +1225,8 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, creator string, top
 			} else {
 				if category != "" {
 					categoryHash := ms.k.sha256Generate(category)
-					exists := ms.k.CategoryExists(ctx, categoryHash)
-					if exists {
+					categoryExists := ms.k.CategoryExists(ctx, categoryHash)
+					if categoryExists {
 						//ms.k.SetCategorySearch(ctx, category)
 						ms.addToCategoryPosts(ctx, categoryHash, postId)
 						topic, _ := ms.k.GetTopic(ctx, topicHash)
@@ -1197,8 +1261,8 @@ func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, creator string, top
 		// connect category and post
 		if category != "" {
 			categoryHash := ms.k.sha256Generate(category)
-			exists := ms.k.CategoryExists(ctx, categoryHash)
-			if exists {
+			categoryExists := ms.k.CategoryExists(ctx, categoryHash)
+			if categoryExists {
 				//ms.k.SetCategorySearch(ctx, category)
 				ms.addToCategoryPosts(ctx, categoryHash, postId)
 				ms.k.SetPostCategoryMapping(ctx, categoryHash, postId)
@@ -1236,7 +1300,7 @@ func (ms msgServer) updateCategoryPosts(ctx sdk.Context, post types.Post) {
 	}
 }
 func (ms msgServer) addToCategoryTopics(ctx sdk.Context, categoryHash string, topic types.Topic) {
-	ms.k.SetCategoryTopics(ctx, topic.Score, categoryHash, topic.Id)
+	ms.k.SetCategoryTopics(ctx, categoryHash, topic.Id, topic.Score)
 	count, b := ms.k.GetCategoryTopicsCount(ctx, categoryHash)
 	if !b {
 		panic("GetCategoryTopicsCount error")
@@ -1366,14 +1430,20 @@ func (ms msgServer) UpdateTopic(goCtx context.Context, msg *types.UpdateTopicReq
 	json := msg.TopicJson
 	id := json.Id
 	topic, _ := ms.k.GetTopic(ctx, id)
-	topic.Title = json.Title
-	topic.Summary = json.Summary
-	topic.Score = json.Score
+	if json.Title != "" {
+		topic.Title = json.Title
+	}
+	if json.Summary != "" {
+		topic.Summary = json.Summary
+	}
+	if json.Score > 0 {
+		topic.Score = json.Score
+	}
 	categoryId := json.CategoryId
 	if categoryId != "" && topic.CategoryId == "" {
 		topic.CategoryId = categoryId
 
-		ms.k.SetCategoryTopics(ctx, topic.Score, categoryId, id)
+		ms.k.SetCategoryTopics(ctx, categoryId, id, topic.Score)
 		ms.k.SetTopicCategoryMapping(ctx, id, categoryId)
 	}
 	ms.k.AddTopic(ctx, topic)

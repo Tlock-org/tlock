@@ -21,8 +21,8 @@ message Topic {
   int64 create_time = 12;
   int64 update_time = 13;
 
-  int64 hours_72_time = 14;
-  uint64 hours_72_score = 15;
+  int64 trending_keywords_time = 14;
+  uint64 trending_keywords_score = 15;
 
   string category_id = 16;
   string creator = 17;

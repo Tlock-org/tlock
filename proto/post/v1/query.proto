@@ -97,10 +97,6 @@ service Query {
     option (google.api.http).get = "/post/v1/category/posts/{category_id}/{page}";
   };
 
-  rpc QueryHotTopics72(QueryHotTopics72Request) returns (QueryHotTopics72Response) {
-    option (google.api.http).get = "/post/v1/hot/topics/72/{page}";
-  };
-
   rpc QueryFollowingPosts(QueryFollowingPostsRequest) returns (QueryFollowingPostsResponse) {
     option (google.api.http).get = "/post/v1/following/posts/{address}/{page}";
   };
@@ -122,6 +118,18 @@ service Query {
   rpc QueryTopicImage(QueryTopicImageRequest) returns (QueryTopicImageResponse) {
     option (google.api.http).get = "/post/v1/topic/image/{topic_id}";
   }
+
+  rpc QueryTopic(QueryTopicRequest) returns (QueryTopicResponse) {
+    option (google.api.http).get = "/post/v1/topic/{topic_id}";
+  }
+
+  rpc QueryTrendingKeywords(QueryTrendingKeywordsRequest) returns (QueryTrendingKeywordsResponse) {
+    option (google.api.http).get = "/post/v1/trending/keywords/{page}";
+  };
+
+  rpc QueryTrendingTopics(QueryTrendingTopicsRequest) returns (QueryTrendingTopicsResponse) {
+    option (google.api.http).get = "/post/v1/trending/topics/{page}";
+  };
 }
 
 // QueryResolveNameRequest grabs the name of a wallet.
@@ -305,15 +313,6 @@ message QueryCategoryPostsResponse {
   CategoryPostsResponse response = 2;
 }
 
-message QueryHotTopics72Request {
-  uint64 page = 1;
-}
-
-message QueryHotTopics72Response {
-  uint64 page = 1;
-  repeated TopicResponse topics = 2;
-}
-
 message QueryFollowingPostsRequest {
   string address = 1;
   uint64 page = 2;
@@ -365,4 +364,31 @@ message QueryTopicImageRequest {
 }
 message QueryTopicImageResponse {
   string image = 1;
+}
+
+message QueryTopicRequest {
+  string topic_id = 1;
+}
+
+message QueryTopicResponse {
+  TopicResponse topic = 1;
+}
+
+
+message QueryTrendingKeywordsRequest {
+  uint64 page = 1;
+}
+
+message QueryTrendingKeywordsResponse {
+  uint64 page = 1;
+  repeated TopicResponse topics = 2;
+}
+
+message QueryTrendingTopicsRequest {
+  uint64 page = 1;
+}
+
+message QueryTrendingTopicsResponse {
+  uint64 page = 1;
+  repeated TopicResponse topics = 2;
 }

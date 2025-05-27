@@ -8,6 +8,7 @@ import (
 	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
 	"google.golang.org/grpc/codes"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/rollchains/tlock/x/post/types"
@@ -236,13 +237,15 @@ func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (
 		for _, topicHash := range topics {
 			topic, _ := k.Keeper.GetTopic(ctx, topicHash)
 			topicResponse := types.TopicResponse{
-				Id:            topic.Id,
-				Name:          topic.Name,
-				Avatar:        topic.Image,
-				Title:         topic.Title,
-				Summary:       topic.Summary,
-				Score:         topic.Score,
-				Hours_72Score: topic.Hours_72Score,
+				Id:                    topic.Id,
+				Name:                  topic.Name,
+				Image:                 topic.Image,
+				Title:                 topic.Title,
+				Summary:               topic.Summary,
+				Score:                 topic.Score,
+				TrendingKeywordsScore: topic.TrendingKeywordsScore,
+				CategoryId:            topic.CategoryId,
+				Creator:               topic.Creator,
 			}
 			topicResponses = append(topicResponses, &topicResponse)
 		}
@@ -266,18 +269,22 @@ func (k Querier) SearchTopics(goCtx context.Context, req *types.SearchTopicsRequ
 	topicOriginalList, _ := k.SearchTopicMatches(ctx, req.Matching)
 	var topicResponses []*types.TopicResponse
 	for _, topicOriginal := range topicOriginalList {
-		topicHash := k.sha256Generate(topicOriginal)
+		topicHash := k.sha256Generate(strings.ToLower(topicOriginal))
 		topic, _ := k.GetTopic(ctx, topicHash)
-		topicResponse := types.TopicResponse{
-			Id:            topic.Id,
-			Name:          topic.Name,
-			Avatar:        topic.Image,
-			Title:         topic.Title,
-			Summary:       topic.Summary,
-			Score:         topic.Score,
-			Hours_72Score: topic.Hours_72Score,
+		if topic.Id != "" {
+			topicResponse := types.TopicResponse{
+				Id:                    topic.Id,
+				Name:                  topic.Name,
+				Image:                 topic.Image,
+				Title:                 topic.Title,
+				Summary:               topic.Summary,
+				Score:                 topic.Score,
+				TrendingKeywordsScore: topic.TrendingKeywordsScore,
+				CategoryId:            topic.CategoryId,
+				Creator:               topic.Creator,
+			}
+			topicResponses = append(topicResponses, &topicResponse)
 		}
-		topicResponses = append(topicResponses, &topicResponse)
 	}
 	return &types.SearchTopicsResponse{
 		Topics: topicResponses,
@@ -541,13 +548,15 @@ func (k Querier) QueryTopicsByCategory(goCtx context.Context, req *types.QueryTo
 	for _, topicHash := range topics {
 		topic, _ := k.GetTopic(ctx, topicHash)
 		topicResponse := types.TopicResponse{
-			Id:            topic.Id,
-			Name:          topic.Name,
-			Avatar:        topic.Image,
-			Title:         topic.Title,
-			Summary:       topic.Summary,
-			Score:         topic.Score,
-			Hours_72Score: topic.Hours_72Score,
+			Id:                    topic.Id,
+			Name:                  topic.Name,
+			Image:                 topic.Image,
+			Title:                 topic.Title,
+			Summary:               topic.Summary,
+			Score:                 topic.Score,
+			TrendingKeywordsScore: topic.TrendingKeywordsScore,
+			CategoryId:            topic.CategoryId,
+			Creator:               topic.Creator,
 		}
 		TopicResponseList = append(TopicResponseList, &topicResponse)
 	}
@@ -622,33 +631,6 @@ func (k Querier) QueryCategoryPosts(goCtx context.Context, req *types.QueryCateg
 	return &types.QueryCategoryPostsResponse{
 		Page:     page,
 		Response: &categoryPostsResponse,
-	}, nil
-}
-
-// QueryHotTopics72 implements types.QueryServer.
-func (k Querier) QueryHotTopics72(goCtx context.Context, req *types.QueryHotTopics72Request) (*types.QueryHotTopics72Response, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	topics72, _, page, err := k.GetHotTopics72(ctx, req.Page)
-	if err != nil {
-		return &types.QueryHotTopics72Response{}, nil
-	}
-	var topicResponseList []*types.TopicResponse
-	for _, topicHash := range topics72 {
-		topic, _ := k.GetTopic(ctx, topicHash)
-		topicResponse := types.TopicResponse{
-			Id:            topic.Id,
-			Name:          topic.Name,
-			Avatar:        topic.Image,
-			Title:         topic.Title,
-			Summary:       topic.Summary,
-			Score:         topic.Score,
-			Hours_72Score: topic.Hours_72Score,
-		}
-		topicResponseList = append(topicResponseList, &topicResponse)
-	}
-	return &types.QueryHotTopics72Response{
-		Page:   page,
-		Topics: topicResponseList,
 	}, nil
 }
 
@@ -742,13 +724,15 @@ func (k Querier) QueryFollowingTopics(goCtx context.Context, req *types.QueryFol
 		for _, topicHash := range topicIds {
 			topic, _ := k.GetTopic(ctx, topicHash)
 			topicResponse := types.TopicResponse{
-				Id:            topic.Id,
-				Name:          topic.Name,
-				Avatar:        topic.Image,
-				Title:         topic.Title,
-				Summary:       topic.Summary,
-				Score:         topic.Score,
-				Hours_72Score: topic.Hours_72Score,
+				Id:                    topic.Id,
+				Name:                  topic.Name,
+				Image:                 topic.Image,
+				Title:                 topic.Title,
+				Summary:               topic.Summary,
+				Score:                 topic.Score,
+				TrendingKeywordsScore: topic.TrendingKeywordsScore,
+				CategoryId:            topic.CategoryId,
+				Creator:               topic.Creator,
 			}
 			topicResponseList = append(topicResponseList, &topicResponse)
 		}
@@ -780,13 +764,15 @@ func (k Querier) QueryUncategorizedTopics(goCtx context.Context, req *types.Quer
 		for _, topicHash := range topics {
 			topic, _ := k.GetTopic(ctx, topicHash)
 			topicResponse := types.TopicResponse{
-				Id:            topic.Id,
-				Name:          topic.Name,
-				Avatar:        topic.Image,
-				Title:         topic.Title,
-				Summary:       topic.Summary,
-				Score:         topic.Score,
-				Hours_72Score: topic.Hours_72Score,
+				Id:                    topic.Id,
+				Name:                  topic.Name,
+				Image:                 topic.Image,
+				Title:                 topic.Title,
+				Summary:               topic.Summary,
+				Score:                 topic.Score,
+				TrendingKeywordsScore: topic.TrendingKeywordsScore,
+				CategoryId:            topic.CategoryId,
+				Creator:               topic.Creator,
 			}
 			topicResponseList = append(topicResponseList, &topicResponse)
 		}
@@ -816,4 +802,87 @@ func (k Querier) QueryTopicImage(goCtx context.Context, req *types.QueryTopicIma
 	return &types.QueryTopicImageResponse{
 		Image: image,
 	}, nil
+}
+
+// QueryTopic implements types.QueryServer.
+func (k Querier) QueryTopic(goCtx context.Context, req *types.QueryTopicRequest) (*types.QueryTopicResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	topic, _ := k.GetTopic(ctx, req.TopicId)
+	image := k.GetImageByTopic(ctx, req.TopicId)
+	topicResponse := types.TopicResponse{
+		Id:                    topic.Id,
+		Name:                  topic.Name,
+		Image:                 topic.Image,
+		Title:                 topic.Title,
+		Summary:               topic.Summary,
+		Score:                 topic.Score,
+		TrendingKeywordsScore: topic.TrendingKeywordsScore,
+		CategoryId:            topic.CategoryId,
+		Creator:               topic.Creator,
+	}
+	if image != "" {
+		topicResponse.Image = image
+	}
+	return &types.QueryTopicResponse{
+		Topic: &topicResponse,
+	}, nil
+}
+
+// QueryTrendingKeywords implements types.QueryServer.
+func (k Querier) QueryTrendingKeywords(goCtx context.Context, req *types.QueryTrendingKeywordsRequest) (*types.QueryTrendingKeywordsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	keywords, _, page, err := k.GetTrendingKeywords(ctx, req.Page)
+	if err != nil {
+		return &types.QueryTrendingKeywordsResponse{}, nil
+	}
+	var topicResponseList []*types.TopicResponse
+	for _, topicHash := range keywords {
+		topic, _ := k.GetTopic(ctx, topicHash)
+		topicResponse := types.TopicResponse{
+			Id:                    topic.Id,
+			Name:                  topic.Name,
+			Image:                 topic.Image,
+			Title:                 topic.Title,
+			Summary:               topic.Summary,
+			Score:                 topic.Score,
+			TrendingKeywordsScore: topic.TrendingKeywordsScore,
+			CategoryId:            topic.CategoryId,
+			Creator:               topic.Creator,
+		}
+		topicResponseList = append(topicResponseList, &topicResponse)
+	}
+	return &types.QueryTrendingKeywordsResponse{
+		Page:   page,
+		Topics: topicResponseList,
+	}, nil
+}
+
+// QueryTrendingTopics implements types.QueryServer.
+func (k Querier) QueryTrendingTopics(goCtx context.Context, req *types.QueryTrendingTopicsRequest) (*types.QueryTrendingTopicsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	topics, _, page, err := k.GetTrendingTopics(ctx, req.Page)
+	if err != nil {
+		return &types.QueryTrendingTopicsResponse{}, nil
+	}
+	var topicResponseList []*types.TopicResponse
+	for _, topicHash := range topics {
+		topic, _ := k.GetTopic(ctx, topicHash)
+		topicResponse := types.TopicResponse{
+			Id:                    topic.Id,
+			Name:                  topic.Name,
+			Image:                 topic.Image,
+			Title:                 topic.Title,
+			Summary:               topic.Summary,
+			Score:                 topic.Score,
+			TrendingKeywordsScore: topic.TrendingKeywordsScore,
+			CategoryId:            topic.CategoryId,
+			Creator:               topic.Creator,
+		}
+		topicResponseList = append(topicResponseList, &topicResponse)
+	}
+	return &types.QueryTrendingTopicsResponse{
+		Page:   page,
+		Topics: topicResponseList,
+	}, nil
+
 }

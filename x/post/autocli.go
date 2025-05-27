@@ -229,16 +229,6 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-					RpcMethod: "QueryHotTopics72",
-					Use:       "hot-topics [page]",
-					Short:     "get hot topics",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{
-							ProtoField: "page",
-						},
-					},
-				},
-				{
 					RpcMethod: "QueryFollowingTopics",
 					Use:       "following-topics [address] [page]",
 					Short:     "get following topics",
@@ -299,6 +289,34 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Short:     "get the image by topic",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "topic_id"},
+					},
+				},
+				{
+					RpcMethod: "QueryTopic",
+					Use:       "topic [topic_id]",
+					Short:     "get the topic by id",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "topic_id"},
+					},
+				},
+				{
+					RpcMethod: "QueryTrendingKeywords",
+					Use:       "trending-keywords [page]",
+					Short:     "get trending keywords",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "page",
+						},
+					},
+				},
+				{
+					RpcMethod: "QueryTrendingTopics",
+					Use:       "trending-topics [page]",
+					Short:     "get trending topics",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "page",
+						},
 					},
 				},
 			},
