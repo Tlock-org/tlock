@@ -8,11 +8,11 @@ option go_package = "github.com/rollchains/tlock/x/post/types";
 message TopicResponse {
   string id = 1;
   string name = 2;
-  string avatar = 3;
+  string image = 3;
   string title = 4;
   string summary = 5;
   uint64 score = 6;
-  uint64 hours_72_score = 7;
+  uint64 trending_keywords_score = 7;
+  string category_id = 8;
+  string creator = 9;
 }
-
-

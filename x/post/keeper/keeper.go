@@ -1276,8 +1276,8 @@ func (k Keeper) TopicExists(ctx sdk.Context, topicHash string) bool {
 	return store.Has(key)
 }
 
-func (k Keeper) addToHotTopics72(ctx sdk.Context, topicHash string, score uint64) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72KeyPrefix))
+func (k Keeper) addToTrendingKeywords(ctx sdk.Context, topicHash string, score uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingKeywordsPrefix))
 	bzScore := k.EncodeScore(score)
 	var buffer bytes.Buffer
 	buffer.Write(bzScore)
@@ -1285,8 +1285,8 @@ func (k Keeper) addToHotTopics72(ctx sdk.Context, topicHash string, score uint64
 	key := buffer.Bytes()
 	store.Set(key, []byte(topicHash))
 }
-func (k Keeper) deleteFormHotTopics72(ctx sdk.Context, topicHash string, score uint64) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72KeyPrefix))
+func (k Keeper) deleteFormTrendingKeywords(ctx sdk.Context, topicHash string, score uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingKeywordsPrefix))
 	bzScore := k.EncodeScore(score)
 	var buffer bytes.Buffer
 	buffer.Write(bzScore)
@@ -1294,23 +1294,35 @@ func (k Keeper) deleteFormHotTopics72(ctx sdk.Context, topicHash string, score u
 	key := buffer.Bytes()
 	store.Delete(key)
 }
-func (k Keeper) GetHotTopics72(ctx sdk.Context, page uint64) ([]string, *query.PageResponse, uint64, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72KeyPrefix))
+func (k Keeper) DeleteLastFromTrendingKeywords(ctx sdk.Context) string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingKeywordsPrefix))
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+	if !iterator.Valid() {
+		panic("trendingKeywords exceeds 1000 but no found")
+	}
+	earliestKey := iterator.Key()
+	bz := store.Get(earliestKey)
+	store.Delete(earliestKey)
+	return string(bz)
+}
+func (k Keeper) GetTrendingKeywords(ctx sdk.Context, page uint64) ([]string, *query.PageResponse, uint64, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingKeywordsPrefix))
 
-	hotTopics72Count, _ := k.GetHotTopics72Count(ctx)
-	if hotTopics72Count == 0 {
+	trendingKeywordsCount, _ := k.GetTrendingKeywordsCount(ctx)
+	if trendingKeywordsCount == 0 {
 		return []string{}, &query.PageResponse{
 			NextKey: nil,
-			Total:   uint64(hotTopics72Count),
+			Total:   uint64(trendingKeywordsCount),
 		}, uint64(0), nil
 	}
 
 	if page < 1 {
 		page = 1
 	}
-	const pageSize = types.HotTopics72PageSize
-	totalPages := hotTopics72Count / pageSize
-	if hotTopics72Count%pageSize != 0 {
+	const pageSize = types.TrendingKeywordsPageSize
+	totalPages := trendingKeywordsCount / pageSize
+	if trendingKeywordsCount%pageSize != 0 {
 		totalPages += 1
 	}
 
@@ -1326,9 +1338,9 @@ func (k Keeper) GetHotTopics72(ctx sdk.Context, page uint64) ([]string, *query.P
 	// 00-99  10000 00:1-100 01:101-200 02:201-300
 	first := (page - 1) * pageSize
 
-	const totalTopics = types.HotTopics72Count
+	const totalTopics = types.TrendingKeywordsCount
 	if first >= totalTopics {
-		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of hot topics")
+		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of trending keywords")
 	}
 
 	pagination := &query.PageRequest{}
@@ -1337,25 +1349,25 @@ func (k Keeper) GetHotTopics72(ctx sdk.Context, page uint64) ([]string, *query.P
 	pagination.Offset = first
 	pagination.Reverse = true
 
-	var postIDs []string
+	var topicIds []string
 
 	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
-		postIDs = append(postIDs, string(value))
+		topicIds = append(topicIds, string(value))
 		return nil
 	})
 	if err != nil {
 		return nil, nil, uint64(0), err
 	}
-	return postIDs, pageRes, page, nil
+	return topicIds, pageRes, page, nil
 }
-func (k Keeper) SetHotTopics72Count(ctx sdk.Context, count int64) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72CountKeyPrefix))
+func (k Keeper) SetTrendingKeywordsCount(ctx sdk.Context, count int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingKeywordsCountPrefix))
 	bz := make([]byte, 8)
 	binary.BigEndian.PutUint64(bz, uint64(count))
 	store.Set([]byte("count"), bz)
 }
-func (k Keeper) GetHotTopics72Count(ctx sdk.Context) (int64, bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72CountKeyPrefix))
+func (k Keeper) GetTrendingKeywordsCount(ctx sdk.Context) (int64, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingKeywordsCountPrefix))
 	bz := store.Get([]byte("count"))
 	if bz == nil {
 		return 0, true
@@ -1363,18 +1375,113 @@ func (k Keeper) GetHotTopics72Count(ctx sdk.Context) (int64, bool) {
 	count := int64(binary.BigEndian.Uint64(bz))
 	return count, true
 }
-func (k Keeper) DeleteLastFromHotTopics72(ctx sdk.Context) string {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HotTopics72KeyPrefix))
+
+func (k Keeper) addToTrendingTopics(ctx sdk.Context, topicHash string, score uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingTopicsPrefix))
+	bzScore := k.EncodeScore(score)
+	var buffer bytes.Buffer
+	buffer.Write(bzScore)
+	buffer.WriteString(topicHash)
+	key := buffer.Bytes()
+	store.Set(key, []byte(topicHash))
+}
+func (k Keeper) isWithinTrendingTopics(ctx sdk.Context, topicHash string, score uint64) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingTopicsPrefix))
+	bzScore := k.EncodeScore(score)
+	var buffer bytes.Buffer
+	buffer.Write(bzScore)
+	buffer.WriteString(topicHash)
+	key := buffer.Bytes()
+	return store.Has(key)
+}
+func (k Keeper) deleteFormTrendingTopics(ctx sdk.Context, topicHash string, score uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingTopicsPrefix))
+	bzScore := k.EncodeScore(score)
+	var buffer bytes.Buffer
+	buffer.Write(bzScore)
+	buffer.WriteString(topicHash)
+	key := buffer.Bytes()
+	store.Delete(key)
+}
+func (k Keeper) DeleteLastFromTrendingTopics(ctx sdk.Context) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingTopicsPrefix))
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 	if !iterator.Valid() {
-		panic("hotTopics72Count exceeds 1000 but no posts found")
+		panic("trendingTopicsCount exceeds 1000 but no found")
 	}
 	earliestKey := iterator.Key()
-	bz := store.Get(earliestKey)
 	store.Delete(earliestKey)
-	return string(bz)
 }
+func (k Keeper) GetTrendingTopics(ctx sdk.Context, page uint64) ([]string, *query.PageResponse, uint64, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingTopicsPrefix))
+	trendingTopicsCount, _ := k.GetTrendingTopicsCount(ctx)
+	if trendingTopicsCount == 0 {
+		return []string{}, &query.PageResponse{
+			NextKey: nil,
+			Total:   uint64(trendingTopicsCount),
+		}, uint64(0), nil
+	}
+
+	if page < 1 {
+		page = 1
+	}
+	const pageSize = types.TrendingTopicsPageSize
+	totalPages := trendingTopicsCount / pageSize
+	if trendingTopicsCount%pageSize != 0 {
+		totalPages += 1
+	}
+
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	//currentTime := time.Now()
+	//unixMilli := currentTime.Unix()
+	//lastTwoDigits := unixMilli % 100
+
+	//pageIndex := lastTwoDigits % totalPages
+	// 00-99  10000 00:1-100 01:101-200 02:201-300
+	first := (page - 1) * pageSize
+
+	const totalTopics = types.TrendingTopicsCount
+	if first >= totalTopics {
+		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of trending topics")
+	}
+
+	pagination := &query.PageRequest{}
+
+	pagination.Limit = pageSize
+	pagination.Offset = first
+	pagination.Reverse = true
+
+	var topicIds []string
+
+	pageRes, err := query.Paginate(store, pagination, func(key, value []byte) error {
+		topicIds = append(topicIds, string(value))
+		return nil
+	})
+	if err != nil {
+		return nil, nil, uint64(0), err
+	}
+	return topicIds, pageRes, page, nil
+}
+func (k Keeper) SetTrendingTopicsCount(ctx sdk.Context, count int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingTopicsCountPrefix))
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, uint64(count))
+	store.Set([]byte("count"), bz)
+}
+func (k Keeper) GetTrendingTopicsCount(ctx sdk.Context) (int64, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingTopicsCountPrefix))
+	bz := store.Get([]byte("count"))
+	if bz == nil {
+		return 0, true
+	}
+	count := int64(binary.BigEndian.Uint64(bz))
+	return count, true
+}
+
 func (k Keeper) SetTopicCategoryMapping(ctx sdk.Context, topicHash string, categoryHash string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicCategoryMappingKeyPrefix))
 	key := append([]byte(topicHash))
@@ -1390,7 +1497,7 @@ func (k Keeper) getCategoryByTopicHash(ctx sdk.Context, topicHash string) string
 	return string(value)
 }
 
-func (k Keeper) SetCategoryTopics(ctx sdk.Context, topicScore uint64, categoryHash string, topicHash string) {
+func (k Keeper) SetCategoryTopics(ctx sdk.Context, categoryHash string, topicHash string, topicScore uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.CategoryTopicsKeyPrefix+categoryHash))
 	bzScore := k.EncodeScore(topicScore)
 	var buffer bytes.Buffer
