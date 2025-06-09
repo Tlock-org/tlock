@@ -991,7 +991,7 @@ func (ms msgServer) trendingKeywordsUpdate(ctx sdk.Context, topic types.Topic, o
 	}
 	if trendingKeywordsTime > 0 {
 		ms.k.deleteFormTrendingKeywords(ctx, topic.Id, oldKeywordsScore)
-		withinSpecifiedHours := isWithinHours(trendingKeywordsTime, blockTime, 48)
+		withinSpecifiedHours := isWithinHours(trendingKeywordsTime, blockTime, types.TrendingKeyWordsRetentionHours)
 		if withinSpecifiedHours {
 			ms.k.addToTrendingKeywords(ctx, topic.Id, newKeywordsScore)
 			topic.TrendingKeywordsScore = newKeywordsScore
@@ -1029,7 +1029,7 @@ func (ms msgServer) trendingTopicsUpdate(ctx sdk.Context, topic types.Topic, old
 		panic("GetTrendingKeywordsCount error")
 	}
 
-	withinSpecifiedHours := isWithinHours(createTime, blockTime, 72)
+	withinSpecifiedHours := isWithinHours(createTime, blockTime, types.TrendingTopicsRetentionHours)
 	isWithinTrendingTopics := ms.k.isWithinTrendingTopics(ctx, topic.Id, oldTopicScore)
 
 	if withinSpecifiedHours {
