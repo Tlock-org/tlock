@@ -99,8 +99,7 @@ func NewKeeper(
 		bankKeeper:     bk,
 		FeeGrantKeeper: fk,
 		ProfileKeeper:  pk,
-
-		authority: authority,
+		authority:      authority,
 	}
 
 	schema, err := sb.Build()
@@ -991,10 +990,9 @@ func (k Keeper) SendCoinsFromAccountToModule(ctx sdk.Context, userAddr sdk.AccAd
 func (k Keeper) GrantPeriodicAllowance(ctx sdk.Context, sender sdk.AccAddress, userAddr sdk.AccAddress) {
 
 	// Define a specific address
-	specificAddress := sdk.MustAccAddressFromBech32("tlock1vj037yzhdslqzens3lu5vfjay9y8n956gqwyqw")
-	//specificAddress := sdk.MustAccAddressFromBech32("tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p")
+	//specificAddress := sdk.MustAccAddressFromBech32("tlock1vj037yzhdslqzens3lu5vfjay9y8n956gqwyqw")
+	specificAddress := sdk.MustAccAddressFromBech32("tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p")
 
-	k.logger.Error("=======sender & specificAddress:", "sender", sender, "specificAddress", specificAddress)
 	if sender.Equals(specificAddress) {
 		now := ctx.BlockTime()
 		//oneHour := now.Add(1 * time.Hour)
@@ -1003,8 +1001,8 @@ func (k Keeper) GrantPeriodicAllowance(ctx sdk.Context, sender sdk.AccAddress, u
 		//period := 24 * time.Hour
 		//period := 10 * time.Second
 		period := 1 * time.Hour
-		totalSpendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(10)))
-		spendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(2)))
+		totalSpendLimit := sdk.NewCoins(sdk.NewCoin("uTOK", sdkmath.NewInt(10000000)))
+		spendLimit := sdk.NewCoins(sdk.NewCoin("uTOK", sdkmath.NewInt(2000000)))
 		// create a basic allowance
 		basicAllowance := feegrant.BasicAllowance{
 			SpendLimit: totalSpendLimit,
@@ -1023,7 +1021,6 @@ func (k Keeper) GrantPeriodicAllowance(ctx sdk.Context, sender sdk.AccAddress, u
 		granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
 		grantee := userAddr
 
-		k.Logger().Error("=======FeeGrantKeeper===:", "FeeGrantKeeper", k.FeeGrantKeeper, "granter", granter)
 		err := k.FeeGrantKeeper.GrantAllowance(ctx, granter, grantee, periodicAllowance)
 		if err != nil {
 			ctx.Logger().Error("Failed to grant allowance", "error", err)
