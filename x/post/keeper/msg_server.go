@@ -60,7 +60,6 @@ func (ms msgServer) GrantAllowanceFromModule(goCtx context.Context, msg *types.M
 	if userErr != nil {
 		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", userErr)
 	}
-
 	ms.k.GrantPeriodicAllowance(ctx, sender, userAddress)
 
 	return &types.MsgGrantAllowanceFromModuleResponse{Status: true}, nil
@@ -280,10 +279,22 @@ func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types
 		Content:         msg.Content,
 		Creator:         msg.Creator,
 		Timestamp:       blockTime,
-		ImagesBase64:    msg.ImagesBase64,
 		ImagesUrl:       msg.ImagesUrl,
 		VideosUrl:       msg.VideosUrl,
 		HomePostsUpdate: blockTime,
+	}
+	imagesBase64 := msg.ImagesBase64
+	if len(imagesBase64) > 0 {
+		if len(imagesBase64) > 1 {
+			return nil, fmt.Errorf("only one paid image is allowed to be uploaded")
+		}
+		paidImageBase64 := imagesBase64[0]
+		imageHash := ms.k.sha256Generate(paidImageBase64)
+		setPaidPostImageErr := ms.k.SetPaidPostImage(ctx, imageHash, msg.ImagesBase64[0])
+		if setPaidPostImageErr != nil {
+			return nil, setPaidPostImageErr
+		}
+		post.ImageIds = []string{imageHash}
 	}
 
 	// post payment
@@ -364,12 +375,24 @@ func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePa
 		Content:         msg.Content,
 		Creator:         msg.Creator,
 		Timestamp:       blockTime,
-		ImagesBase64:    msg.ImagesBase64,
 		ImagesUrl:       msg.ImagesUrl,
 		VideosUrl:       msg.VideosUrl,
 		HomePostsUpdate: blockTime,
 	}
 
+	imagesBase64 := msg.ImagesBase64
+	if len(imagesBase64) > 0 {
+		if len(imagesBase64) > 1 {
+			return nil, fmt.Errorf("only one paid image is allowed to be uploaded")
+		}
+		paidImageBase64 := imagesBase64[0]
+		imageHash := ms.k.sha256Generate(paidImageBase64)
+		setPaidPostImageErr := ms.k.SetPaidPostImage(ctx, imageHash, msg.ImagesBase64[0])
+		if setPaidPostImageErr != nil {
+			return nil, setPaidPostImageErr
+		}
+		post.ImageIds = []string{imageHash}
+	}
 	// post payment
 	ms.k.postPayment(ctx, post)
 	// Store the post in the state

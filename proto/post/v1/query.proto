@@ -130,6 +130,10 @@ service Query {
   rpc QueryTrendingTopics(QueryTrendingTopicsRequest) returns (QueryTrendingTopicsResponse) {
     option (google.api.http).get = "/post/v1/trending/topics/{page}";
   };
+
+  rpc QueryPaidPostImage(QueryPaidPostImageRequest) returns (QueryPaidPostImageResponse) {
+    option (google.api.http).get = "/post/v1/paid/image/{image_id}";
+  }
 }
 
 // QueryResolveNameRequest grabs the name of a wallet.
@@ -391,4 +395,11 @@ message QueryTrendingTopicsRequest {
 message QueryTrendingTopicsResponse {
   uint64 page = 1;
   repeated TopicResponse topics = 2;
+}
+
+message QueryPaidPostImageRequest {
+  string image_id = 1;
+}
+message QueryPaidPostImageResponse {
+  string image = 1;
 }

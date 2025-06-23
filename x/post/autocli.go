@@ -319,6 +319,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 					},
 				},
+				{
+					RpcMethod: "QueryPaidPostImage",
+					Use:       "paid-post-image [image_id]",
+					Short:     "get the image by id",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "image_id"},
+					},
+				},
 			},
 		},
 		Tx: &autocliv1.ServiceCommandDescriptor{

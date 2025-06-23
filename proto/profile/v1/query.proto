@@ -16,7 +16,7 @@ service Query {
   }
 
   rpc QueryProfile(QueryProfileRequest) returns (QueryProfileResponse) {
-    option (google.api.http).get = "/profile/v1/get/{wallet_address}";
+    option (google.api.http).get = "/profile/v1/get/{address}";
   }
 
   rpc QueryProfileAvatar(QueryProfileAvatarRequest) returns (QueryProfileAvatarResponse) {
@@ -24,10 +24,10 @@ service Query {
   }
 
   rpc QueryFollowing(QueryFollowingRequest) returns (QueryFollowingResponse) {
-    option (google.api.http).get = "/profile/v1/flowing/{wallet_address}/{page}/{limit}";
+    option (google.api.http).get = "/profile/v1/flowing/{address}/{page}/{limit}";
   };
   rpc QueryFollowers(QueryFollowersRequest) returns (QueryFollowersResponse) {
-    option (google.api.http).get = "/profile/v1/flowers/{wallet_address}";
+    option (google.api.http).get = "/profile/v1/flowers/{address}";
   };
   rpc QueryFollowRelationship(QueryFollowRelationshipRequest) returns (QueryFollowRelationshipResponse) {
     option (google.api.http).get = "/profile/v1/follow/relationship/{addressA}/{addressB}";
@@ -36,10 +36,10 @@ service Query {
     option (google.api.http).get = "/profile/v1/getMentionSuggestions/{address}/{matching}";
   };
 //  rpc QueryActivitiesReceived(QueryActivitiesReceivedRequest) returns (QueryActivitiesReceivedResponse) {
-//    option (google.api.http).get = "/profile/v1/activites/received/{wallet_address}";
+//    option (google.api.http).get = "/profile/v1/activites/received/{address}";
 //  };
   rpc QueryActivitiesReceivedCount(QueryActivitiesReceivedCountRequest) returns (QueryActivitiesReceivedCountResponse) {
-    option (google.api.http).get = "/profile/v1/activites/received/count/{wallet_address}";
+    option (google.api.http).get = "/profile/v1/activities/received/count/{address}";
   };
 
   rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse) {
@@ -61,7 +61,7 @@ message QueryParamsResponse {
 }
 
 message QueryProfileRequest {
-  string wallet_address = 1;
+  string address = 1;
 }
 
 message QueryProfileResponse {
@@ -85,7 +85,7 @@ message QueryFollowRelationshipResponse {
 }
 
 message QueryFollowingRequest {
-  string wallet_address = 1;
+  string address = 1;
   uint64 page = 2;
   uint64 limit = 3;
 }
@@ -95,7 +95,7 @@ message QueryFollowingResponse {
 }
 
 message QueryFollowersRequest {
-  string wallet_address = 1;
+  string address = 1;
 }
 
 message QueryFollowersResponse {
@@ -112,7 +112,7 @@ message QueryGetMentionSuggestionsResponse {
 }
 
 message QueryActivitiesReceivedCountRequest {
-  string wallet_address = 1;
+  string address = 1;
 }
 
 message QueryActivitiesReceivedCountResponse {

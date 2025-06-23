@@ -37,11 +37,11 @@ func (k Querier) QueryProfile(goCtx context.Context, req *types.QueryProfileRequ
 	}
 
 	// Retrieve the post from the state
-	profile, _ := k.Keeper.GetProfile(sdk.UnwrapSDKContext(goCtx), req.WalletAddress)
+	profile, _ := k.Keeper.GetProfile(sdk.UnwrapSDKContext(goCtx), req.Address)
 	//if !found {
 	//	return nil, types.ErrPostNotFound
 	//}
-	avatar := k.Keeper.GetAvatarByAddress(ctx, req.WalletAddress)
+	avatar := k.Keeper.GetAvatarByAddress(ctx, req.Address)
 	profile.Avatar = avatar
 
 	return &types.QueryProfileResponse{Profile: &profile}, nil
@@ -81,7 +81,7 @@ func (k Querier) QueryFollowRelationship(goCtx context.Context, req *types.Query
 // QueryFollowing implements types.QueryServer.
 func (k Querier) QueryFollowing(goCtx context.Context, req *types.QueryFollowingRequest) (*types.QueryFollowingResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	followings, _, _ := k.Keeper.GetFollowingPagination(ctx, req.WalletAddress, req.Page, req.Limit)
+	followings, _, _ := k.Keeper.GetFollowingPagination(ctx, req.Address, req.Page, req.Limit)
 	var profiles []*types.Profile
 	for _, address := range followings {
 		profile, success := k.GetProfile(ctx, address)
@@ -99,7 +99,7 @@ func (k Querier) QueryFollowing(goCtx context.Context, req *types.QueryFollowing
 // QueryFollowers implements types.QueryServer.
 func (k Querier) QueryFollowers(goCtx context.Context, req *types.QueryFollowersRequest) (*types.QueryFollowersResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	followers := k.Keeper.GetFollowers(ctx, req.WalletAddress)
+	followers := k.Keeper.GetFollowers(ctx, req.Address)
 
 	var profiles []*types.Profile
 	for _, address := range followers {
@@ -198,7 +198,7 @@ func (k Querier) GetMentionSuggestions(goCtx context.Context, req *types.QueryGe
 // QueryActivitiesReceivedCount implements types.QueryServer.
 func (k Querier) QueryActivitiesReceivedCount(goCtx context.Context, req *types.QueryActivitiesReceivedCountRequest) (*types.QueryActivitiesReceivedCountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	count, _ := k.GetActivitiesReceivedCount(ctx, req.WalletAddress)
+	count, _ := k.GetActivitiesReceivedCount(ctx, req.Address)
 	return &types.QueryActivitiesReceivedCountResponse{
 		Count: uint64(count),
 	}, nil

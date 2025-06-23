@@ -24,7 +24,8 @@ message Post {
   string content = 5;
   string creator = 6;
   int64 timestamp = 7;
-  repeated bytes images_base64 = 8;
+//  repeated string images_base64 = 8;
+  repeated string image_ids = 8;
   repeated string images_url = 9;
   repeated string videos_url = 10;
   string quote = 11;

@@ -62,6 +62,7 @@ const (
 	CategoryIndexKeyPrefix            = "Post/category_index"
 	TopicKeyPrefix                    = "Post/topic/"
 	TopicImagePrefix                  = "Post/topic/image/"
+	PostPaidImagePrefix               = "Post/paid/post/image/"
 	TopicCategoryMappingKeyPrefix     = "Post/topicCategoryMapping/"
 	CategoryTopicsKeyPrefix           = "Post/category/topics/"
 	UncategorizedTopicsKeyPrefix      = "Post/uncategorized/topics/"
@@ -80,7 +81,7 @@ const (
 	TrendingTopicsRetentionHours = 24
 	CategoryTopicsCountKeyPrefix = "Post/category/topics/count/"
 	CategoryTopicsCount          = 10000
-	CategoryTopicsPageSize       = 10
+	CategoryTopicsPageSize       = 20
 
 	CategoryPostsKeyPrefix       = "Post/posts/category/"
 	CategoryPostsCountKeyPrefix  = "Post/posts/topic/count/"

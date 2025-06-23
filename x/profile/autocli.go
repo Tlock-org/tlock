@@ -18,10 +18,10 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryProfile",
-					Use:       "get [wallet_address]",
+					Use:       "get [address]",
 					Short:     "get the profile by wallet_address",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "wallet_address"},
+						{ProtoField: "address"},
 					},
 				},
 				{
@@ -47,11 +47,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryFollowing",
-					Use:       "following [wallet_address]",
+					Use:       "following [address]",
 					Short:     "get list of following",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
-							ProtoField: "wallet_address",
+							ProtoField: "address",
 						},
 						{
 							ProtoField: "page",
@@ -63,11 +63,11 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryFollowers",
-					Use:       "followers [wallet_address]",
+					Use:       "followers [address]",
 					Short:     "get list of followers",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
-							ProtoField: "wallet_address",
+							ProtoField: "address",
 						},
 					},
 				},
@@ -94,10 +94,10 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				//},
 				{
 					RpcMethod: "QueryActivitiesReceivedCount",
-					Use:       "activitiesReceivedCount [wallet_address]",
+					Use:       "activitiesReceivedCount [address]",
 					Short:     "get list of activitiesReceivedCount",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{ProtoField: "wallet_address"},
+						{ProtoField: "address"},
 					},
 				},
 				{

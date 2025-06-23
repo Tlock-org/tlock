@@ -650,9 +650,6 @@ func (k Querier) QueryFollowingPosts(goCtx context.Context, req *types.QueryFoll
 			}
 		} else if followingCount <= 50 {
 			y := 50 / followingCount
-			if y < 1 {
-				y = 1
-			}
 			for _, follow := range followingList {
 				ids, _, _ := k.GetLastPostsByAddress(ctx, follow, y)
 				postIds = append(postIds, ids...)
@@ -690,6 +687,19 @@ func (k Querier) QueryFollowingPosts(goCtx context.Context, req *types.QueryFoll
 	} else {
 
 	}
+	// sort followed posts by timestamp
+	sort.Slice(postResponses, func(i, j int) bool {
+		if postResponses[i].Post == nil && postResponses[j].Post == nil {
+			return false
+		}
+		if postResponses[i].Post == nil {
+			return false
+		}
+		if postResponses[j].Post == nil {
+			return true
+		}
+		return postResponses[i].Post.Timestamp > postResponses[j].Post.Timestamp
+	})
 	return &types.QueryFollowingPostsResponse{
 		Posts: postResponses,
 	}, nil
@@ -885,4 +895,16 @@ func (k Querier) QueryTrendingTopics(goCtx context.Context, req *types.QueryTren
 		Topics: topicResponseList,
 	}, nil
 
+}
+
+// QueryPaidPostImage implements types.QueryServer.
+func (k Querier) QueryPaidPostImage(goCtx context.Context, req *types.QueryPaidPostImageRequest) (*types.QueryPaidPostImageResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	image, found := k.GetPaidPostImage(ctx, req.ImageId)
+	if !found {
+		return nil, fmt.Errorf("no image found for postId %s", req.ImageId)
+	}
+	return &types.QueryPaidPostImageResponse{
+		Image: image,
+	}, nil
 }

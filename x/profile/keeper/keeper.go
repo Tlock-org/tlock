@@ -223,16 +223,33 @@ func (k Keeper) GetAddressByUserHandle(ctx sdk.Context, userHandle string) strin
 	}
 	return string(bz)
 }
+func padToFixedLength(s string, length int, padChar byte) string {
+	if len(s) >= length {
+		return s[:length]
+	}
+	padding := strings.Repeat(string(padChar), length-len(s))
+	return s + padding
+}
 
+//	func (k Keeper) AddToUserSearchList(ctx sdk.Context, uhnn string, userSearch types.UserSearch) {
+//		store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserSearchKeyPrefix))
+//		key := append([]byte(strings.ToLower(uhnn)), []byte(userSearch.WalletAddress)...)
+//		bz := k.cdc.MustMarshal(&userSearch)
+//		store.Set(key, bz)
+//	}
 func (k Keeper) AddToUserSearchList(ctx sdk.Context, uhnn string, userSearch types.UserSearch) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserSearchKeyPrefix))
-	key := append([]byte(strings.ToLower(uhnn)), []byte(userSearch.WalletAddress)...)
+	uhnnLower := strings.ToLower(uhnn)
+	paddedUhnn := padToFixedLength(uhnnLower, types.UserSearchFixedLength, types.UserSearchPaddingChar)
+	key := append([]byte(paddedUhnn+":"), []byte(userSearch.WalletAddress)...)
 	bz := k.cdc.MustMarshal(&userSearch)
 	store.Set(key, bz)
 }
 func (k Keeper) DeleteFromUserSearchList(ctx sdk.Context, uhnn string, address string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileUserSearchKeyPrefix))
-	key := append([]byte(strings.ToLower(uhnn)), []byte(address)...)
+	uhnnLower := strings.ToLower(uhnn)
+	paddedUhnn := padToFixedLength(uhnnLower, types.UserSearchFixedLength, types.UserSearchPaddingChar)
+	key := append([]byte(paddedUhnn+":"), []byte(address)...)
 	store.Delete(key)
 }
 func (k Keeper) SearchUsersByMatching(ctx sdk.Context, matching string) ([]types.UserSearch, bool) {
@@ -240,14 +257,44 @@ func (k Keeper) SearchUsersByMatching(ctx sdk.Context, matching string) ([]types
 	iterator := store.ReverseIterator(nil, nil)
 	defer iterator.Close()
 	var users []types.UserSearch
+	seenAddresses := make(map[string]bool)
 	const limit = 10
 	count := 0
 	for ; iterator.Valid() && count < limit; iterator.Next() {
 		val := iterator.Value()
 		var user types.UserSearch
 		k.cdc.MustUnmarshal(val, &user)
-		users = append(users, user)
+		if !seenAddresses[user.WalletAddress] {
+			users = append(users, user)
+			seenAddresses[user.WalletAddress] = true
+			count++
+		}
+	}
+	return users, true
+}
+
+func (k Keeper) SearchUsersLimitByMatching(ctx sdk.Context, matching string, limit int) ([]string, bool) {
+	matchingLower := strings.ToLower(matching)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
+	searchPrefix := fmt.Sprintf("%s%s", types.ProfileUserSearchKeyPrefix, matchingLower)
+	startKey := []byte(searchPrefix)
+	endKey := []byte(fmt.Sprintf("%s\xFF", searchPrefix))
+	iterator := store.Iterator(startKey, endKey)
+	defer iterator.Close()
+
+	var users []string
+	count := 0
+	foundWallets := make(map[string]struct{})
+	for ; iterator.Valid() && count < limit; iterator.Next() {
+		val := iterator.Value()
+		var user types.UserSearch
+		k.cdc.MustUnmarshal(val, &user)
+		if _, exists := foundWallets[user.WalletAddress]; exists {
+			continue
+		}
+		users = append(users, user.WalletAddress)
 		count++
+		foundWallets[user.WalletAddress] = struct{}{}
 	}
 	return users, true
 }
@@ -383,30 +430,6 @@ func (k Keeper) GetFollowingSearch(ctx sdk.Context, address string, matching str
 	return matchedProfiles, nil
 }
 
-func (k Keeper) SearchUsersLimitByMatching(ctx sdk.Context, matching string, limit int) ([]string, bool) {
-	matchingLower := strings.ToLower(matching)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
-	searchPrefix := fmt.Sprintf("%s%s", types.ProfileUserSearchKeyPrefix, matchingLower)
-	startKey := []byte(searchPrefix)
-	endKey := []byte(fmt.Sprintf("%s\xFF", searchPrefix))
-	iterator := store.Iterator(startKey, endKey)
-	defer iterator.Close()
-	var users []string
-	count := 0
-	foundWallets := make(map[string]struct{})
-	for ; iterator.Valid() && count < limit; iterator.Next() {
-		val := iterator.Value()
-		var user types.UserSearch
-		k.cdc.MustUnmarshal(val, &user)
-		if _, exists := foundWallets[user.WalletAddress]; exists {
-			continue
-		}
-		users = append(users, user.WalletAddress)
-		count++
-		foundWallets[user.WalletAddress] = struct{}{}
-	}
-	return users, true
-}
 func (k Keeper) Unfollow(ctx sdk.Context, followerAddr string, time uint64, targetAddr string) {
 	storeFlowing := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowingPrefix+followerAddr+"/"))
 	keyFlowing := append(itob(int64(time)), []byte(targetAddr)...)
