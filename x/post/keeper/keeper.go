@@ -581,7 +581,6 @@ func (k Keeper) GetLastPostsByAddress(ctx sdk.Context, address string, limit int
 		postIDs = append(postIDs, string(value))
 		return nil
 	})
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -934,7 +933,6 @@ func (k Keeper) postPayment(ctx sdk.Context, post types.Post) {
 	amount := sdk.NewCoins(sdk.NewCoin(types.DenomBase, sdkmath.NewInt(10)))
 	userAddr, err := sdk.AccAddressFromBech32(post.Creator)
 
-	ctx.Logger().Debug("===========userAddress, amount:", userAddr, amount)
 	if err != nil {
 		return
 	}
@@ -994,15 +992,18 @@ func (k Keeper) GrantPeriodicAllowance(ctx sdk.Context, sender sdk.AccAddress, u
 
 	// Define a specific address
 	specificAddress := sdk.MustAccAddressFromBech32("tlock1vj037yzhdslqzens3lu5vfjay9y8n956gqwyqw")
+	//specificAddress := sdk.MustAccAddressFromBech32("tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p")
 
+	k.logger.Error("=======sender & specificAddress:", "sender", sender, "specificAddress", specificAddress)
 	if sender.Equals(specificAddress) {
 		now := ctx.BlockTime()
 		//oneHour := now.Add(1 * time.Hour)
 		oneDay := now.Add(24 * time.Hour)
 		//oneDay := now.Add(10 * time.Second)
 		//period := 24 * time.Hour
-		period := 10 * time.Second
-		totalSpendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(5)))
+		//period := 10 * time.Second
+		period := 1 * time.Hour
+		totalSpendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(10)))
 		spendLimit := sdk.NewCoins(sdk.NewCoin("TOK", sdkmath.NewInt(2)))
 		// create a basic allowance
 		basicAllowance := feegrant.BasicAllowance{
@@ -1022,6 +1023,7 @@ func (k Keeper) GrantPeriodicAllowance(ctx sdk.Context, sender sdk.AccAddress, u
 		granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
 		grantee := userAddr
 
+		k.Logger().Error("=======FeeGrantKeeper===:", "FeeGrantKeeper", k.FeeGrantKeeper, "granter", granter)
 		err := k.FeeGrantKeeper.GrantAllowance(ctx, granter, grantee, periodicAllowance)
 		if err != nil {
 			ctx.Logger().Error("Failed to grant allowance", "error", err)
@@ -1824,4 +1826,30 @@ func (k Keeper) GetImageByTopic(ctx sdk.Context, topicHash string) string {
 		return ""
 	}
 	return string(bz)
+}
+
+// SetPaidPostImage stores the single paid image (base64 encoded) for a given imageHash into on-chain KVStore.
+func (k Keeper) SetPaidPostImage(ctx sdk.Context, imageHash string, image string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostPaidImagePrefix))
+	bz, err := json.Marshal(image)
+	if err != nil {
+		return fmt.Errorf("failed to marshal image: %w", err)
+	}
+	store.Set([]byte(imageHash), bz)
+	return nil
+}
+
+// GetPaidPostImage retrieves the stored paid image (base64 encoded) for a given imageHash.
+// Returns the image and a boolean indicating whether it was found.
+func (k Keeper) GetPaidPostImage(ctx sdk.Context, imageHash string) (string, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostPaidImagePrefix))
+	bz := store.Get([]byte(imageHash))
+	if bz == nil {
+		return "", false
+	}
+	var image string
+	if err := json.Unmarshal(bz, &image); err != nil {
+		return "", false
+	}
+	return image, true
 }

@@ -39,6 +39,9 @@ const (
 	AdminActionRemove       = "remove"
 
 	PageSize = 10
+
+	UserSearchFixedLength = 36
+	UserSearchPaddingChar = 0
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{

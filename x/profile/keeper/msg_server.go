@@ -51,6 +51,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	userHandle := profileJson.UserHandle
 	nickname := profileJson.Nickname
 	if userHandle != "" {
+		userHandle = strings.TrimSpace(userHandle)
 		validateUserHandle, err := types.ValidateUserHandle(userHandle)
 		if validateUserHandle {
 			userHandle = strings.ToLower(userHandle)
@@ -70,8 +71,8 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 							ms.k.DeleteFromUserSearchList(ctx, suffixHandle, msg.Creator)
 							userSearch := types.UserSearch{
 								UserHandle:    suffixHandle,
-								WalletAddress: nickname,
-								Nickname:      msg.Creator,
+								WalletAddress: msg.Creator,
+								Nickname:      nickname,
 								Avatar:        profileJson.Avatar,
 							}
 							ms.k.AddToUserSearchList(ctx, suffixHandle, userSearch)
@@ -109,13 +110,15 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 		if validateNickName {
 			if dbNickname != nickname {
 				ms.k.DeleteFromUserSearchList(ctx, dbNickname, msg.Creator)
-				userSearch := types.UserSearch{
-					UserHandle:    userHandle,
-					WalletAddress: msg.Creator,
-					Nickname:      nickname,
-					Avatar:        profileJson.Avatar,
+				if nickname != userHandle {
+					userSearch := types.UserSearch{
+						UserHandle:    userHandle,
+						WalletAddress: msg.Creator,
+						Nickname:      nickname,
+						Avatar:        profileJson.Avatar,
+					}
+					ms.k.AddToUserSearchList(ctx, nickname, userSearch)
 				}
-				ms.k.AddToUserSearchList(ctx, nickname, userSearch)
 			}
 		} else {
 			return &types.MsgAddProfileResponse{}, err
@@ -123,7 +126,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	}
 
 	dbProfile.WalletAddress = msg.Creator
-	dbProfile.Nickname = profileJson.Nickname
+	dbProfile.Nickname = nickname
 	if profileJson.Avatar != "" {
 		//dbProfile.Avatar = profileJson.Avatar
 		ms.k.SetProfileAvatar(ctx, msg.Creator, profileJson.Avatar)
@@ -194,6 +197,189 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	return &types.MsgAddProfileResponse{
 		Profile: &dbProfile,
 	}, nil
+}
+
+//func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRequest) (*types.MsgAddProfileResponse, error) {
+//	ctx := sdk.UnwrapSDKContext(goCtx)
+//
+//	// Validate creator address.
+//	_, err := sdk.AccAddressFromBech32(msg.Creator)
+//	if err != nil {
+//		return nil, errors.Wrapf(types.ErrInvalidAddress, "invalid creator address: %s", err)
+//	}
+//
+//	blockTime := ctx.BlockTime().Unix()
+//	profileJson := msg.ProfileJson
+//
+//	// Get existing profile data.
+//	dbProfile, _ := ms.k.GetProfile(ctx, msg.GetCreator())
+//	dbUserHandle := dbProfile.UserHandle
+//	dbNickname := dbProfile.Nickname
+//
+//	var userHandle, nickname, searchKey string
+//
+//	// Process userHandle.
+//	userHandle = profileJson.UserHandle
+//	if userHandle != "" {
+//		ok, err := types.ValidateUserHandle(userHandle)
+//		if !ok {
+//			return nil, err
+//		}
+//		// Convert to lowercase and trim spaces.
+//		userHandle = strings.ToLower(strings.TrimSpace(userHandle))
+//		// If the stored userHandle is different from the provided one, update it.
+//		if dbUserHandle != userHandle {
+//			exist := ms.k.HasUserHandle(ctx, userHandle)
+//			if exist {
+//				// If no userHandle is stored in DB, try using a truncated suffix of the address.
+//				if dbUserHandle == "" {
+//					suffixHandle := ms.k.TruncateAddressSuffix(dbProfile.WalletAddress)
+//					if ms.k.HasUserHandle(ctx, suffixHandle) {
+//						return nil, errors.Wrapf(types.ErrInvalidUserHandle, "userHandle unavailable: %s", err)
+//					}
+//					ms.k.AddToUserHandleList(ctx, suffixHandle, msg.Creator)
+//					dbProfile.UserHandle = suffixHandle
+//				} else {
+//					ms.k.DeleteFromUserHandleList(ctx, dbUserHandle)
+//					ms.k.AddToUserHandleList(ctx, userHandle, msg.Creator)
+//					dbProfile.UserHandle = userHandle
+//				}
+//			}
+//		}
+//	}
+//
+//	// Process nickname.
+//	nickname = profileJson.Nickname
+//	if nickname != "" {
+//		ok, err := types.ValidateNickName(nickname)
+//		if !ok {
+//			return nil, err
+//		}
+//		// Trim spaces from nickname.
+//		nickname = strings.TrimSpace(nickname)
+//		if dbNickname != nickname {
+//			ms.k.DeleteFromUserSearchList(ctx, dbNickname, msg.Creator)
+//		}
+//	}
+//
+//	// Define a unified searchKey using userHandle if available; otherwise, use nickname.
+//	if userHandle != "" {
+//		searchKey = userHandle
+//	} else if nickname != "" {
+//		searchKey = nickname
+//	}
+//
+//	// Update the search list if searchKey is set.
+//	if searchKey != "" {
+//		userSearch := types.UserSearch{
+//			UserHandle:    userHandle,  // This field can be empty if userHandle is not provided
+//			WalletAddress: msg.Creator, // WalletAddress is set to the creator's address
+//			Nickname:      nickname,
+//			Avatar:        profileJson.Avatar,
+//		}
+//		// Delete any previous records with the same searchKey and add the new record.
+//		ms.k.DeleteFromUserSearchList(ctx, searchKey, msg.Creator)
+//		ms.k.AddToUserSearchList(ctx, searchKey, userSearch)
+//	}
+//
+//	// Update other profile fields.
+//	dbProfile.WalletAddress = msg.Creator
+//	dbProfile.Nickname = nickname
+//	if profileJson.Avatar != "" {
+//		ms.k.SetProfileAvatar(ctx, msg.Creator, profileJson.Avatar)
+//	}
+//	dbProfile.Bio = profileJson.Bio
+//	dbProfile.Location = profileJson.Location
+//	dbProfile.Website = profileJson.Website
+//	dbProfile.CreationTime = blockTime
+//
+//	// Special profile settings for specific creator addresses.
+//	if msg.Creator == "tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p" {
+//		if dbProfile.Level < 6 {
+//			dbProfile.Level = 6
+//		}
+//		if dbProfile.AdminLevel < 5 {
+//			dbProfile.AdminLevel = 5
+//		}
+//	}
+//	if msg.Creator == "tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg" {
+//		if dbProfile.Level < 6 {
+//			dbProfile.Level = 6
+//		}
+//		if dbProfile.AdminLevel < 3 {
+//			dbProfile.AdminLevel = 3
+//		}
+//	}
+//	if msg.Creator == "tlock1qvmhf9qw5xhefm6jpqpggneahanjhkgw0szlzn" {
+//		if dbProfile.Level < 5 {
+//			dbProfile.Level = 5
+//		}
+//		if dbProfile.AdminLevel < 4 {
+//			dbProfile.AdminLevel = 4
+//		}
+//	}
+//	if msg.Creator == "tlock16f7etm42yp5nup77q3027rvvkl73q2gr8wkjcm" {
+//		if dbProfile.Level < 5 {
+//			dbProfile.Level = 5
+//		}
+//		if dbProfile.AdminLevel < 3 {
+//			dbProfile.AdminLevel = 3
+//		}
+//	}
+//	if msg.Creator == "tlock1wfvjqmkekyuy59r535nm2ca3yjkf706nu8x49r" {
+//		if dbProfile.Level < 4 {
+//			dbProfile.Level = 4
+//		}
+//		if dbProfile.AdminLevel < 5 {
+//			dbProfile.AdminLevel = 5
+//		}
+//	}
+//
+//	if dbProfile.Level < 3 {
+//		dbProfile.Level = uint64(rand.Intn(3) + 3)
+//	}
+//
+//	ms.k.SetProfile(ctx, dbProfile)
+//
+//	// Emit event for profile creation.
+//	ctx.EventManager().EmitEvents(sdk.Events{
+//		sdk.NewEvent(
+//			types.EventTypeAddProfile,
+//			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+//			sdk.NewAttribute(types.AttributeKeyNickname, nickname),
+//			sdk.NewAttribute(types.AttributeKeyUserHandle, userHandle),
+//			sdk.NewAttribute(types.AttributeKeyAvatar, profileJson.Avatar),
+//			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
+//		),
+//	})
+//
+//	return &types.MsgAddProfileResponse{
+//		Profile: &dbProfile,
+//	}, nil
+//}
+
+func (ms msgServer) updateUserSearchData(ctx sdk.Context, address string, oldNickname, oldUserHandle, newNickname, newUserHandle, avatar string) {
+	if oldNickname != "" {
+		ms.k.DeleteFromUserSearchList(ctx, oldNickname, address)
+	}
+	if oldUserHandle != "" && oldUserHandle != oldNickname {
+		ms.k.DeleteFromUserSearchList(ctx, oldUserHandle, address)
+	}
+
+	userSearch := types.UserSearch{
+		UserHandle:    newUserHandle,
+		WalletAddress: address,
+		Nickname:      newNickname,
+		Avatar:        avatar,
+	}
+
+	if newNickname != "" {
+		ms.k.AddToUserSearchList(ctx, newNickname, userSearch)
+	}
+
+	if newUserHandle != "" && newUserHandle != newNickname {
+		ms.k.AddToUserSearchList(ctx, newUserHandle, userSearch)
+	}
 }
 
 // Follow implements types.MsgServer.
