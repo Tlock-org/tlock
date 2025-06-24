@@ -1126,8 +1126,8 @@ func (app *ChainApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*
 	}
 
 	// create Coin
-	initialBalance := sdk.NewCoins(sdk.NewCoin(posttypes.DenomBase, sdkmath.NewInt(1000000000)))
-	//initialBalance := sdk.NewCoins(sdk.NewCoin(posttypes.DenomBase, sdkmath.NewInt(0)))
+	//initialBalance := sdk.NewCoins(sdk.NewCoin(posttypes.DenomBase, sdkmath.NewInt(1000000000)))
+	initialBalance := sdk.NewCoins(sdk.NewCoin(posttypes.DenomBase, sdkmath.NewInt(0)))
 
 	// make BankKeeper to postModuleAccount mintCoins and init balance
 	mintCoinsErr := app.BankKeeper.MintCoins(ctx, posttypes.ModuleName, initialBalance)
