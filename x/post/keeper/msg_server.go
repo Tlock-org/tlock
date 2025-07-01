@@ -50,12 +50,12 @@ func (ms msgServer) GrantAllowanceFromModule(goCtx context.Context, msg *types.M
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender, senderErr := sdk.AccAddressFromBech32(msg.Sender)
-	fmt.Printf("====sender: %s\n", sender)
+	//fmt.Printf("====sender: %s\n", sender)
 	if senderErr != nil {
 		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", senderErr)
 	}
 	userAddress, userErr := sdk.AccAddressFromBech32(msg.UserAddress)
-	fmt.Printf("=====userAddress: %s\n", userAddress)
+	//fmt.Printf("=====userAddress: %s\n", userAddress)
 	if userErr != nil {
 		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", userErr)
 	}
@@ -64,22 +64,21 @@ func (ms msgServer) GrantAllowanceFromModule(goCtx context.Context, msg *types.M
 	return &types.MsgGrantAllowanceFromModuleResponse{Status: true}, nil
 }
 
-// CreateFreePostWithTitle implements types.MsgServer.
-func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.MsgCreateFreePostWithTitle) (*types.MsgCreateFreePostWithTitleResponse, error) {
+// CreatePost implements types.MsgServer.
+func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) (*types.MsgCreatePostResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	postDetail := msg.GetPostDetail()
 	// Validate the message
-	if len(msg.Title) == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidRequest, "Title cannot be empty")
-	}
-	if len(msg.Content) == 0 {
+	if len(postDetail.Content) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
 	}
-	if err := types.ValidatePostWithTitleContent(msg.Content); err != nil {
+	if err := types.ValidatePostContent(postDetail.Content); err != nil {
 		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
 	}
 
 	// Validate sender address
+	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
@@ -91,36 +90,61 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 
 	blockTime := ctx.BlockTime().Unix()
 	// Generate a unique post ID
-	data := fmt.Sprintf("%s|%s|%s|%d", msg.Creator, msg.Title, msg.Content, blockTime)
+	var data string
+	var postType types.PostType
+	if postDetail.Title != "" {
+		postType = types.PostType_ARTICLE
+		data = fmt.Sprintf("%s|%s|%s|%d", msg.Creator, postDetail.Title, postDetail.Content, blockTime)
+	} else {
+		postType = types.PostType_ORIGINAL
+		data = fmt.Sprintf("%s|%s|%d", msg.Creator, postDetail.Content, blockTime)
+	}
 	postId := ms.k.sha256Generate(data)
 
 	// Create the post
 	post := types.Post{
-		Id:              postId,
-		PostType:        types.PostType_ARTICLE,
-		Title:           msg.Title,
-		Content:         msg.Content,
+		Id: postId,
+		//PostType:        types.PostType_ORIGINAL,
+		PostType:        postType,
+		Content:         postDetail.Content,
 		Creator:         msg.Creator,
 		Timestamp:       blockTime,
-		ImagesUrl:       msg.ImagesUrl,
-		VideosUrl:       msg.VideosUrl,
+		ImagesUrl:       postDetail.ImagesUrl,
+		VideosUrl:       postDetail.VideosUrl,
 		HomePostsUpdate: blockTime,
-		Poll:            msg.Poll,
 	}
-	if msg.Poll != nil {
-		post.PostType = types.PostType_POLL
+	if postDetail.GetTitle() != "" {
+		post.Title = postDetail.GetTitle()
+		//post.PostType = types.PostType_ARTICLE
 	}
 
+	imagesBase64 := postDetail.ImagesBase64
+	if len(imagesBase64) > 0 {
+		if len(imagesBase64) > 1 {
+			return nil, fmt.Errorf("only one paid image is allowed to be uploaded")
+		}
+		paidImageBase64 := imagesBase64[0]
+		imageHash := ms.k.sha256Generate(paidImageBase64)
+		setPaidPostImageErr := ms.k.SetPaidPostImage(ctx, imageHash, postDetail.ImagesBase64[0])
+		if setPaidPostImageErr != nil {
+			return nil, setPaidPostImageErr
+		}
+		post.ImageIds = []string{imageHash}
+	}
+
+	// post payment
+	ms.k.postPayment(ctx, post)
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
-	// post reward
-	ms.k.PostReward(ctx, post)
 	// add home posts
 	ms.addToHomePosts(ctx, post)
 	// add to user created posts
 	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
 
-	userHandleList := msg.Mention
+	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
+
+	// mentions add to activitiesReceived
+	userHandleList := postDetail.Mention
 	if len(userHandleList) > 0 {
 		if len(userHandleList) > 10 {
 			return nil, fmt.Errorf("cannot mention more than 10 users")
@@ -133,8 +157,8 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 		}
 	}
 
-	topicList := msg.Topic
-	category := msg.Category
+	topicList := postDetail.Topic
+	category := postDetail.Category
 	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
 	if err != nil {
 		return nil, err
@@ -143,300 +167,391 @@ func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.Ms
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeCreateFreePostWithTitle,
+			types.EventTypeCreatePaidPost,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyPostID, postId),
-			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
+			sdk.NewAttribute(types.AttributeKeyTitle, postDetail.Title),
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
 		),
 	})
-
-	return &types.MsgCreateFreePostWithTitleResponse{PostId: postId}, nil
+	return &types.MsgCreatePostResponse{
+		PostId: postId,
+	}, nil
 }
+
+// CreateFreePostWithTitle implements types.MsgServer.
+//func (ms msgServer) CreateFreePostWithTitle(goCtx context.Context, msg *types.MsgCreateFreePostWithTitle) (*types.MsgCreateFreePostWithTitleResponse, error) {
+//	ctx := sdk.UnwrapSDKContext(goCtx)
+//
+//	// Validate the message
+//	if len(msg.Title) == 0 {
+//		return nil, errors.Wrapf(types.ErrInvalidRequest, "Title cannot be empty")
+//	}
+//	if len(msg.Content) == 0 {
+//		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
+//	}
+//	if err := types.ValidatePostWithTitleContent(msg.Content); err != nil {
+//		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
+//	}
+//
+//	// Validate sender address
+//	_, err := sdk.AccAddressFromBech32(msg.Creator)
+//	if err != nil {
+//		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+//	}
+//
+//	//if len(msg.Image) > MaxImageSize {
+//	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
+//	//}
+//
+//	blockTime := ctx.BlockTime().Unix()
+//	// Generate a unique post ID
+//	data := fmt.Sprintf("%s|%s|%s|%d", msg.Creator, msg.Title, msg.Content, blockTime)
+//	postId := ms.k.sha256Generate(data)
+//
+//	// Create the post
+//	post := types.Post{
+//		Id:              postId,
+//		PostType:        types.PostType_ARTICLE,
+//		Title:           msg.Title,
+//		Content:         msg.Content,
+//		Creator:         msg.Creator,
+//		Timestamp:       blockTime,
+//		ImagesUrl:       msg.ImagesUrl,
+//		VideosUrl:       msg.VideosUrl,
+//		HomePostsUpdate: blockTime,
+//		Poll:            msg.Poll,
+//	}
+//	if msg.Poll != nil {
+//		post.PostType = types.PostType_POLL
+//	}
+//
+//	// Store the post in the state
+//	ms.k.SetPost(ctx, post)
+//	// post reward
+//	ms.k.PostReward(ctx, post)
+//	// add home posts
+//	ms.addToHomePosts(ctx, post)
+//	// add to user created posts
+//	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
+//
+//	userHandleList := msg.Mention
+//	if len(userHandleList) > 0 {
+//		if len(userHandleList) > 10 {
+//			return nil, fmt.Errorf("cannot mention more than 10 users")
+//		}
+//		for _, userHandle := range userHandleList {
+//			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
+//			if address != "" {
+//				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
+//			}
+//		}
+//	}
+//
+//	topicList := msg.Topic
+//	category := msg.Category
+//	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	//Emit an event for the creation
+//	ctx.EventManager().EmitEvents(sdk.Events{
+//		sdk.NewEvent(
+//			types.EventTypeCreateFreePostWithTitle,
+//			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+//			sdk.NewAttribute(types.AttributeKeyPostID, postId),
+//			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
+//			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
+//		),
+//	})
+//
+//	return &types.MsgCreateFreePostWithTitleResponse{PostId: postId}, nil
+//}
 
 // CreateFreePost implements types.MsgServer.
-func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFreePost) (*types.MsgCreateFreePostResponse, error) {
-	//base64.StdEncoding.EncodeToString([]byte("{\"body\":{\"messages\":[{\"@type\":\"/cosmos.bank.v1beta1.MsgSend\",\"from_address\":\"tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p\",\"to_address\":\"tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg\",\"amount\":[{\"denom\":\"uTOK\",\"amount\":\"10\"}]}],\"memo\":\"\",\"timeout_height\":\"0\",\"extension_options\":[],\"non_critical_extension_options\":[]},\"auth_info\":{\"signer_infos\":[{\"public_key\":{\"@type\":\"/cosmos.crypto.secp256k1.PubKey\",\"key\":\"ApZa31BR3NWLylRT6Qi5+f+zXtj2OpqtC76vgkUGLyww\"},\"mode_info\":{\"single\":{\"mode\":\"SIGN_MODE_DIRECT\"}},\"sequence\":\"1\"}],\"fee\":{\"amount\":[{\"denom\":\"uTOK\",\"amount\":\"77886\"}],\"gas_limit\":\"77886\",\"payer\":\"\",\"granter\":\"\"},\"tip\":null},\"signatures\":[\"RWGJJcQ8Ioul52d6HbBW6F1FJwuNPRSTTny6xpAZCfpYgHSIGuk0+uupaC5gx0FKur8qOA9tZlhKhAfLyf9hWg==\"]}"))
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// Validate the message
-	if len(msg.Content) == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
-	}
-	if err := types.ValidatePostContent(msg.Content); err != nil {
-		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
-	}
-
-	// Validate sender address
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
-	}
-
-	//if len(msg.Image) > MaxImageSize {
-	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
-	//}
-
-	// Generate a unique post ID
-	blockTime := ctx.BlockTime().Unix()
-	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
-	postId := ms.k.sha256Generate(data)
-
-	// Create the post
-	post := types.Post{
-		Id:              postId,
-		PostType:        types.PostType_ORIGINAL,
-		Content:         msg.Content,
-		Creator:         msg.Creator,
-		Timestamp:       blockTime,
-		ImagesUrl:       msg.ImagesUrl,
-		VideosUrl:       msg.VideosUrl,
-		HomePostsUpdate: blockTime,
-		Poll:            msg.Poll,
-	}
-	if msg.Poll != nil {
-		post.PostType = types.PostType_POLL
-	}
-
-	// Store the post in the state
-	ms.k.SetPost(ctx, post)
-	// post reward
-	ms.k.PostReward(ctx, post)
-	// add to home posts
-	ms.addToHomePosts(ctx, post)
-	// add to user created posts
-	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
-
-	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
-
-	// mentions add to activitiesReceived
-	userHandleList := msg.Mention
-	if len(userHandleList) > 0 {
-		if len(userHandleList) > 10 {
-			return nil, fmt.Errorf("cannot mention more than 10 users")
-		}
-		for _, userHandle := range userHandleList {
-			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
-			if address != "" {
-				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
-			}
-		}
-	}
-
-	topicList := msg.Topic
-	category := msg.Category
-	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
-	if err != nil {
-		return nil, err
-	}
-
-	//Emit an event for the creation
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeCreateFreePost,
-			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
-			sdk.NewAttribute(types.AttributeKeyPostID, postId),
-			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
-		),
-	})
-	//ms.k.Logger().Warn("============= create free post end ==============")
-	return &types.MsgCreateFreePostResponse{PostId: postId}, nil
-}
+//func (ms msgServer) CreateFreePost(goCtx context.Context, msg *types.MsgCreateFreePost) (*types.MsgCreateFreePostResponse, error) {
+//	//base64.StdEncoding.EncodeToString([]byte("{\"body\":{\"messages\":[{\"@type\":\"/cosmos.bank.v1beta1.MsgSend\",\"from_address\":\"tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p\",\"to_address\":\"tlock1efd63aw40lxf3n4mhf7dzhjkr453axurggdkvg\",\"amount\":[{\"denom\":\"uTOK\",\"amount\":\"10\"}]}],\"memo\":\"\",\"timeout_height\":\"0\",\"extension_options\":[],\"non_critical_extension_options\":[]},\"auth_info\":{\"signer_infos\":[{\"public_key\":{\"@type\":\"/cosmos.crypto.secp256k1.PubKey\",\"key\":\"ApZa31BR3NWLylRT6Qi5+f+zXtj2OpqtC76vgkUGLyww\"},\"mode_info\":{\"single\":{\"mode\":\"SIGN_MODE_DIRECT\"}},\"sequence\":\"1\"}],\"fee\":{\"amount\":[{\"denom\":\"uTOK\",\"amount\":\"77886\"}],\"gas_limit\":\"77886\",\"payer\":\"\",\"granter\":\"\"},\"tip\":null},\"signatures\":[\"RWGJJcQ8Ioul52d6HbBW6F1FJwuNPRSTTny6xpAZCfpYgHSIGuk0+uupaC5gx0FKur8qOA9tZlhKhAfLyf9hWg==\"]}"))
+//
+//	ctx := sdk.UnwrapSDKContext(goCtx)
+//
+//	// Validate the message
+//	if len(msg.Content) == 0 {
+//		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
+//	}
+//	if err := types.ValidatePostContent(msg.Content); err != nil {
+//		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
+//	}
+//
+//	// Validate sender address
+//	_, err := sdk.AccAddressFromBech32(msg.Creator)
+//	if err != nil {
+//		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+//	}
+//
+//	//if len(msg.Image) > MaxImageSize {
+//	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
+//	//}
+//
+//	// Generate a unique post ID
+//	blockTime := ctx.BlockTime().Unix()
+//	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
+//	postId := ms.k.sha256Generate(data)
+//
+//	// Create the post
+//	post := types.Post{
+//		Id:              postId,
+//		PostType:        types.PostType_ORIGINAL,
+//		Content:         msg.Content,
+//		Creator:         msg.Creator,
+//		Timestamp:       blockTime,
+//		ImagesUrl:       msg.ImagesUrl,
+//		VideosUrl:       msg.VideosUrl,
+//		HomePostsUpdate: blockTime,
+//		Poll:            msg.Poll,
+//	}
+//	if msg.Poll != nil {
+//		post.PostType = types.PostType_POLL
+//	}
+//
+//	// Store the post in the state
+//	ms.k.SetPost(ctx, post)
+//	// post reward
+//	ms.k.PostReward(ctx, post)
+//	// add to home posts
+//	ms.addToHomePosts(ctx, post)
+//	// add to user created posts
+//	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
+//
+//	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
+//
+//	// mentions add to activitiesReceived
+//	userHandleList := msg.Mention
+//	if len(userHandleList) > 0 {
+//		if len(userHandleList) > 10 {
+//			return nil, fmt.Errorf("cannot mention more than 10 users")
+//		}
+//		for _, userHandle := range userHandleList {
+//			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
+//			if address != "" {
+//				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
+//			}
+//		}
+//	}
+//
+//	topicList := msg.Topic
+//	category := msg.Category
+//	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	//Emit an event for the creation
+//	ctx.EventManager().EmitEvents(sdk.Events{
+//		sdk.NewEvent(
+//			types.EventTypeCreateFreePost,
+//			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+//			sdk.NewAttribute(types.AttributeKeyPostID, postId),
+//			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
+//		),
+//	})
+//	//ms.k.Logger().Warn("============= create free post end ==============")
+//	return &types.MsgCreateFreePostResponse{PostId: postId}, nil
+//}
 
 // CreateFreePostImagePayable implements types.MsgServer.
-func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types.MsgCreateFreePostImagePayable) (*types.MsgCreateFreePostImagePayableResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
+//func (ms msgServer) CreateFreePostImagePayable(goCtx context.Context, msg *types.MsgCreateFreePostImagePayable) (*types.MsgCreateFreePostImagePayableResponse, error) {
+//	ctx := sdk.UnwrapSDKContext(goCtx)
+//
+//	// Validate the message
+//	if len(msg.Content) == 0 {
+//		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
+//	}
+//	if err := types.ValidatePostContent(msg.Content); err != nil {
+//		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
+//	}
+//
+//	// Validate sender address
+//	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
+//	_, err := sdk.AccAddressFromBech32(msg.Creator)
+//	if err != nil {
+//		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+//	}
+//
+//	//if len(msg.Image) > MaxImageSize {
+//	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
+//	//}
+//
+//	blockTime := ctx.BlockTime().Unix()
+//	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
+//	postId := ms.k.sha256Generate(data)
+//
+//	// Create the post
+//	post := types.Post{
+//		Id:              postId,
+//		PostType:        types.PostType_ADVERTISEMENT,
+//		Content:         msg.Content,
+//		Creator:         msg.Creator,
+//		Timestamp:       blockTime,
+//		ImagesUrl:       msg.ImagesUrl,
+//		VideosUrl:       msg.VideosUrl,
+//		HomePostsUpdate: blockTime,
+//	}
+//	imagesBase64 := msg.ImagesBase64
+//	if len(imagesBase64) > 0 {
+//		if len(imagesBase64) > 1 {
+//			return nil, fmt.Errorf("only one paid image is allowed to be uploaded")
+//		}
+//		paidImageBase64 := imagesBase64[0]
+//		imageHash := ms.k.sha256Generate(paidImageBase64)
+//		setPaidPostImageErr := ms.k.SetPaidPostImage(ctx, imageHash, msg.ImagesBase64[0])
+//		if setPaidPostImageErr != nil {
+//			return nil, setPaidPostImageErr
+//		}
+//		post.ImageIds = []string{imageHash}
+//	}
+//
+//	// post payment
+//	ms.k.postPayment(ctx, post)
+//	// Store the post in the state
+//	ms.k.SetPost(ctx, post)
+//	// add home posts
+//	ms.addToHomePosts(ctx, post)
+//	// add to user created posts
+//	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
+//
+//	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
+//
+//	// mentions add to activitiesReceived
+//	userHandleList := msg.Mention
+//	if len(userHandleList) > 0 {
+//		if len(userHandleList) > 10 {
+//			return nil, fmt.Errorf("cannot mention more than 10 users")
+//		}
+//		for _, userHandle := range userHandleList {
+//			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
+//			if address != "" {
+//				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
+//			}
+//		}
+//	}
+//
+//	topicList := msg.Topic
+//	category := msg.Category
+//	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	//Emit an event for the creation
+//	ctx.EventManager().EmitEvents(sdk.Events{
+//		sdk.NewEvent(
+//			types.EventTypeCreatePaidPost,
+//			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+//			sdk.NewAttribute(types.AttributeKeyPostID, postId),
+//			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
+//			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
+//		),
+//	})
+//	return &types.MsgCreateFreePostImagePayableResponse{}, nil
+//}
 
-	// Validate the message
-	if len(msg.Content) == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
-	}
-	if err := types.ValidatePostContent(msg.Content); err != nil {
-		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
-	}
-
-	// Validate sender address
-	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
-	}
-
-	//if len(msg.Image) > MaxImageSize {
-	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
-	//}
-
-	blockTime := ctx.BlockTime().Unix()
-	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
-	postId := ms.k.sha256Generate(data)
-
-	// Create the post
-	post := types.Post{
-		Id:              postId,
-		PostType:        types.PostType_ADVERTISEMENT,
-		Content:         msg.Content,
-		Creator:         msg.Creator,
-		Timestamp:       blockTime,
-		ImagesUrl:       msg.ImagesUrl,
-		VideosUrl:       msg.VideosUrl,
-		HomePostsUpdate: blockTime,
-	}
-	imagesBase64 := msg.ImagesBase64
-	if len(imagesBase64) > 0 {
-		if len(imagesBase64) > 1 {
-			return nil, fmt.Errorf("only one paid image is allowed to be uploaded")
-		}
-		paidImageBase64 := imagesBase64[0]
-		imageHash := ms.k.sha256Generate(paidImageBase64)
-		setPaidPostImageErr := ms.k.SetPaidPostImage(ctx, imageHash, msg.ImagesBase64[0])
-		if setPaidPostImageErr != nil {
-			return nil, setPaidPostImageErr
-		}
-		post.ImageIds = []string{imageHash}
-	}
-
-	// post payment
-	ms.k.postPayment(ctx, post)
-	// Store the post in the state
-	ms.k.SetPost(ctx, post)
-	// add home posts
-	ms.addToHomePosts(ctx, post)
-	// add to user created posts
-	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
-
-	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
-
-	// mentions add to activitiesReceived
-	userHandleList := msg.Mention
-	if len(userHandleList) > 0 {
-		if len(userHandleList) > 10 {
-			return nil, fmt.Errorf("cannot mention more than 10 users")
-		}
-		for _, userHandle := range userHandleList {
-			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
-			if address != "" {
-				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
-			}
-		}
-	}
-
-	topicList := msg.Topic
-	category := msg.Category
-	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
-	if err != nil {
-		return nil, err
-	}
-
-	//Emit an event for the creation
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeCreatePaidPost,
-			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
-			sdk.NewAttribute(types.AttributeKeyPostID, postId),
-			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
-			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
-		),
-	})
-	return &types.MsgCreateFreePostImagePayableResponse{}, nil
-}
-
-func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePaidPost) (*types.MsgCreatePaidPostResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// Validate the message
-	if len(msg.Content) == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
-	}
-	if err := types.ValidatePostContent(msg.Content); err != nil {
-		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
-	}
-
-	// Validate sender address
-	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
-	}
-
-	//if len(msg.Image) > MaxImageSize {
-	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
-	//}
-
-	blockTime := ctx.BlockTime().Unix()
-	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
-	postId := ms.k.sha256Generate(data)
-
-	// Create the post
-	post := types.Post{
-		Id:              postId,
-		PostType:        types.PostType_ADVERTISEMENT,
-		Content:         msg.Content,
-		Creator:         msg.Creator,
-		Timestamp:       blockTime,
-		ImagesUrl:       msg.ImagesUrl,
-		VideosUrl:       msg.VideosUrl,
-		HomePostsUpdate: blockTime,
-	}
-
-	imagesBase64 := msg.ImagesBase64
-	if len(imagesBase64) > 0 {
-		if len(imagesBase64) > 1 {
-			return nil, fmt.Errorf("only one paid image is allowed to be uploaded")
-		}
-		paidImageBase64 := imagesBase64[0]
-		imageHash := ms.k.sha256Generate(paidImageBase64)
-		setPaidPostImageErr := ms.k.SetPaidPostImage(ctx, imageHash, msg.ImagesBase64[0])
-		if setPaidPostImageErr != nil {
-			return nil, setPaidPostImageErr
-		}
-		post.ImageIds = []string{imageHash}
-	}
-	// post payment
-	ms.k.postPayment(ctx, post)
-	// Store the post in the state
-	ms.k.SetPost(ctx, post)
-	// add home posts
-	ms.addToHomePosts(ctx, post)
-	// add to user created posts
-	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
-
-	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
-
-	// mentions add to activitiesReceived
-	userHandleList := msg.Mention
-	if len(userHandleList) > 0 {
-		if len(userHandleList) > 10 {
-			return nil, fmt.Errorf("cannot mention more than 10 users")
-		}
-		for _, userHandle := range userHandleList {
-			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
-			if address != "" {
-				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
-			}
-		}
-	}
-
-	topicList := msg.Topic
-	category := msg.Category
-	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
-	if err != nil {
-		return nil, err
-	}
-
-	//Emit an event for the creation
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeCreatePaidPost,
-			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
-			sdk.NewAttribute(types.AttributeKeyPostID, postId),
-			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
-			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
-		),
-	})
-
-	return &types.MsgCreatePaidPostResponse{PostId: postId}, nil
-}
+//func (ms msgServer) CreatePaidPost(goCtx context.Context, msg *types.MsgCreatePaidPost) (*types.MsgCreatePaidPostResponse, error) {
+//	ctx := sdk.UnwrapSDKContext(goCtx)
+//
+//	// Validate the message
+//	if len(msg.Content) == 0 {
+//		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
+//	}
+//	if err := types.ValidatePostContent(msg.Content); err != nil {
+//		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
+//	}
+//
+//	// Validate sender address
+//	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
+//	_, err := sdk.AccAddressFromBech32(msg.Creator)
+//	if err != nil {
+//		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+//	}
+//
+//	//if len(msg.Image) > MaxImageSize {
+//	//	return nil, errors.Wrap(types.ErrInvalidRequest, "Image size exceeds the maximum allowed limit")
+//	//}
+//
+//	blockTime := ctx.BlockTime().Unix()
+//	data := fmt.Sprintf("%s|%s|%d", msg.Creator, msg.Content, blockTime)
+//	postId := ms.k.sha256Generate(data)
+//
+//	// Create the post
+//	post := types.Post{
+//		Id:              postId,
+//		PostType:        types.PostType_ADVERTISEMENT,
+//		Content:         msg.Content,
+//		Creator:         msg.Creator,
+//		Timestamp:       blockTime,
+//		ImagesUrl:       msg.ImagesUrl,
+//		VideosUrl:       msg.VideosUrl,
+//		HomePostsUpdate: blockTime,
+//	}
+//
+//	imagesBase64 := msg.ImagesBase64
+//	if len(imagesBase64) > 0 {
+//		if len(imagesBase64) > 1 {
+//			return nil, fmt.Errorf("only one paid image is allowed to be uploaded")
+//		}
+//		paidImageBase64 := imagesBase64[0]
+//		imageHash := ms.k.sha256Generate(paidImageBase64)
+//		setPaidPostImageErr := ms.k.SetPaidPostImage(ctx, imageHash, msg.ImagesBase64[0])
+//		if setPaidPostImageErr != nil {
+//			return nil, setPaidPostImageErr
+//		}
+//		post.ImageIds = []string{imageHash}
+//	}
+//	// post payment
+//	ms.k.postPayment(ctx, post)
+//	// Store the post in the state
+//	ms.k.SetPost(ctx, post)
+//	// add home posts
+//	ms.addToHomePosts(ctx, post)
+//	// add to user created posts
+//	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
+//
+//	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
+//
+//	// mentions add to activitiesReceived
+//	userHandleList := msg.Mention
+//	if len(userHandleList) > 0 {
+//		if len(userHandleList) > 10 {
+//			return nil, fmt.Errorf("cannot mention more than 10 users")
+//		}
+//		for _, userHandle := range userHandleList {
+//			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
+//			if address != "" {
+//				ms.addActivitiesReceived(ctx, post, "", "", msg.Creator, address, profiletypes.ActivitiesType_ACTIVITIES_MENTION)
+//			}
+//		}
+//	}
+//
+//	topicList := msg.Topic
+//	category := msg.Category
+//	err = ms.handleCategoryTopicPost(ctx, msg.Creator, topicList, category, blockTime, postId)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	//Emit an event for the creation
+//	ctx.EventManager().EmitEvents(sdk.Events{
+//		sdk.NewEvent(
+//			types.EventTypeCreatePaidPost,
+//			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+//			sdk.NewAttribute(types.AttributeKeyPostID, postId),
+//			sdk.NewAttribute(types.AttributeKeyTitle, msg.Title),
+//			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
+//		),
+//	})
+//
+//	return &types.MsgCreatePaidPostResponse{PostId: postId}, nil
+//}
 
 // QuotePost implements types.MsgServer.
 func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequest) (*types.MsgQuotePostResponse, error) {
