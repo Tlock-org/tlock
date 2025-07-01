@@ -358,102 +358,115 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
-					RpcMethod: "CreateFreePostWithTitle",
-					Use:       "create-free-post-with-title [creator] [title] [content]",
-					Short:     "create free post with title",
+					RpcMethod: "CreatePost",
+					Use:       "create-post [creator] [post_detail]",
+					Short:     "create post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
 						},
 						{
-							ProtoField: "title",
+							ProtoField: "post_detail",
 						},
-						{
-							ProtoField: "content",
-						},
-					},
-					FlagOptions: map[string]*autocliv1.FlagOptions{
-						"imagesUrl": {
-							//Shorthand: "i",
-						},
-						"videosUrl": {
-							//Shorthand: "v",
-						},
-						"mention": {},
-						"topic":   {},
 					},
 				},
-				{
-					RpcMethod: "CreateFreePost",
-					Use:       "create-free-post [creator] [content]",
-					Short:     "create free post",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{
-							ProtoField: "creator",
-						},
-						{
-							ProtoField: "content",
-						},
-					},
-					FlagOptions: map[string]*autocliv1.FlagOptions{
-						"imagesUrl": {},
-						"videosUrl": {},
-						"mention":   {},
-						"topic":     {},
-					},
-				},
-				{
-					RpcMethod: "CreateFreePostImagePayable",
-					Use:       "create-free-post-image-payable [creator] [content] [imagesBase64]",
-					Short:     "create free post image payable",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{
-							ProtoField: "creator",
-						},
-						{
-							ProtoField: "content",
-						},
-						{
-							ProtoField: "imagesBase64",
-						},
-					},
-					FlagOptions: map[string]*autocliv1.FlagOptions{
-						"imagesUrl": {
-							//Shorthand: "i",
-						},
-						"videosUrl": {
-							//Shorthand: "v",
-						},
-						"mention": {},
-						"topic":   {},
-					},
-				},
-				{
-					RpcMethod: "CreatePaidPost",
-					Use:       "create-paid-post [creator] [content] [imagesBase64]",
-					Short:     "create paid post",
-					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
-						{
-							ProtoField: "creator",
-						},
-						{
-							ProtoField: "content",
-						},
-						{
-							ProtoField: "imagesBase64",
-						},
-					},
-					FlagOptions: map[string]*autocliv1.FlagOptions{
-						"imagesUrl": {
-							//Shorthand: "i",
-						},
-						"videosUrl": {
-							//Shorthand: "v",
-						},
-						"mention": {},
-						"topic":   {},
-					},
-				},
+				//{
+				//	RpcMethod: "CreateFreePostWithTitle",
+				//	Use:       "create-free-post-with-title [creator] [title] [content]",
+				//	Short:     "create free post with title",
+				//	PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+				//		{
+				//			ProtoField: "creator",
+				//		},
+				//		{
+				//			ProtoField: "title",
+				//		},
+				//		{
+				//			ProtoField: "content",
+				//		},
+				//	},
+				//	FlagOptions: map[string]*autocliv1.FlagOptions{
+				//		"imagesUrl": {
+				//			//Shorthand: "i",
+				//		},
+				//		"videosUrl": {
+				//			//Shorthand: "v",
+				//		},
+				//		"mention": {},
+				//		"topic":   {},
+				//	},
+				//},
+				//{
+				//	RpcMethod: "CreateFreePost",
+				//	Use:       "create-free-post [creator] [content]",
+				//	Short:     "create free post",
+				//	PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+				//		{
+				//			ProtoField: "creator",
+				//		},
+				//		{
+				//			ProtoField: "content",
+				//		},
+				//	},
+				//	FlagOptions: map[string]*autocliv1.FlagOptions{
+				//		"imagesUrl": {},
+				//		"videosUrl": {},
+				//		"mention":   {},
+				//		"topic":     {},
+				//	},
+				//},
+				//{
+				//	RpcMethod: "CreateFreePostImagePayable",
+				//	Use:       "create-free-post-image-payable [creator] [content] [imagesBase64]",
+				//	Short:     "create free post image payable",
+				//	PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+				//		{
+				//			ProtoField: "creator",
+				//		},
+				//		{
+				//			ProtoField: "content",
+				//		},
+				//		{
+				//			ProtoField: "imagesBase64",
+				//		},
+				//	},
+				//	FlagOptions: map[string]*autocliv1.FlagOptions{
+				//		"imagesUrl": {
+				//			//Shorthand: "i",
+				//		},
+				//		"videosUrl": {
+				//			//Shorthand: "v",
+				//		},
+				//		"mention": {},
+				//		"topic":   {},
+				//	},
+				//},
+				//{
+				//	RpcMethod: "CreatePaidPost",
+				//	Use:       "create-paid-post [creator] [content] [imagesBase64]",
+				//	Short:     "create paid post",
+				//	PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+				//		{
+				//			ProtoField: "creator",
+				//		},
+				//		{
+				//			ProtoField: "content",
+				//		},
+				//		{
+				//			ProtoField: "imagesBase64",
+				//		},
+				//	},
+				//	FlagOptions: map[string]*autocliv1.FlagOptions{
+				//		"imagesUrl": {
+				//			//Shorthand: "i",
+				//		},
+				//		"videosUrl": {
+				//			//Shorthand: "v",
+				//		},
+				//		"mention": {},
+				//		"topic":   {},
+				//	},
+				//},
 				{
 					RpcMethod: "QuotePost",
 					Use:       "quote-post [creator] [quote] [comment]",

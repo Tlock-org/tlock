@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"math/big"
 	"strings"
 	"time"
 
@@ -913,8 +914,27 @@ func (k Keeper) RemoveFromLikesReceived(ctx sdk.Context, creator string, sender 
 }
 
 func (k Keeper) PostReward(ctx sdk.Context, post types.Post) {
+	metadata, found := k.bankKeeper.GetDenomMetaData(ctx, types.DenomBase)
+	if !found {
+		return
+	}
+	var exponent uint32
+	for _, unit := range metadata.DenomUnits {
+		if unit.Denom == metadata.Display {
+			exponent = unit.Exponent
+			break
+		}
+	}
+	if exponent == 0 {
+		exponent = 10000000
+	}
+	baseBig := big.NewInt(10)
+	expBig := big.NewInt(int64(exponent))
+	powerBig := new(big.Int).Exp(baseBig, expBig, nil)
+	exchangeRate := sdkmath.NewIntFromBigInt(powerBig)
+	rewardAmount := sdkmath.NewInt(10).Mul(exchangeRate)
 	// send post reward
-	amount := sdk.NewCoins(sdk.NewCoin(types.DenomBase, sdkmath.NewInt(10)))
+	amount := sdk.NewCoins(sdk.NewCoin(types.DenomBase, rewardAmount))
 	userAddr, err := sdk.AccAddressFromBech32(post.Creator)
 
 	if err != nil {

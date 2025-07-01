@@ -24,16 +24,19 @@ service Msg {
 
   rpc GrantAllowanceFromModule(MsgGrantAllowanceFromModuleRequest) returns (MsgGrantAllowanceFromModuleResponse);
 
-  // CreateFreePostWithTitle allows user to create a free post with title
-  rpc CreateFreePostWithTitle(MsgCreateFreePostWithTitle) returns (MsgCreateFreePostWithTitleResponse);
+  // CreatPost
+  rpc CreatePost(MsgCreatePost) returns (MsgCreatePostResponse);
 
-  // CreateFreePost allows user to create a free post without title
-  rpc CreateFreePost(MsgCreateFreePost) returns (MsgCreateFreePostResponse);
-
-  rpc CreateFreePostImagePayable(MsgCreateFreePostImagePayable) returns (MsgCreateFreePostImagePayableResponse);
-
-  // CreatePaidPost allows user to create a paid post without title
-  rpc CreatePaidPost(MsgCreatePaidPost) returns (MsgCreatePaidPostResponse);
+//  // CreateFreePostWithTitle allows user to create a free post with title
+//  rpc CreateFreePostWithTitle(MsgCreateFreePostWithTitle) returns (MsgCreateFreePostWithTitleResponse);
+//
+//  // CreateFreePost allows user to create a free post without title
+//  rpc CreateFreePost(MsgCreateFreePost) returns (MsgCreateFreePostResponse);
+//
+//  rpc CreateFreePostImagePayable(MsgCreateFreePostImagePayable) returns (MsgCreateFreePostImagePayableResponse);
+//
+//  // CreatePaidPost allows user to create a paid post without title
+//  rpc CreatePaidPost(MsgCreatePaidPost) returns (MsgCreatePaidPostResponse);
 
   rpc QuotePost(MsgQuotePostRequest) returns (MsgQuotePostResponse);
 
@@ -126,6 +129,28 @@ message MsgCreateFreePostWithTitle {
 }
 
 message MsgCreateFreePostWithTitleResponse {
+  string post_id = 1;
+}
+
+message PostDetail {
+  string title = 1;
+  string content = 2;
+  repeated string imagesBase64 = 3;
+  repeated string imagesUrl = 5;
+  repeated string videosUrl = 6;
+  string quote = 7;
+  repeated string mention = 8;
+  repeated string topic = 9;
+  string category = 10;
+}
+
+message MsgCreatePost {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  PostDetail post_detail = 2;
+}
+
+message MsgCreatePostResponse {
   string post_id = 1;
 }
 
