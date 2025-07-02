@@ -92,12 +92,16 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 	// Generate a unique post ID
 	var data string
 	var postType types.PostType
-	if postDetail.Title != "" {
-		postType = types.PostType_ARTICLE
-		data = fmt.Sprintf("%s|%s|%s|%d", msg.Creator, postDetail.Title, postDetail.Content, blockTime)
+	if postDetail.Poll != nil {
+		postType = types.PostType_POLL
 	} else {
-		postType = types.PostType_ORIGINAL
-		data = fmt.Sprintf("%s|%s|%d", msg.Creator, postDetail.Content, blockTime)
+		if postDetail.Title != "" {
+			postType = types.PostType_ARTICLE
+			data = fmt.Sprintf("%s|%s|%s|%d", msg.Creator, postDetail.Title, postDetail.Content, blockTime)
+		} else {
+			postType = types.PostType_ORIGINAL
+			data = fmt.Sprintf("%s|%s|%d", msg.Creator, postDetail.Content, blockTime)
+		}
 	}
 	postId := ms.k.sha256Generate(data)
 
@@ -112,7 +116,9 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 		ImagesUrl:       postDetail.ImagesUrl,
 		VideosUrl:       postDetail.VideosUrl,
 		HomePostsUpdate: blockTime,
+		Poll:            postDetail.Poll,
 	}
+
 	if postDetail.GetTitle() != "" {
 		post.Title = postDetail.GetTitle()
 		//post.PostType = types.PostType_ARTICLE
