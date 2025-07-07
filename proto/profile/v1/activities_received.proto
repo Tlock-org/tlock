@@ -13,7 +13,7 @@ enum ActivitiesType {
   ACTIVITIES_MENTION = 4;
 }
 
-// ActivitiesReceived defines the structure of a ActivitiesReceived
+// ActivitiesReceived defines the structure of a Activities Received
 message ActivitiesReceived {
   string address = 1;
   string target_address = 2;

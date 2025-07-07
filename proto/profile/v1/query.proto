@@ -4,7 +4,7 @@ package profile.v1;
 import "google/api/annotations.proto";
 import "profile/v1/genesis.proto";
 import "profile/v1/profile.proto";
-import "profile/v1/userSearch.proto";
+import "profile/v1/user_search.proto";
 
 option go_package = "github.com/rollchains/tlock/x/profile/types";
 
@@ -24,10 +24,10 @@ service Query {
   }
 
   rpc QueryFollowing(QueryFollowingRequest) returns (QueryFollowingResponse) {
-    option (google.api.http).get = "/profile/v1/flowing/{address}/{page}/{limit}";
+    option (google.api.http).get = "/profile/v1/following/{address}/{page}/{limit}";
   };
   rpc QueryFollowers(QueryFollowersRequest) returns (QueryFollowersResponse) {
-    option (google.api.http).get = "/profile/v1/flowers/{address}";
+    option (google.api.http).get = "/profile/v1/followers/{address}";
   };
   rpc QueryFollowRelationship(QueryFollowRelationshipRequest) returns (QueryFollowRelationshipResponse) {
     option (google.api.http).get = "/profile/v1/follow/relationship/{addressA}/{addressB}";
@@ -36,7 +36,7 @@ service Query {
     option (google.api.http).get = "/profile/v1/getMentionSuggestions/{address}/{matching}";
   };
 //  rpc QueryActivitiesReceived(QueryActivitiesReceivedRequest) returns (QueryActivitiesReceivedResponse) {
-//    option (google.api.http).get = "/profile/v1/activites/received/{address}";
+//    option (google.api.http).get = "/profile/v1/activities/received/{address}";
 //  };
   rpc QueryActivitiesReceivedCount(QueryActivitiesReceivedCountRequest) returns (QueryActivitiesReceivedCountResponse) {
     option (google.api.http).get = "/profile/v1/activities/received/count/{address}";

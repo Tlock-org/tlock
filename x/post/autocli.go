@@ -19,7 +19,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "ResolveName",
 					Use:       "resolve [address]",
-					Short:     "Resolve the name of a address",
+					Short:     "Resolve the name of an address",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "address"},
 					},
@@ -27,12 +27,12 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryHomePosts",
 					Use:       "home-posts",
-					Short:     "query home posts",
+					Short:     "Query home posts",
 				},
 				{
 					RpcMethod: "QueryFirstPageHomePosts",
 					Use:       "first-home-posts",
-					Short:     "query first home posts",
+					Short:     "Query first home posts",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "page",
@@ -42,7 +42,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryTopicPosts",
 					Use:       "topic-posts [topic_id] [page]",
-					Short:     "query topic posts",
+					Short:     "Query topic posts",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "topic_id",
@@ -55,7 +55,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryUserCreatedPosts",
 					Use:       "user-created-posts [address] [page]",
-					Short:     "query user created posts",
+					Short:     "Query user created posts",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "address",
@@ -68,7 +68,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryPost",
 					Use:       "get [post_id]",
-					Short:     "get the post by post_id",
+					Short:     "Get the post by post_id",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "post_id"},
 					},
@@ -76,7 +76,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "SearchTopics",
 					Use:       "search-topics [matching]",
-					Short:     "get topics by matching",
+					Short:     "Get topics by matching",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "matching"},
 					},
@@ -84,7 +84,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryComments",
 					Use:       "query-comments [id] [page]",
-					Short:     "query commends",
+					Short:     "Query comments",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "id",
@@ -97,7 +97,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryCommentsReceived",
 					Use:       "query-comments-received [address] [page]",
-					Short:     "query comments received",
+					Short:     "Query comments received",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "address",
@@ -145,7 +145,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "SavesIMade",
 					Use:       "saves-i-made [address] [page]",
-					Short:     "Query the list of save made by a specific wallet",
+					Short:     "Query the list of saves made by a specific address",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "address",
@@ -158,7 +158,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "LikesReceived",
 					Use:       "likes-received [address] [page]",
-					Short:     "Query the list of likes received by a specific wallet",
+					Short:     "Query the list of likes received by a specific address",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "address",
@@ -171,7 +171,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryActivitiesReceived",
 					Use:       "activities-received [address] [page]",
-					Short:     "get list of activitiesReceived",
+					Short:     "Get list of activities received",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "address",
@@ -192,12 +192,12 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryCategories",
 					Use:       "categories",
-					Short:     "query categories",
+					Short:     "Query categories",
 				},
 				{
 					RpcMethod: "QueryTopicsByCategory",
 					Use:       "category-topics [category_id] [page]",
-					Short:     "get topics by category",
+					Short:     "Get topics by category",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "category_id",
@@ -210,7 +210,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryCategoryByTopic",
 					Use:       "topic-category [topic_id]",
-					Short:     "get category by topic",
+					Short:     "Get category by topic",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "topic_id"},
 					},
@@ -218,7 +218,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryCategoryPosts",
 					Use:       "category-posts [category_id] [page]",
-					Short:     "get posts by category",
+					Short:     "Get posts by category",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "category_id",
@@ -231,7 +231,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryFollowingTopics",
 					Use:       "following-topics [address] [page]",
-					Short:     "get following topics",
+					Short:     "Get following topics",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "address",
@@ -243,8 +243,8 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryIsFollowingTopic",
-					Use:       "isFollowing-topic [address] [topic_id]",
-					Short:     "query is following topic",
+					Use:       "is-following-topic [address] [topic_id]",
+					Short:     "Query is following topic",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "address",
@@ -257,7 +257,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryUncategorizedTopics",
 					Use:       "uncategorized-topics [address] [page] [limit]",
-					Short:     "query uncategorized topics",
+					Short:     "Query uncategorized topics",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "address",
@@ -273,7 +273,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryVoteOption",
 					Use:       "vote-option",
-					Short:     "query vote option",
+					Short:     "Query vote option",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "address",
@@ -286,7 +286,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryTopicImage",
 					Use:       "topic-image [topic_id]",
-					Short:     "get the image by topic",
+					Short:     "Get the image by topic",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "topic_id"},
 					},
@@ -294,7 +294,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryTopic",
 					Use:       "topic [topic_id]",
-					Short:     "get the topic by id",
+					Short:     "Get the topic by id",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "topic_id"},
 					},
@@ -302,7 +302,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryTrendingKeywords",
 					Use:       "trending-keywords [page]",
-					Short:     "get trending keywords",
+					Short:     "Get trending keywords",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "page",
@@ -312,7 +312,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryTrendingTopics",
 					Use:       "trending-topics [page]",
-					Short:     "get trending topics",
+					Short:     "Get trending topics",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "page",
@@ -322,7 +322,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryPaidPostImage",
 					Use:       "paid-post-image [image_id]",
-					Short:     "get the image by id",
+					Short:     "Get the image by id",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "image_id"},
 					},
@@ -335,7 +335,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "SetServiceName",
 					Use:       "set [name]",
-					Short:     "Set the mapping to your wallet address",
+					Short:     "Set the mapping to your address",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "name"},
 					},
@@ -347,7 +347,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "GrantAllowanceFromModule",
 					Use:       "grant-allowance-from-module [sender] [userAddress]",
-					Short:     "grant allowance from module account to user account",
+					Short:     "Grant allowance from module account to user account",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "sender",
@@ -360,7 +360,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "CreatePost",
 					Use:       "create-post [creator] [post_detail]",
-					Short:     "create post",
+					Short:     "Create post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -470,7 +470,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QuotePost",
 					Use:       "quote-post [creator] [quote] [comment]",
-					Short:     "quote post",
+					Short:     "Quote post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -490,7 +490,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "Repost",
 					Use:       "repost [creator] [quote]",
-					Short:     "repost",
+					Short:     "Repost post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -507,7 +507,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "Like",
 					Use:       "like [sender] [id]",
-					Short:     "like",
+					Short:     "Like post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "sender",
@@ -520,7 +520,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "Unlike",
 					Use:       "unlike [sender] [id]",
-					Short:     "unlike",
+					Short:     "Unlike post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "sender",
@@ -533,7 +533,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "SavePost",
 					Use:       "save-post [sender] [id]",
-					Short:     "save post",
+					Short:     "Save post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "sender",
@@ -546,7 +546,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "UnsavePost",
 					Use:       "unsave-post [sender] [id]",
-					Short:     "unsave post",
+					Short:     "Unsave post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "sender",
@@ -559,7 +559,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "Comment",
 					Use:       "comment [creator] [parentId] [comment]",
-					Short:     "comment",
+					Short:     "Comment post",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -575,7 +575,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "AddCategory",
 					Use:       "add-category [creator] [params]",
-					Short:     "add category",
+					Short:     "Add category",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -588,7 +588,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "DeleteCategory",
 					Use:       "delete-category [creator] [id]",
-					Short:     "delete category",
+					Short:     "Delete category",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -601,7 +601,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "UpdateTopic",
 					Use:       "update-topic [creator] [topic_json]",
-					Short:     "update topic",
+					Short:     "Update topic",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -615,7 +615,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "FollowTopic",
 					Use:       "follow-topic [creator] [topic_id]",
-					Short:     "follow topic",
+					Short:     "Follow topic",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -629,7 +629,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "UnfollowTopic",
 					Use:       "unfollow-topic [creator] [topic_id]",
-					Short:     "unfollow topic",
+					Short:     "Unfollow topic",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -643,7 +643,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "ClassifyUncategorizedTopic",
 					Use:       "classify-uncategorized-topic [creator] [topic_id] [category_id]",
-					Short:     "unfollow topic",
+					Short:     "Classify uncategorized topic",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
