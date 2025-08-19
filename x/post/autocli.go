@@ -26,7 +26,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryHomePosts",
-					Use:       "home-posts",
+					Use:       "home-posts [page_size]",
 					Short:     "Query home posts",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
@@ -36,7 +36,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "QueryFirstPageHomePosts",
-					Use:       "first-home-posts",
+					Use:       "first-home-posts [page] [page_size]",
 					Short:     "Query first home posts",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
