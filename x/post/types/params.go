@@ -6,7 +6,6 @@ import (
 
 // DefaultParams returns default module parameters.
 func DefaultParams() Params {
-	// TODO:
 	return Params{
 		SomeValue: true,
 	}
@@ -16,7 +15,8 @@ func DefaultParams() Params {
 func (p Params) String() string {
 	bz, err := json.Marshal(p)
 	if err != nil {
-		panic(err)
+		// Return a descriptive error string instead of panic
+		return "failed to marshal params to string"
 	}
 
 	return string(bz)
@@ -24,6 +24,12 @@ func (p Params) String() string {
 
 // Validate does the sanity check on the params.
 func (p Params) Validate() error {
-	// TODO:
+	// Add proper validation logic for SomeValue
+	// Example validation (replace with actual requirements):
+	// if p.SomeValue == nil {
+	//     return errors.New("SomeValue cannot be nil")
+	// }
+
+	// Return nil for now as the current param is just a placeholder
 	return nil
 }

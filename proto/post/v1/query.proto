@@ -29,11 +29,11 @@ service Query {
   }
 
   rpc QueryHomePosts(QueryHomePostsRequest) returns (QueryHomePostsResponse) {
-    option (google.api.http).get = "/post/v1/homePosts";
+    option (google.api.http).get = "/post/v1/homePosts/{page_size}";
   }
 
   rpc QueryFirstPageHomePosts(QueryFirstPageHomePostsRequest) returns (QueryFirstPageHomePostsResponse) {
-    option (google.api.http).get = "/post/v1/firstPageHomePosts/{page}";
+    option (google.api.http).get = "/post/v1/firstPageHomePosts/{page}/{page_size}";
   }
 
   rpc SearchTopics(SearchTopicsRequest) returns (SearchTopicsResponse) {
@@ -147,6 +147,7 @@ message QueryResolveNameResponse {
 }
 
 message QueryHomePostsRequest {
+  uint64 page_size = 1;
 }
 
 message QueryHomePostsResponse {
@@ -174,6 +175,7 @@ message QueryTopicPostsResponse {
 
 message QueryFirstPageHomePostsRequest {
   uint64 page = 1;
+  uint64 page_size = 2;
 }
 
 message QueryFirstPageHomePostsResponse {

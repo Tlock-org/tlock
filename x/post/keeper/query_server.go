@@ -2,18 +2,14 @@ package keeper
 
 import (
 	"context"
-	"cosmossdk.io/errors"
-	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
-	"google.golang.org/grpc/codes"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/rollchains/tlock/x/post/types"
 	profileTypes "github.com/rollchains/tlock/x/profile/types"
-	"google.golang.org/grpc/status"
 )
 
 var _ types.QueryServer = Querier{}
@@ -35,7 +31,8 @@ func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*type
 
 	p, err := k.Keeper.Params.Get(ctx)
 	if err != nil {
-		return nil, err
+		types.LogError(k.logger, "get_params", err)
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get params"))
 	}
 
 	return &types.QueryParamsResponse{Params: &p}, nil
@@ -45,86 +42,141 @@ func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*type
 func (k Querier) ResolveName(goCtx context.Context, req *types.QueryResolveNameRequest) (*types.QueryResolveNameResponse, error) {
 	v, err := k.Keeper.NameMapping.Get(goCtx, req.Address)
 	if err != nil {
-		return nil, err
+		types.LogError(k.logger, "get_name_mapping", err, "address", req.Address)
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get name mapping"))
 	}
 	return &types.QueryResolveNameResponse{
 		Name: v,
 	}, nil
 }
 
+// BatchGetPostsWithProfiles retrieves posts and associated profiles in batch to optimize performance
+func (k Querier) batchGetPostsWithProfiles(ctx sdk.Context, postIDs []string) ([]*types.PostResponse, error) {
+	// Step 1: Batch retrieve all main posts
+	posts := make(map[string]types.Post)
+	quotePosts := make(map[string]types.Post)
+
+	// Collect all post IDs that need to be queried (including quoted posts)
+	allPostIDs := make(map[string]bool)
+	for _, postID := range postIDs {
+		allPostIDs[postID] = true
+	}
+
+	// Batch get main posts
+	for _, postID := range postIDs {
+		if post, found := k.GetPost(ctx, postID); found {
+			posts[postID] = post
+			// If there's a quoted post, add it to the query list
+			if post.Quote != "" {
+				allPostIDs[post.Quote] = true
+			}
+		}
+	}
+
+	// Batch get quoted posts
+	for postID := range allPostIDs {
+		if _, exists := posts[postID]; !exists {
+			if post, found := k.GetPost(ctx, postID); found {
+				quotePosts[postID] = post
+			}
+		}
+	}
+
+	// Step 2: Collect all unique creator addresses
+	creators := make(map[string]bool)
+	for _, post := range posts {
+		creators[post.Creator] = true
+	}
+	for _, post := range quotePosts {
+		creators[post.Creator] = true
+	}
+
+	// Step 3: Batch retrieve user profiles
+	profiles := make(map[string]profileTypes.Profile)
+	for creator := range creators {
+		if profile, found := k.ProfileKeeper.GetProfile(ctx, creator); found {
+			profiles[creator] = profile
+		}
+	}
+
+	// Step 4: Assemble responses
+	var responses []*types.PostResponse
+	for _, postID := range postIDs {
+		post, exists := posts[postID]
+		if !exists {
+			types.LogError(k.logger, "batchGetPostsWithProfiles", types.ErrPostNotFound, "post_id", postID)
+			continue
+		}
+
+		profile, hasProfile := profiles[post.Creator]
+		if !hasProfile {
+			types.LogError(k.logger, "profile_not_found", types.ErrProfileNotFound, "creator", post.Creator, "post_id", postID)
+			// Create default profile or skip
+			profile = profileTypes.Profile{WalletAddress: post.Creator}
+		}
+
+		postResponse := &types.PostResponse{
+			Post:    &post,
+			Profile: &profile,
+		}
+
+		// Handle quoted posts
+		if post.Quote != "" {
+			if quotePost, hasQuote := quotePosts[post.Quote]; hasQuote {
+				postResponse.QuotePost = &quotePost
+				if quoteProfile, hasQuoteProfile := profiles[quotePost.Creator]; hasQuoteProfile {
+					postResponse.QuoteProfile = &quoteProfile
+				}
+			}
+		}
+
+		responses = append(responses, postResponse)
+	}
+
+	return responses, nil
+}
+
 // QueryHomePosts implements types.QueryServer.
 func (k Querier) QueryHomePosts(goCtx context.Context, req *types.QueryHomePostsRequest) (*types.QueryHomePostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// Get list of post IDs
 	postIDs, _, page, err := k.Keeper.GetHomePosts(ctx, req)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, types.ToGRPCError(err)
 	}
 
-	var postResponses []*types.PostResponse
-	for _, postID := range postIDs {
-		post, success := k.GetPost(ctx, postID)
-		if !success {
-			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
-		}
-		postCopy := post
-
-		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-
-		profileResponseCopy := profile
-
-		postResponse := types.PostResponse{
-			Post:    &postCopy,
-			Profile: &profileResponseCopy,
-		}
-		if post.Quote != "" {
-			quotePost, _ := k.GetPost(ctx, post.Quote)
-			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
-			postResponse.QuotePost = &quotePost
-			postResponse.QuoteProfile = &quoteProfile
-		}
-
-		postResponses = append(postResponses, &postResponse)
+	// Use batch query to optimize performance
+	postResponses, err := k.batchGetPostsWithProfiles(ctx, postIDs)
+	if err != nil {
+		types.LogError(k.logger, "batchGetPostsWithProfiles", err, "operation", "QueryHomePosts")
+		return nil, types.ToGRPCError(types.ErrDatabaseOperation)
 	}
 
 	return &types.QueryHomePostsResponse{
 		Page:  page,
 		Posts: postResponses,
 	}, nil
+
 }
 
 // QueryFirstPageHomePosts implements types.QueryServer.
 func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.QueryFirstPageHomePostsRequest) (*types.QueryFirstPageHomePostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	page := req.Page
-	postIDs, _, page, err := k.Keeper.GetFirstPageHomePosts(ctx, page)
+
+	// Get post IDs for the requested page
+	postIDs, _, page, err := k.Keeper.GetFirstPageHomePosts(ctx, req)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, types.ToGRPCError(err)
 	}
 
-	var postResponses []*types.PostResponse
-	for _, postID := range postIDs {
-		post, success := k.GetPost(ctx, postID)
-		if !success {
-			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
-		}
-		postCopy := post
-
-		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-		profileResponseCopy := profile
-		postResponse := types.PostResponse{
-			Post:    &postCopy,
-			Profile: &profileResponseCopy,
-		}
-
-		if post.Quote != "" {
-			quotePost, _ := k.GetPost(ctx, post.Quote)
-			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
-			postResponse.QuotePost = &quotePost
-			postResponse.QuoteProfile = &quoteProfile
-		}
-		postResponses = append(postResponses, &postResponse)
+	// Use batch query for better performance
+	postResponses, err := k.batchGetPostsWithProfiles(ctx, postIDs)
+	if err != nil {
+		types.LogError(k.logger, "batchGetPostsWithProfiles", err, "operation", "QueryFirstPageHomePosts")
+		return nil, types.ToGRPCError(types.ErrDatabaseOperation)
 	}
+
 	return &types.QueryFirstPageHomePostsResponse{
 		Page:  page,
 		Posts: postResponses,
@@ -134,37 +186,20 @@ func (k Querier) QueryFirstPageHomePosts(goCtx context.Context, req *types.Query
 // QueryTopicPosts implements types.QueryServer.
 func (k Querier) QueryTopicPosts(goCtx context.Context, req *types.QueryTopicPostsRequest) (*types.QueryTopicPostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	topicHash := req.TopicId
-	page := req.Page
-	postIDs, _, page, err := k.Keeper.GetTopicPosts(ctx, topicHash, page)
+
+	// Retrieve posts for the specified topic
+	postIDs, _, page, err := k.Keeper.GetTopicPosts(ctx, req.TopicId, req.Page)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, types.ToGRPCError(err)
 	}
 
-	var postResponses []*types.PostResponse
-	for _, postID := range postIDs {
-		post, success := k.GetPost(ctx, postID)
-		if !success {
-			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
-		}
-		postCopy := post
-
-		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-		profileResponseCopy := profile
-
-		postResponse := types.PostResponse{
-			Post:    &postCopy,
-			Profile: &profileResponseCopy,
-		}
-		if post.Quote != "" {
-			quotePost, _ := k.GetPost(ctx, post.Quote)
-			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
-			postResponse.QuotePost = &quotePost
-			postResponse.QuoteProfile = &quoteProfile
-		}
-
-		postResponses = append(postResponses, &postResponse)
+	// Apply batch optimization for posts and profiles
+	postResponses, err := k.batchGetPostsWithProfiles(ctx, postIDs)
+	if err != nil {
+		types.LogError(k.logger, "batchGetPostsWithProfiles", err, "operation", "QueryTopicPosts")
+		return nil, types.ToGRPCError(types.ErrDatabaseOperation)
 	}
+
 	return &types.QueryTopicPostsResponse{
 		Page:  page,
 		Posts: postResponses,
@@ -175,52 +210,38 @@ func (k Querier) QueryTopicPosts(goCtx context.Context, req *types.QueryTopicPos
 func (k Querier) QueryUserCreatedPosts(goCtx context.Context, req *types.QueryUserCreatedPostsRequest) (*types.QueryUserCreatedPostsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// Get user's created posts
 	postIDs, _, page, err := k.Keeper.GetUserCreatedPosts(ctx, req.Address, req.Page)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		types.LogError(k.logger, "get_user_created_posts", err, "address", req.Address)
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get user created posts"))
 	}
 
-	var postResponses []*types.PostResponse
-	for _, postID := range postIDs {
-		post, success := k.GetPost(ctx, postID)
-		if !success {
-			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
-		}
-		postCopy := post
-		//posts = append(posts, &postCopy)
-
-		profile, _ := k.ProfileKeeper.GetProfile(ctx, post.Creator)
-		profileResponseCopy := profile
-		postResponse := types.PostResponse{
-			Post:    &postCopy,
-			Profile: &profileResponseCopy,
-		}
-
-		if post.Quote != "" {
-			quotePost, _ := k.GetPost(ctx, post.Quote)
-			quoteProfile, _ := k.ProfileKeeper.GetProfile(ctx, quotePost.Creator)
-			postResponse.QuotePost = &quotePost
-			postResponse.QuoteProfile = &quoteProfile
-		}
-		postResponses = append(postResponses, &postResponse)
+	// Use batch processing to reduce database queries
+	postResponses, err := k.batchGetPostsWithProfiles(ctx, postIDs)
+	if err != nil {
+		types.LogError(k.logger, "batch_get_posts_with_profiles", err, "post_count", len(postIDs))
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to retrieve posts and profiles"))
 	}
+
 	return &types.QueryUserCreatedPostsResponse{
 		Page:  page,
 		Posts: postResponses,
 	}, nil
+
 }
 
 // QueryPost implements types.QueryServer.
 func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (*types.QueryPostResponse, error) {
 	if req == nil {
-		return nil, types.ErrInvalidRequest
+		return nil, types.ToGRPCError(types.ErrInvalidRequest)
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Retrieve the post from the state
 	post, found := k.Keeper.GetPost(sdk.UnwrapSDKContext(goCtx), req.PostId)
 	if !found {
-		return nil, types.ErrPostNotFound
+		return nil, types.ToGRPCError(types.NewPostNotFoundError(req.PostId))
 	}
 	postCopy := post
 
@@ -294,13 +315,14 @@ func (k Querier) SearchTopics(goCtx context.Context, req *types.SearchTopicsRequ
 // likesIMade implements types.QueryServer.
 func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeRequest) (*types.LikesIMadeResponse, error) {
 	if request == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+		return nil, types.ToGRPCError(types.ErrInvalidRequest)
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	likes, _, page, err := k.GetLikesIMade(sdkCtx, request.Address, request.Page)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		types.LogError(k.logger, "get_likes_i_made", err, "address", request.Address)
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get likes made"))
 	}
 
 	var postResponses []*types.PostResponse
@@ -308,7 +330,8 @@ func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeReques
 		postID := likesIMade.PostId
 		post, success := k.GetPost(sdkCtx, postID)
 		if !success {
-			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
+			types.LogError(k.logger, "get_post_for_likes", types.ErrPostNotFound, "post_id", postID)
+			return nil, types.ToGRPCError(types.NewPostNotFoundError(postID))
 		}
 		postCopy := post
 
@@ -331,13 +354,14 @@ func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeReques
 // SavesIMade implements types.QueryServer.
 func (k Querier) SavesIMade(ctx context.Context, request *types.SavesIMadeRequest) (*types.SavesIMadeResponse, error) {
 	if request == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+		return nil, types.ToGRPCError(types.ErrInvalidRequest)
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	saves, _, page, err := k.GetSavesIMade(sdkCtx, request.Address, request.Page)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		types.LogError(k.logger, "get_saves_i_made", err, "address", request.Address)
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get saves made"))
 	}
 
 	var postResponses []*types.PostResponse
@@ -345,7 +369,8 @@ func (k Querier) SavesIMade(ctx context.Context, request *types.SavesIMadeReques
 		postID := savesIMade.PostId
 		post, success := k.GetPost(sdkCtx, postID)
 		if !success {
-			return nil, fmt.Errorf("failed to get post with ID %s: %w", postID, success)
+			types.LogError(k.logger, "get_post_for_saves", types.ErrPostNotFound, "post_id", postID)
+			return nil, types.ToGRPCError(types.NewPostNotFoundError(postID))
 		}
 		postCopy := post
 
@@ -369,13 +394,14 @@ func (k Querier) SavesIMade(ctx context.Context, request *types.SavesIMadeReques
 // LikesReceived implements types.QueryServer.
 func (k Querier) LikesReceived(ctx context.Context, request *types.LikesReceivedRequest) (*types.LikesReceivedResponse, error) {
 	if request == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+		return nil, types.ToGRPCError(types.ErrInvalidRequest)
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	likesReceived, _, page, err := k.GetLikesReceived(sdkCtx, request.Address, request.Page)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		types.LogError(k.logger, "get_likes_received", err, "address", request.Address)
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get likes received"))
 	}
 	return &types.LikesReceivedResponse{
 		Page:          page,
@@ -392,14 +418,16 @@ func (k Querier) QueryComments(goCtx context.Context, req *types.QueryCommentsRe
 	for _, commentId := range ids {
 		comment, success := k.GetPost(ctx, commentId)
 		if !success {
-			return nil, fmt.Errorf("failed to get post with ID %s: %w", commentId, success)
+			types.LogError(k.logger, "get_comment_for_query", types.ErrPostNotFound, "comment_id", commentId)
+			return nil, types.ToGRPCError(types.NewPostNotFoundError(commentId))
 		}
 		commentCopy := comment
 		profile, _ := k.ProfileKeeper.GetProfile(ctx, comment.Creator)
 		pid := comment.ParentId
 		parent, b := k.GetPost(ctx, pid)
 		if !b {
-			return nil, fmt.Errorf("failed to get post with ID %s: %w", pid, b)
+			types.LogError(k.logger, "get_parent_post_for_comment", types.ErrPostNotFound, "parent_id", pid)
+			return nil, types.ToGRPCError(types.NewPostNotFoundError(pid))
 		}
 		targetProfile, _ := k.ProfileKeeper.GetProfile(ctx, parent.Creator)
 		profileResponseCopy := profile
@@ -422,14 +450,16 @@ func (k Querier) QueryCommentsReceived(goCtx context.Context, req *types.QueryCo
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	ids, _, page, err := k.Keeper.GetCommentsReceived(ctx, req.Address, req.Page)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get comments received %s: %w", req.Address, err)
+		types.LogError(k.logger, "get_comments_received", err, "address", req.Address)
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get comments received"))
 	}
 
 	var commentReceivedResponses []*types.CommentReceivedResponse
 	for _, commentID := range ids {
 		comment, success := k.GetPost(ctx, commentID)
 		if !success {
-			return nil, fmt.Errorf("failed to get comments received %s: %w", commentID, success)
+			types.LogError(k.logger, "get_comment_received", types.ErrPostNotFound, "comment_id", commentID)
+			return nil, types.ToGRPCError(types.NewPostNotFoundError(commentID))
 		}
 		commentCopy := comment
 		postParent, _ := k.GetPost(ctx, comment.ParentId)
@@ -536,7 +566,8 @@ func (k Querier) QueryTopicsByCategory(goCtx context.Context, req *types.QueryTo
 	category := k.GetCategory(ctx, req.CategoryId)
 	topics, _, page, err := k.GetCategoryTopics(ctx, req.CategoryId, req.Page)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		types.LogError(k.logger, "get_category_topics", err, "category_id", req.CategoryId)
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get category topics"))
 	}
 	categoryResponse := types.CategoryResponse{
 		Id:     category.Id,
@@ -579,7 +610,6 @@ func (k Querier) QueryCategoryByTopic(goCtx context.Context, req *types.QueryCat
 	if categoryHash != "" {
 		//categoryHash := k.sha256Generate(categoryDb)
 		category := k.GetCategory(ctx, categoryHash)
-		k.Logger().Error("==========category:", "category", category)
 		categoryResponse := types.CategoryResponse{
 			Id:     categoryHash,
 			Name:   category.Name,
@@ -600,7 +630,8 @@ func (k Querier) QueryCategoryPosts(goCtx context.Context, req *types.QueryCateg
 	category := k.GetCategory(ctx, req.CategoryId)
 	posts, _, page, err := k.Keeper.GetCategoryPosts(ctx, req.CategoryId, req.Page)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get posts by category %s: %w", req.CategoryId, err)
+		types.LogError(k.logger, "get_category_posts", err, "category_id", req.CategoryId)
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get posts by category"))
 	}
 	categoryResponse := types.CategoryResponse{
 		Id:     category.Id,
@@ -791,7 +822,7 @@ func (k Querier) QueryUncategorizedTopics(goCtx context.Context, req *types.Quer
 			Topics: topicResponseList,
 		}, nil
 	} else {
-		return nil, errors.Wrapf(types.ErrRequestDenied, "request denied")
+		return nil, types.ToGRPCError(types.ErrRequestDenied)
 	}
 
 }
@@ -902,7 +933,8 @@ func (k Querier) QueryPaidPostImage(goCtx context.Context, req *types.QueryPaidP
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	image, found := k.GetPaidPostImage(ctx, req.ImageId)
 	if !found {
-		return nil, fmt.Errorf("no image found for postId %s", req.ImageId)
+		types.LogError(k.logger, "get_paid_post_image", types.ErrResourceNotFound, "image_id", req.ImageId)
+		return nil, types.ToGRPCError(types.NewResourceNotFoundErrorf("no image found for image ID %s", req.ImageId))
 	}
 	return &types.QueryPaidPostImageResponse{
 		Image: image,

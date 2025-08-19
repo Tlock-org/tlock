@@ -26,6 +26,11 @@ const (
 
 	MaxPostContentLength          = 300
 	MaxPostWithTitleContentLength = 10000
+	MaxPostTitleLength            = 100
+	MaxMentionUsers               = 10
+	MaxTopicsPerPost              = 5
+	MaxImagesPerPost              = 1
+	MaxPageLimit                  = 100
 
 	HomePostsKeyPrefix      = "Post/posts/home/"
 	FollowedPostsKeyPrefix  = "Post/posts/followed/"
@@ -84,7 +89,7 @@ const (
 	CategoryTopicsPageSize       = 20
 
 	CategoryPostsKeyPrefix       = "Post/posts/category/"
-	CategoryPostsCountKeyPrefix  = "Post/posts/topic/count/"
+	CategoryPostsCountKeyPrefix  = "Post/posts/category/count/"
 	CategoryPostsCount           = 10000
 	CategoryPostsPageSize        = 10
 	CategorySearchKeyPrefix      = "Post/category/search/"

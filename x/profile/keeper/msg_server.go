@@ -37,7 +37,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	// Validate creator address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid creator address: %s", err)
+		return nil, errors.Wrapf(types.ErrInvalidAddress, "invalid creator address: %s", err)
 	}
 
 	blockTime := ctx.BlockTime().Unix()
@@ -45,6 +45,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	profileJson := msg.ProfileJson
 
 	dbProfile, _ := ms.k.GetProfile(ctx, msg.GetCreator())
+	dbProfile.HasAvatar = false
 	dbUserHandle := dbProfile.UserHandle
 	dbNickname := dbProfile.Nickname
 
@@ -106,7 +107,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 
 	// add nickName to userSearch
 	if nickname != "" {
-		validateNickName, err := types.ValidateNickName(nickname)
+		validateNickName, err := types.ValidateNickname(nickname)
 		if validateNickName {
 			if dbNickname != nickname {
 				ms.k.DeleteFromUserSearchList(ctx, dbNickname, msg.Creator)
@@ -130,6 +131,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	if profileJson.Avatar != "" {
 		//dbProfile.Avatar = profileJson.Avatar
 		ms.k.SetProfileAvatar(ctx, msg.Creator, profileJson.Avatar)
+		dbProfile.HasAvatar = true
 	}
 	dbProfile.Bio = profileJson.Bio
 	dbProfile.Location = profileJson.Location
@@ -389,7 +391,7 @@ func (ms msgServer) Follow(ctx context.Context, msg *types.MsgFollowRequest) (*t
 	follower := msg.Creator
 	targetAddr := msg.TargetAddr
 	if follower == targetAddr {
-		return nil, errors.Wrap(types.ErrCannotFollowSelf, "follower and targetAddr cannot be the same")
+		return nil, errors.Wrap(types.ErrCannotFollowSelf, "You cannot follow yourself")
 	}
 	isFollowing := ms.k.IsFollowing(sdkCtx, follower, targetAddr)
 	if !isFollowing {
@@ -419,7 +421,7 @@ func (ms msgServer) Follow(ctx context.Context, msg *types.MsgFollowRequest) (*t
 		ms.k.SetActivitiesReceived(sdkCtx, activitiesReceived, targetAddr, follower)
 		count, b := ms.k.GetActivitiesReceivedCount(sdkCtx, targetAddr)
 		if !b {
-			panic("GetActivitiesReceivedCount error")
+			types.LogError(ms.k.logger, "follow_user", types.ErrDatabaseOperation, "operation", "GetActivitiesReceivedCount", "target", targetAddr)
 		}
 		count += 1
 		if count > types.ActivitiesReceivedCount {
@@ -490,9 +492,10 @@ func (ms msgServer) RemoveAdmin(goCtx context.Context, msg *types.MsgRemoveAdmin
 			return nil, err
 		}
 	} else {
+		types.LogError(ms.k.logger, "remove_admin", types.ErrRequestDenied, "creator", msg.Creator)
 		return &types.MsgRemoveAdminResponse{
 			Status: false,
-		}, fmt.Errorf("address %s is not an admin", msg.Creator)
+		}, types.NewInvalidRequestErrorf("address %s is not an admin", msg.Creator)
 	}
 	return &types.MsgRemoveAdminResponse{
 		Status: true,
