@@ -1116,6 +1116,7 @@ func (ms msgServer) updateHomePosts(ctx sdk.Context, post types.Post) {
 func (ms msgServer) addToHomePosts(ctx sdk.Context, post types.Post) {
 	ms.k.SetHomePosts(ctx, post.Id)
 	count, b := ms.k.GetHomePostsCount(ctx)
+	ms.k.Logger().Warn("==========b:{}", b)
 	if !b {
 		types.LogError(ms.k.logger, "addToHomePosts", types.ErrDatabaseOperation, "operation", "GetHomePostsCount")
 		return
@@ -1595,16 +1596,13 @@ func (ms msgServer) CastVoteOnPoll(goCtx context.Context, msg *types.CastVoteOnP
 		return nil, types.ErrVotingEnded
 	}
 
-	// 原子性检查：在同一个事务中检查和设置投票状态
 	_, alreadyVoted := ms.k.GetPoll(ctx, msg.Id, msg.Creator)
 	if alreadyVoted {
 		return nil, types.ErrAlreadyVoted
 	}
 
-	// 立即设置投票状态，防止竞态条件
 	ms.k.SetPoll(ctx, msg.Id, msg.Creator, msg.OptionId)
 
-	// 验证选项ID是否有效
 	validOptionId := false
 	for _, option := range parentPost.Poll.Vote {
 		if option.Id == msg.OptionId {
@@ -1613,12 +1611,10 @@ func (ms msgServer) CastVoteOnPoll(goCtx context.Context, msg *types.CastVoteOnP
 		}
 	}
 	if !validOptionId {
-		// 如果选项ID无效，回滚投票状态
 		ms.k.RemovePoll(ctx, msg.Id, msg.Creator)
 		return nil, types.NewInvalidRequestError("invalid option ID")
 	}
 
-	// 更新投票数量
 	parentPost.Poll.TotalVotes += 1
 	voteList := parentPost.Poll.Vote
 	for i := range voteList {
@@ -1628,7 +1624,6 @@ func (ms msgServer) CastVoteOnPoll(goCtx context.Context, msg *types.CastVoteOnP
 		}
 	}
 
-	// 保存更新后的帖子
 	ms.k.SetPost(ctx, parentPost)
 
 	return &types.CastVoteOnPollResponse{Status: true}, nil

@@ -174,11 +174,11 @@ func (k Keeper) GetHomePostsCount(ctx sdk.Context) (int64, bool) {
 
 	bz := store.Get([]byte("count"))
 	if bz == nil {
-		return 0, false // 返回false表示数据不存在
+		return 0, true
 	}
 
 	count := int64(binary.BigEndian.Uint64(bz))
-	return count, true // 返回true表示数据存在
+	return count, true
 }
 
 func (k Keeper) SetHomePosts(ctx sdk.Context, postId string) {
@@ -206,12 +206,16 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) 
 		}, uint64(0), nil
 	}
 
-	//pageSize := req.PageSize
+	k.Logger().Warn("=============req.pageSize:{}", "req.PageSize", req.PageSize)
 
 	var pageSize int64 = types.HomePostsPageSize
 	if req.PageSize > 0 {
 		pageSize = int64(req.PageSize)
+		if pageSize > 100 {
+			pageSize = 100
+		}
 	}
+	k.Logger().Warn("==============================pageSize:{}", "req.PageSize", pageSize)
 	totalPages := homePostsCount / pageSize
 	if homePostsCount%pageSize != 0 {
 		totalPages += 1
@@ -273,6 +277,9 @@ func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context, req *types.QueryFirstPage
 	var pageSize int64 = types.HomePostsPageSize
 	if req.PageSize > 0 {
 		pageSize = int64(req.PageSize)
+		if pageSize > 100 {
+			pageSize = 100
+		}
 	}
 	totalPages := homePostsCount / pageSize
 	if homePostsCount%pageSize != 0 {
