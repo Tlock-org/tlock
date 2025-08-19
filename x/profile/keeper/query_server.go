@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/rollchains/tlock/x/profile/types"
@@ -86,7 +85,8 @@ func (k Querier) QueryFollowing(goCtx context.Context, req *types.QueryFollowing
 	for _, address := range followings {
 		profile, success := k.GetProfile(ctx, address)
 		if !success {
-			return nil, fmt.Errorf("failed to get profile %s: %w", profile, success)
+			types.LogError(k.logger, "query_following", types.ErrProfileNotFound, "address", address)
+			return nil, types.ToGRPCError(types.NewProfileNotFoundError(address))
 		}
 		profileCopy := profile
 		profiles = append(profiles, &profileCopy)
@@ -105,7 +105,8 @@ func (k Querier) QueryFollowers(goCtx context.Context, req *types.QueryFollowers
 	for _, address := range followers {
 		profile, success := k.GetProfile(ctx, address)
 		if !success {
-			return nil, fmt.Errorf("failed to get profile %s: %w", profile, success)
+			types.LogError(k.logger, "query_followers", types.ErrProfileNotFound, "address", address)
+			return nil, types.ToGRPCError(types.NewProfileNotFoundError(address))
 		}
 		profileCopy := profile
 		profiles = append(profiles, &profileCopy)
@@ -133,7 +134,8 @@ func (k Querier) GetMentionSuggestions(goCtx context.Context, req *types.QueryGe
 		}
 		profile, success := k.GetProfile(ctx, address)
 		if !success {
-			return nil, fmt.Errorf("failed to get profile %s: %w", profile, success)
+			types.LogError(k.logger, "get_mention_suggestions", types.ErrProfileNotFound, "address", address)
+			return nil, types.ToGRPCError(types.NewProfileNotFoundError(address))
 		}
 		profileCopy := profile
 		profiles = append(profiles, &profileCopy)
@@ -222,7 +224,6 @@ func (k Querier) SearchUsers(goCtx context.Context, req *types.SearchUsersReques
 		return &types.SearchUsersResponse{}, nil
 	}
 	users, _ := k.SearchUsersByMatching(ctx, matching)
-	//users, _ := k.SearchUsersByMatching(ctx, strings.ToLower(matching))
 	var list []*types.Profile
 	for _, user := range users {
 		profile, _ := k.GetProfile(ctx, user.WalletAddress)

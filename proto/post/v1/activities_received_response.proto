@@ -2,8 +2,8 @@ syntax = "proto3";
 package post.v1;
 
 import "profile/v1/genesis.proto";
-import "profile/v1/profileResponse.proto";
-import "profile/v1/ActivitiesReceived.proto";
+import "profile/v1/profile_response.proto";
+import "profile/v1/activities_received.proto";
 import "post/v1/post.proto";
 
 option go_package = "github.com/rollchains/tlock/x/post/types";

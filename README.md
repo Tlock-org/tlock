@@ -1,10 +1,8 @@
-## What is Tlock
+Tlock is an application-specific blockchain built on the Cosmos SDK, and a fully decentralized social media platform, engineered for unstoppable resilience in extreme conditions, with optional centralized services for an enhanced user experience.
 
-Tlock is an application-specific blockchain and decentralized social media platform that allows users to create profiles, content, connections directly on-chain. Anyone can access the pre-sorted content and interact via RPC of the chain, even if the front-end interface is unavailable.
+Users can create profiles, post stories, build connections, and like and comment on posts directly on-chain, with gas fees paid by the system account if a periodic allowance is granted. Each of these transactions triggers real-time sorting of recommended posts, trending topics, categories, and communities, enabling dynamic content updates based on the accumulated reputation score.
 
-Tlock’s mission is to maximize the user experience of a fully decentralized social media platform, making it easy for Web2 and Web3 users to engage.
-
-Inevitably, it introduces challenges including on-chain storage, token acquisition, Sybil attacks, indexing and Sorting which will be introduced in details. Tlock implements multiple alternative solutions to balance these challenges with decentralization.
+Inevitably, it introduces challenges including on-chain storage, token acquisition, Sybil attacks, indexing and sorting, content moderation, which will be discussed in detail. Tlock implements diverse hybrid solutions to address these challenges while maintaining decentralization, making it easy for both Web2 and Web3 users to engage.
 
 Official Site (not ready): https://tlock.org
 
@@ -12,4 +10,4 @@ GitHub: https://github.com/Tlock-org/tlock
 
 X.com(Twitter):  https://x.com/TlockTok
 
-GitBook: https://tlock.gitbook.io/tlock
+Documentation: https://tlock.gitbook.io/tlock

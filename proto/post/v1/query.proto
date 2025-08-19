@@ -3,16 +3,16 @@ package post.v1;
 
 import "post/v1/genesis.proto";
 import "google/api/annotations.proto";
-import "post/v1/postResponse.proto";
-import "post/v1/commentResponse.proto";
-import "post/v1/commentReceivedResponse.proto";
-import "post/v1/likesIMade.proto";
-import "post/v1/likesReceived.proto";
-import "post/v1/activitiesReceivedResponse.proto";
-import "post/v1/categoryResponse.proto";
-import "post/v1/categoryTopicResponse.proto";
-import "post/v1/topicResponse.proto";
-import "post/v1/categoryPostsResponse.proto";
+import "post/v1/post_response.proto";
+import "post/v1/comment_response.proto";
+import "post/v1/comment_received_response.proto";
+import "post/v1/likes_i_made.proto";
+import "post/v1/likes_received.proto";
+import "post/v1/activities_received_response.proto";
+import "post/v1/category_response.proto";
+import "post/v1/category_topic_response.proto";
+import "post/v1/topic_response.proto";
+import "post/v1/category_posts_response.proto";
 
 option go_package = "github.com/rollchains/tlock/x/post/types";
 
@@ -29,11 +29,11 @@ service Query {
   }
 
   rpc QueryHomePosts(QueryHomePostsRequest) returns (QueryHomePostsResponse) {
-    option (google.api.http).get = "/post/v1/homePosts";
+    option (google.api.http).get = "/post/v1/homePosts/{page_size}";
   }
 
   rpc QueryFirstPageHomePosts(QueryFirstPageHomePostsRequest) returns (QueryFirstPageHomePostsResponse) {
-    option (google.api.http).get = "/post/v1/firstPageHomePosts/{page}";
+    option (google.api.http).get = "/post/v1/firstPageHomePosts/{page}/{page_size}";
   }
 
   rpc SearchTopics(SearchTopicsRequest) returns (SearchTopicsResponse) {
@@ -74,7 +74,7 @@ service Query {
   }
 
   rpc QueryActivitiesReceived(QueryActivitiesReceivedRequest) returns (QueryActivitiesReceivedResponse) {
-    option (google.api.http).get = "/post/v1/activites/received/{address}/{page}";
+    option (google.api.http).get = "/post/v1/activities/received/{address}/{page}";
   };
 
 //  rpc QueryCategoryExists(QueryCategoryExistsRequest) returns (QueryCategoryExistsResponse) {
@@ -147,6 +147,7 @@ message QueryResolveNameResponse {
 }
 
 message QueryHomePostsRequest {
+  uint64 page_size = 1;
 }
 
 message QueryHomePostsResponse {
@@ -174,6 +175,7 @@ message QueryTopicPostsResponse {
 
 message QueryFirstPageHomePostsRequest {
   uint64 page = 1;
+  uint64 page_size = 2;
 }
 
 message QueryFirstPageHomePostsResponse {

@@ -17,16 +17,17 @@ message Profile {
   string user_handle = 2;
   string nickname = 3;
   string avatar = 4;
-  string bio = 5;
-  uint64 level = 6;
-  uint64 admin_level = 7;
-  uint64 following = 8;
-  uint64 followers = 9;
-  int64 creation_time = 10;
-  string location = 11;
-  string website = 12;
-  IdVerificationStatus idVerification_status = 13;
-  uint64 score = 14;
-  string line_manager = 15;
+  bool has_avatar = 5;
+  string bio = 6;
+  uint64 level = 7;
+  uint64 admin_level = 8;
+  uint64 following = 9;
+  uint64 followers = 10;
+  int64 creation_time = 11;
+  string location = 12;
+  string website = 13;
+  IdVerificationStatus idVerification_status = 14;
+  uint64 score = 15;
+  string line_manager = 16;
 }
 

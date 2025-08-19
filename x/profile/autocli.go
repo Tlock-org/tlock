@@ -19,7 +19,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryProfile",
 					Use:       "get [address]",
-					Short:     "get the profile by wallet_address",
+					Short:     "Get the profile by wallet_address",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "address"},
 					},
@@ -27,7 +27,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryProfileAvatar",
 					Use:       "avatar [address]",
-					Short:     "get the avatar by address",
+					Short:     "Get the avatar by address",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "address"},
 					},
@@ -35,7 +35,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryFollowRelationship",
 					Use:       "follow-relationship [addressA] [addressB]",
-					Short:     "get follow relationship",
+					Short:     "Get follow relationship",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "addressA",
@@ -48,7 +48,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryFollowing",
 					Use:       "following [address]",
-					Short:     "get list of following",
+					Short:     "Get list of following",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "address",
@@ -64,7 +64,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryFollowers",
 					Use:       "followers [address]",
-					Short:     "get list of followers",
+					Short:     "Get list of followers",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "address",
@@ -74,7 +74,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "GetMentionSuggestions",
 					Use:       "get-mention-suggestions [address] [matching]",
-					Short:     "get list of mention suggestions",
+					Short:     "Get list of mention suggestions",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "address",
@@ -94,16 +94,16 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				//},
 				{
 					RpcMethod: "QueryActivitiesReceivedCount",
-					Use:       "activitiesReceivedCount [address]",
-					Short:     "get list of activitiesReceivedCount",
+					Use:       "activities-received-count [address]",
+					Short:     "Get activities received count",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "address"},
 					},
 				},
 				{
 					RpcMethod: "SearchUsers",
-					Use:       "searchUsers [matching]",
-					Short:     "get users by matching",
+					Use:       "search-users [matching]",
+					Short:     "Get users by matching",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "matching"},
 					},
@@ -111,7 +111,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "IsAdmin",
 					Use:       "is-admin [address]",
-					Short:     "is admin",
+					Short:     "Check if address is admin",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "address"},
 					},
@@ -153,7 +153,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "Follow",
 					Use:       "follow [creator] [targetAddr]",
-					Short:     "follow someone",
+					Short:     "Follow someone",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -167,7 +167,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "Unfollow",
 					Use:       "unfollow [creator] [targetAddr]",
-					Short:     "unfollow someone",
+					Short:     "Unfollow someone",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -181,7 +181,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "AddAdmin",
 					Use:       "add-admin [creator] [address]",
-					Short:     "add admin",
+					Short:     "Add admin",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -195,7 +195,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "RemoveAdmin",
 					Use:       "remove-admin [creator] [address]",
-					Short:     "remove admin",
+					Short:     "Remove admin",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",
@@ -209,7 +209,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "ManageAdmin",
 					Use:       "manage-admin [creator] [action] [manage_json]",
-					Short:     "manage admin",
+					Short:     "Manage admin",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
 							ProtoField: "creator",

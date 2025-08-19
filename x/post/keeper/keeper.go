@@ -3,20 +3,21 @@ package keeper
 import (
 	"bytes"
 	"context"
-	"cosmossdk.io/store/prefix"
-	"cosmossdk.io/x/feegrant"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"strings"
+	"time"
+
+	"cosmossdk.io/store/prefix"
+	"cosmossdk.io/x/feegrant"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"math/big"
-	"strings"
-	"time"
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -33,8 +34,9 @@ import (
 	apiv1 "github.com/rollchains/tlock/api/post/v1"
 	"github.com/rollchains/tlock/x/post/types"
 
-	sdkmath "cosmossdk.io/math"
 	"encoding/binary"
+
+	sdkmath "cosmossdk.io/math"
 )
 
 type Keeper struct {
@@ -172,11 +174,11 @@ func (k Keeper) GetHomePostsCount(ctx sdk.Context) (int64, bool) {
 
 	bz := store.Get([]byte("count"))
 	if bz == nil {
-		return 0, true
+		return 0, false // 返回false表示数据不存在
 	}
 
 	count := int64(binary.BigEndian.Uint64(bz))
-	return count, true
+	return count, true // 返回true表示数据存在
 }
 
 func (k Keeper) SetHomePosts(ctx sdk.Context, postId string) {
@@ -204,7 +206,12 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) 
 		}, uint64(0), nil
 	}
 
-	const pageSize = types.HomePostsPageSize
+	//pageSize := req.PageSize
+
+	var pageSize int64 = types.HomePostsPageSize
+	if req.PageSize > 0 {
+		pageSize = int64(req.PageSize)
+	}
 	totalPages := homePostsCount / pageSize
 	if homePostsCount%pageSize != 0 {
 		totalPages += 1
@@ -217,7 +224,6 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) 
 	currentTime := time.Now()
 	unixMilli := currentTime.Unix()
 	lastTwoDigits := unixMilli % 100
-	fmt.Sprintf("===============lastTwoDigits: %d", lastTwoDigits)
 
 	pageIndex := lastTwoDigits % totalPages
 	// 00-99  10000 00:1-100 01:101-200 02:201-300
@@ -226,12 +232,12 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) 
 
 	const totalPosts = types.HomePostsCount
 	if first >= totalPosts {
-		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of home posts")
+		return nil, nil, uint64(0), types.NewInvalidRequestErrorf("offset %d exceeds total number of home posts %d", first, totalPosts)
 	}
 
 	pagination := &query.PageRequest{}
 
-	pagination.Limit = pageSize
+	pagination.Limit = uint64(pageSize)
 	pagination.Offset = uint64(first)
 	pagination.Reverse = true
 
@@ -243,12 +249,13 @@ func (k Keeper) GetHomePosts(ctx sdk.Context, req *types.QueryHomePostsRequest) 
 	})
 
 	if err != nil {
-		return nil, nil, uint64(0), err
+		types.LogError(k.logger, "get_home_posts", err, "page_index", pageIndex, "page_size", pageSize)
+		return nil, nil, uint64(0), types.WrapError(types.ErrDatabaseOperation, "failed to paginate home posts")
 	}
 	return postIDs, pageRes, uint64(pageIndex + 1), nil
 }
 
-func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context, page uint64) ([]string, *query.PageResponse, uint64, error) {
+func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context, req *types.QueryFirstPageHomePostsRequest) ([]string, *query.PageResponse, uint64, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.HomePostsKeyPrefix))
 	homePostsCount, _ := k.GetHomePostsCount(ctx)
 	if homePostsCount == 0 {
@@ -257,12 +264,16 @@ func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context, page uint64) ([]string, *
 			Total:   uint64(homePostsCount),
 		}, uint64(0), nil
 	}
-
+	page := req.GetPage()
 	if page < 1 {
 		page = 1
 	}
 
-	const pageSize = types.HomePostsPageSize
+	//const pageSize = types.HomePostsPageSize
+	var pageSize int64 = types.HomePostsPageSize
+	if req.PageSize > 0 {
+		pageSize = int64(req.PageSize)
+	}
 	totalPages := homePostsCount / pageSize
 	if homePostsCount%pageSize != 0 {
 		totalPages += 1
@@ -273,9 +284,9 @@ func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context, page uint64) ([]string, *
 	}
 	pagination := &query.PageRequest{}
 
-	first := (page - 1) * pageSize
+	first := (page - 1) * uint64(pageSize)
 
-	pagination.Limit = pageSize
+	pagination.Limit = uint64(pageSize)
 	pagination.Offset = first
 	pagination.Reverse = true
 
@@ -287,7 +298,8 @@ func (k Keeper) GetFirstPageHomePosts(ctx sdk.Context, page uint64) ([]string, *
 	})
 
 	if err != nil {
-		return nil, nil, uint64(0), err
+		types.LogError(k.logger, "get_first_page_home_posts", err, "page", page, "page_size", pageSize)
+		return nil, nil, uint64(0), types.WrapError(types.ErrDatabaseOperation, "failed to paginate first page home posts")
 	}
 	return postIDs, pageRes, page, nil
 }
@@ -299,13 +311,15 @@ func (k Keeper) DeleteLastPostFromHomePosts(ctx sdk.Context) {
 	defer iterator.Close()
 
 	if !iterator.Valid() {
-		panic("homePostsCount exceeds 1000 but no posts found")
+		types.LogError(k.logger, "delete_last_home_post", types.ErrResourceNotFound, "message", "No posts found to delete from home posts")
+		return
 	}
+
 	earliestKey := iterator.Key()
 	earliestPostID := string(iterator.Value())
 
 	store.Delete(earliestKey)
-	k.Logger().Info("Deleted earliest home post", "post_id", earliestPostID)
+	k.logger.Info("Deleted earliest home post", "post_id", earliestPostID)
 }
 
 func (k Keeper) DeleteFromHomePostsByPostId(ctx sdk.Context, postId string, homePostsUpdate int64) {
@@ -415,7 +429,8 @@ func (k Keeper) GetTopicPosts(ctx sdk.Context, topic string, page uint64) ([]str
 	})
 
 	if err != nil {
-		return nil, nil, uint64(0), err
+		types.LogError(k.logger, "get_topic_posts", err, "topic", topic, "page", page, "page_size", pageSize)
+		return nil, nil, uint64(0), types.WrapError(types.ErrDatabaseOperation, "failed to paginate topic posts")
 	}
 	return postIDs, pageRes, page, nil
 }
@@ -440,13 +455,14 @@ func (k Keeper) DeleteLastPostFromTopicPosts(ctx sdk.Context, topic string) {
 	defer iterator.Close()
 
 	if !iterator.Valid() {
-		panic("topicPostsCount exceeds 1000 but no posts found")
+		types.LogError(k.logger, "delete_last_topic_post", types.ErrResourceNotFound, "topic", topic, "message", "topicPostsCount exceeds 1000 but no posts found")
+		return
 	}
 	earliestKey := iterator.Key()
 	earliestPostID := string(iterator.Value())
 
 	store.Delete(earliestKey)
-	k.Logger().Info("Deleted earliest topic posts", "post_id", earliestPostID)
+	k.logger.Info("Deleted earliest topic posts", "post_id", earliestPostID)
 }
 func (k Keeper) SetTopicPostsCount(ctx sdk.Context, topic string, count int64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TopicPostsCountKeyPrefix))
@@ -499,12 +515,13 @@ func (k Keeper) DeleteLastPostFromUserCreated(ctx sdk.Context, creator string) {
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 	if !iterator.Valid() {
-		panic("userCreatedPostsCount exceeds 1000 but no posts found")
+		types.LogError(k.logger, "delete_last_user_post", types.ErrResourceNotFound, "creator", creator, "message", "userCreatedPostsCount exceeds 1000 but no posts found")
+		return
 	}
 	earliestKey := iterator.Key()
 	earliestPostID := string(iterator.Value())
 	store.Delete(earliestKey)
-	k.Logger().Info("Deleted earliest user created post", "post_id", earliestPostID)
+	k.logger.Info("Deleted earliest user created post", "post_id", earliestPostID)
 }
 
 func (k Keeper) GetUserCreatedPosts(ctx sdk.Context, creator string, page uint64) ([]string, *query.PageResponse, uint64, error) {
@@ -541,7 +558,7 @@ func (k Keeper) GetUserCreatedPosts(ctx sdk.Context, creator string, page uint64
 
 	const totalPosts = types.UserCreatedPostsCount
 	if first >= totalPosts {
-		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of home posts")
+		return nil, nil, uint64(0), types.NewInvalidRequestErrorf("offset %d exceeds total number of home posts %d", first, totalPosts)
 	}
 
 	pagination := &query.PageRequest{}
@@ -558,7 +575,8 @@ func (k Keeper) GetUserCreatedPosts(ctx sdk.Context, creator string, page uint64
 	})
 
 	if err != nil {
-		return nil, nil, uint64(0), err
+		types.LogError(k.logger, "get_user_created_posts", err, "creator", creator, "page", page, "page_size", pageSize)
+		return nil, nil, uint64(0), types.WrapError(types.ErrDatabaseOperation, "failed to paginate user created posts")
 	}
 	return postIDs, pageRes, page, nil
 }
@@ -582,7 +600,8 @@ func (k Keeper) GetLastPostsByAddress(ctx sdk.Context, address string, limit int
 		return nil
 	})
 	if err != nil {
-		return nil, nil, err
+		types.LogError(k.logger, "get_last_posts_by_address", err, "address", address, "limit", limit)
+		return nil, nil, types.WrapError(types.ErrDatabaseOperation, "failed to get last posts by address")
 	}
 	return postIDs, pageRes, nil
 }
@@ -622,7 +641,8 @@ func (k Keeper) GetCommentsByParentId(ctx sdk.Context, parentId string, page uin
 	})
 
 	if err != nil {
-		return nil, nil, uint64(0), err
+		types.LogError(k.logger, "get_comments_by_parent_id", err, "parent_id", parentId, "page", page, "page_size", types.PageSize)
+		return nil, nil, uint64(0), types.WrapError(types.ErrDatabaseOperation, "failed to paginate comments by parent id")
 	}
 	return ids, pageResponse, page, nil
 }
@@ -667,7 +687,8 @@ func (k Keeper) GetCommentsReceived(ctx sdk.Context, creator string, page uint64
 	})
 
 	if err != nil {
-		return nil, nil, uint64(0), err
+		types.LogError(k.logger, "get_comments_received", err, "creator", creator, "page", page, "page_size", types.PageSize)
+		return nil, nil, uint64(0), types.WrapError(types.ErrDatabaseOperation, "failed to paginate comments received")
 	}
 	return list, pageResponse, page, nil
 }
@@ -688,6 +709,14 @@ func (k Keeper) MarkUserLikedPost(ctx sdk.Context, sender, postId string) {
 	key := []byte(postId)
 	store.Set(key, blockTime)
 }
+
+// UnmarkUserLikedPost removes the user's like record for a specific post
+func (k Keeper) UnmarkUserLikedPost(ctx sdk.Context, sender, postId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserLikesPrefix+sender+"/"))
+	key := []byte(postId)
+	store.Delete(key)
+}
+
 func (k Keeper) HasUserLikedPost(ctx sdk.Context, sender, postId string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.UserLikesPrefix+sender+"/"))
 	key := []byte(postId)
@@ -720,14 +749,16 @@ func (k Keeper) GetLikesIMade(ctx sdk.Context, sender string, page uint64) ([]*t
 	pageResponse, err := query.Paginate(store, pageRequest, func(key []byte, value []byte) error {
 		var like types.LikesIMade
 		if err := k.cdc.Unmarshal(value, &like); err != nil {
-			return err
+			types.LogError(k.logger, "unmarshal_likes_i_made", err, "sender", sender, "post_id", like.PostId)
+			return types.WrapError(types.ErrDatabaseOperation, "failed to unmarshal LikesIMade")
 		}
 		likesList = append(likesList, &like)
 		return nil
 	})
 
 	if err != nil {
-		return nil, nil, uint64(0), err
+		types.LogError(k.logger, "get_likes_i_made", err, "sender", sender, "page", page, "page_size", types.PageSize)
+		return nil, nil, uint64(0), types.WrapError(types.ErrDatabaseOperation, "failed to paginate likes I made")
 	}
 	return likesList, pageResponse, page, nil
 }
@@ -749,7 +780,8 @@ func (k Keeper) GetLikesIMadePaginated(ctx sdk.Context, sender string, offset, l
 		var like types.LikesIMade
 		err := k.cdc.Unmarshal(iterator.Value(), &like)
 		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal LikesIMade: %w", err)
+			types.LogError(k.logger, "unmarshal_likes_i_made", err, "sender", sender, "post_id", like.PostId)
+			return nil, types.WrapError(types.ErrDatabaseOperation, "failed to unmarshal LikesIMade")
 		}
 		likesList = append(likesList, like)
 		currentIndex++
@@ -767,7 +799,8 @@ func (k Keeper) RemoveFromLikesIMade(ctx sdk.Context, sender string, postId stri
 		var like types.LikesIMade
 		err := k.cdc.Unmarshal(iterator.Value(), &like)
 		if err != nil {
-			return fmt.Errorf("failed to unmarshal LikesImade: %w", err)
+			types.LogError(k.logger, "unmarshal_likes_i_made", err, "sender", sender, "post_id", postId)
+			return types.WrapError(types.ErrDatabaseOperation, "failed to unmarshal LikesIMade")
 		}
 
 		if like.PostId == postId {
@@ -776,7 +809,7 @@ func (k Keeper) RemoveFromLikesIMade(ctx sdk.Context, sender string, postId stri
 			return nil
 		}
 	}
-	return fmt.Errorf("like not found for sender %s and postId %s", sender, postId)
+	return types.NewPostNotFoundError(postId)
 }
 
 func (k Keeper) MarkUserSavedPost(ctx sdk.Context, sender, postId string) {
@@ -810,7 +843,8 @@ func (k Keeper) RemoveFromSavesIMade(ctx sdk.Context, sender string, postId stri
 		var like types.LikesIMade
 		err := k.cdc.Unmarshal(iterator.Value(), &like)
 		if err != nil {
-			return fmt.Errorf("failed to unmarshal LikesImade: %w", err)
+			types.LogError(k.logger, "unmarshal_saves_i_made", err, "sender", sender, "post_id", postId)
+			return types.WrapError(types.ErrDatabaseOperation, "failed to unmarshal SavesIMade")
 		}
 
 		if like.PostId == postId {
@@ -819,7 +853,7 @@ func (k Keeper) RemoveFromSavesIMade(ctx sdk.Context, sender string, postId stri
 			return nil
 		}
 	}
-	return fmt.Errorf("like not found for sender %s and postId %s", sender, postId)
+	return types.NewPostNotFoundError(postId)
 }
 
 func (k Keeper) GetSavesIMade(ctx sdk.Context, sender string, page uint64) ([]*types.LikesIMade, *query.PageResponse, uint64, error) {
@@ -901,7 +935,8 @@ func (k Keeper) RemoveFromLikesReceived(ctx sdk.Context, creator string, sender 
 		var received types.LikesReceived
 		err := k.cdc.Unmarshal(iterator.Value(), &received)
 		if err != nil {
-			return fmt.Errorf("failed to unmarshal LikesReceived: %w", err)
+			types.LogError(k.logger, "unmarshal_likes_received", err, "creator", creator, "sender", sender, "post_id", postId)
+			return types.WrapError(types.ErrDatabaseOperation, "failed to unmarshal LikesReceived")
 		}
 
 		if received.PostId == postId && received.LikerAddress == sender {
@@ -910,7 +945,7 @@ func (k Keeper) RemoveFromLikesReceived(ctx sdk.Context, creator string, sender 
 			return nil
 		}
 	}
-	return fmt.Errorf("like not found for creator %s sender %s and postId %s", creator, sender, postId)
+	return types.NewPostNotFoundError(postId)
 }
 
 func (k Keeper) PostReward(ctx sdk.Context, post types.Post) {
@@ -1013,20 +1048,20 @@ func (k Keeper) GrantPeriodicAllowance(ctx sdk.Context, sender sdk.AccAddress, u
 	//specificAddress := sdk.MustAccAddressFromBech32("tlock1vj037yzhdslqzens3lu5vfjay9y8n956gqwyqw")
 	specificAddress := sdk.MustAccAddressFromBech32("tlock1hj5fveer5cjtn4wd6wstzugjfdxzl0xp5u7j9p")
 
+	granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
+	grantee := userAddr
+
 	if sender.Equals(specificAddress) {
 		now := ctx.BlockTime()
-		//oneHour := now.Add(1 * time.Hour)
-		oneDay := now.Add(24 * time.Hour)
-		//oneDay := now.Add(10 * time.Second)
-		//period := 24 * time.Hour
-		//period := 10 * time.Second
-		period := 1 * time.Hour
-		totalSpendLimit := sdk.NewCoins(sdk.NewCoin("uTOK", sdkmath.NewInt(10000000)))
-		spendLimit := sdk.NewCoins(sdk.NewCoin("uTOK", sdkmath.NewInt(2000000)))
+		expiration := now.Add(5 * 365 * 24 * time.Hour)
+
+		period := 24 * time.Hour
+		totalSpendLimit := sdk.NewCoins(sdk.NewCoin("uTOK", sdkmath.NewInt(20000000000)))
+		spendLimit := sdk.NewCoins(sdk.NewCoin("uTOK", sdkmath.NewInt(10000000)))
 		// create a basic allowance
 		basicAllowance := feegrant.BasicAllowance{
 			SpendLimit: totalSpendLimit,
-			Expiration: &oneDay,
+			Expiration: &expiration,
 		}
 
 		// create a periodic allowance
@@ -1038,16 +1073,13 @@ func (k Keeper) GrantPeriodicAllowance(ctx sdk.Context, sender sdk.AccAddress, u
 			PeriodReset:      now.Add(period),
 		}
 
-		granter := k.AccountKeeper.GetModuleAddress(types.ModuleName)
-		grantee := userAddr
-
 		err := k.FeeGrantKeeper.GrantAllowance(ctx, granter, grantee, periodicAllowance)
 		if err != nil {
-			ctx.Logger().Error("Failed to grant allowance", "error", err)
+			types.LogError(k.logger, "grant_allowance_failed", err, "granter", granter.String(), "grantee", grantee.String())
 			return
 		}
 	} else {
-		ctx.Logger().Error("Failed to grant allowance", "error", "=====")
+		k.logger.Error("Failed to grant allowance - unknown error", "granter", granter.String(), "grantee", grantee.String())
 		return
 	}
 
@@ -1304,7 +1336,7 @@ func (k Keeper) addToTrendingKeywords(ctx sdk.Context, topicHash string, score u
 	key := buffer.Bytes()
 	store.Set(key, []byte(topicHash))
 }
-func (k Keeper) deleteFormTrendingKeywords(ctx sdk.Context, topicHash string, score uint64) {
+func (k Keeper) deleteFromTrendingKeywords(ctx sdk.Context, topicHash string, score uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingKeywordsPrefix))
 	bzScore := k.EncodeScore(score)
 	var buffer bytes.Buffer
@@ -1413,7 +1445,7 @@ func (k Keeper) isWithinTrendingTopics(ctx sdk.Context, topicHash string, score 
 	key := buffer.Bytes()
 	return store.Has(key)
 }
-func (k Keeper) deleteFormTrendingTopics(ctx sdk.Context, topicHash string, score uint64) {
+func (k Keeper) deleteFromTrendingTopics(ctx sdk.Context, topicHash string, score uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.TrendingTopicsPrefix))
 	bzScore := k.EncodeScore(score)
 	var buffer bytes.Buffer
@@ -1715,6 +1747,12 @@ func (k Keeper) SetPoll(ctx sdk.Context, id string, sender string, optionId int6
 	optionIdBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(optionIdBytes, uint64(optionId))
 	store.Set([]byte(sender), optionIdBytes)
+}
+
+// RemovePoll removes a user's vote record for a specific poll
+func (k Keeper) RemovePoll(ctx sdk.Context, id string, sender string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PollUserPrefix+id+"/"))
+	store.Delete([]byte(sender))
 }
 
 func (k Keeper) GetPoll(ctx sdk.Context, id string, sender string) (string, bool) {

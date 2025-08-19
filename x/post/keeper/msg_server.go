@@ -2,14 +2,13 @@ package keeper
 
 import (
 	"context"
-	"cosmossdk.io/errors"
 	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/rollchains/tlock/x/post/types"
-	profiletypes "github.com/rollchains/tlock/x/profile/types"
 	"math"
 	"strings"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/rollchains/tlock/x/post/types"
+	profiletypes "github.com/rollchains/tlock/x/profile/types"
 )
 
 const MaxImageSize = 500 * 1024 // 500 KB
@@ -25,9 +24,42 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{k: keeper}
 }
 
+// Helper function to validate addresses
+func (ms msgServer) validateAddress(address string) error {
+	if _, err := sdk.AccAddressFromBech32(address); err != nil {
+		return types.NewInvalidAddressErrorf("invalid address %s: %s", address, err)
+	}
+	return nil
+}
+
+// Helper function to validate post ID
+func (ms msgServer) validatePostID(postID string) error {
+	return types.ValidatePostID(postID)
+}
+
+// Helper function to get post with validation
+func (ms msgServer) getPostWithValidation(ctx sdk.Context, postID string) (types.Post, error) {
+	if err := ms.validatePostID(postID); err != nil {
+		return types.Post{}, err
+	}
+
+	post, found := ms.k.GetPost(ctx, postID)
+	if !found {
+		return types.Post{}, types.NewPostNotFoundError(postID)
+	}
+
+	return post, nil
+}
+
+// Helper function to log and return error
+func (ms msgServer) logAndReturnError(operation string, err error, context ...interface{}) error {
+	types.LogError(ms.k.logger, operation, err, context...)
+	return err
+}
+
 func (ms msgServer) UpdateParams(ctx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	if ms.k.authority != msg.Authority {
-		return nil, errors.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.k.authority, msg.Authority)
+		return nil, types.NewInvalidAddressErrorf("invalid authority; expected %s, got %s", ms.k.authority, msg.Authority)
 	}
 
 	return nil, ms.k.Params.Set(ctx, msg.Params)
@@ -36,7 +68,6 @@ func (ms msgServer) UpdateParams(ctx context.Context, msg *types.MsgUpdateParams
 // SetServiceName implements types.MsgServer.
 func (ms msgServer) SetServiceName(ctx context.Context, msg *types.MsgSetServiceName) (*types.MsgSetServiceNameResponse, error) {
 	// ctx := sdk.UnwrapSDKContext(goCtx)
-	//panic("SetServiceName is unimplemented")
 	//return &types.MsgSetServiceNameResponse{}, nil
 	if err := ms.k.NameMapping.Set(ctx, msg.Sender, msg.Name); err != nil {
 		return nil, err
@@ -50,18 +81,63 @@ func (ms msgServer) GrantAllowanceFromModule(goCtx context.Context, msg *types.M
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender, senderErr := sdk.AccAddressFromBech32(msg.Sender)
-	//fmt.Printf("====sender: %s\n", sender)
 	if senderErr != nil {
-		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", senderErr)
+		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, types.NewInvalidAddressErrorf("invalid sender address: %s", senderErr)
 	}
 	userAddress, userErr := sdk.AccAddressFromBech32(msg.UserAddress)
-	//fmt.Printf("=====userAddress: %s\n", userAddress)
 	if userErr != nil {
-		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", userErr)
+		return &types.MsgGrantAllowanceFromModuleResponse{Status: false}, types.NewInvalidAddressErrorf("invalid user address: %s", userErr)
 	}
 	ms.k.GrantPeriodicAllowance(ctx, sender, userAddress)
 
 	return &types.MsgGrantAllowanceFromModuleResponse{Status: true}, nil
+}
+
+func (ms msgServer) validateCreatePostRequest(msg *types.MsgCreatePost) error {
+	postDetail := msg.GetPostDetail()
+
+	// Validate content
+	if err := types.ValidatePostContent(postDetail.Content); err != nil {
+		return err
+	}
+
+	// Validate title if present
+	if postDetail.Title != "" {
+		if err := types.ValidateTitle(postDetail.Title); err != nil {
+			return err
+		}
+	}
+
+	// Validate mentions
+	if err := types.ValidateMentions(postDetail.Mention); err != nil {
+		return err
+	}
+
+	// Validate topics
+	if err := types.ValidateTopics(postDetail.Topic); err != nil {
+		return err
+	}
+
+	// Validate images
+	if err := types.ValidateImages(postDetail.ImagesBase64); err != nil {
+		return err
+	}
+
+	// Validate category if present
+	if postDetail.Category != "" {
+		if err := types.ValidateCategory(postDetail.Category); err != nil {
+			return err
+		}
+	}
+
+	// Validate image sizes
+	for _, img := range postDetail.ImagesBase64 {
+		if len(img) > MaxImageSize {
+			return types.ErrImageTooLarge
+		}
+	}
+
+	return nil
 }
 
 // CreatePost implements types.MsgServer.
@@ -69,19 +145,15 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	postDetail := msg.GetPostDetail()
-	// Validate the message
-	if len(postDetail.Content) == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidRequest, "Content cannot be empty")
-	}
-	if err := types.ValidatePostContent(postDetail.Content); err != nil {
-		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
+	// Validate params
+	err := ms.validateCreatePostRequest(msg)
+	if err != nil {
+		return nil, err
 	}
 
-	// Validate sender address
-	//sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+	// Validate address
+	if err := ms.validateAddress(msg.Creator); err != nil {
+		return nil, err
 	}
 
 	//if len(msg.Image) > MaxImageSize {
@@ -92,16 +164,18 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 	// Generate a unique post ID
 	var data string
 	var postType types.PostType
-	if postDetail.Poll != nil {
-		postType = types.PostType_POLL
-	} else {
-		if postDetail.Title != "" {
-			postType = types.PostType_ARTICLE
-			data = fmt.Sprintf("%s|%s|%s|%d", msg.Creator, postDetail.Title, postDetail.Content, blockTime)
-		} else {
-			postType = types.PostType_ORIGINAL
-			data = fmt.Sprintf("%s|%s|%d", msg.Creator, postDetail.Content, blockTime)
+	if postDetail.Title != "" {
+		if err := types.ValidatePostWithTitleContent(postDetail.Content); err != nil {
+			return nil, err
 		}
+		postType = types.PostType_ARTICLE
+		data = fmt.Sprintf("%s|%s|%s|%d", msg.Creator, postDetail.Title, postDetail.Content, blockTime)
+	} else {
+		if err := types.ValidatePostContent(postDetail.Content); err != nil {
+			return nil, err
+		}
+		postType = types.PostType_ORIGINAL
+		data = fmt.Sprintf("%s|%s|%d", msg.Creator, postDetail.Content, blockTime)
 	}
 	postId := ms.k.sha256Generate(data)
 
@@ -109,7 +183,8 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 	post := types.Post{
 		Id: postId,
 		//PostType:        types.PostType_ORIGINAL,
-		PostType:        postType,
+		PostType: postType,
+		//Title:           postDetail.Title,
 		Content:         postDetail.Content,
 		Creator:         msg.Creator,
 		Timestamp:       blockTime,
@@ -118,7 +193,9 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 		HomePostsUpdate: blockTime,
 		Poll:            postDetail.Poll,
 	}
-
+	if postDetail.Poll != nil {
+		post.PostType = types.PostType_POLL
+	}
 	if postDetail.GetTitle() != "" {
 		post.Title = postDetail.GetTitle()
 		//post.PostType = types.PostType_ARTICLE
@@ -126,9 +203,6 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 
 	imagesBase64 := postDetail.ImagesBase64
 	if len(imagesBase64) > 0 {
-		if len(imagesBase64) > 1 {
-			return nil, fmt.Errorf("only one paid image is allowed to be uploaded")
-		}
 		paidImageBase64 := imagesBase64[0]
 		imageHash := ms.k.sha256Generate(paidImageBase64)
 		setPaidPostImageErr := ms.k.SetPaidPostImage(ctx, imageHash, postDetail.ImagesBase64[0])
@@ -139,7 +213,7 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 	}
 
 	// post payment
-	ms.k.postPayment(ctx, post)
+	//ms.k.postPayment(ctx, post)
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
 	// add home posts
@@ -152,9 +226,6 @@ func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) 
 	// mentions add to activitiesReceived
 	userHandleList := postDetail.Mention
 	if len(userHandleList) > 0 {
-		if len(userHandleList) > 10 {
-			return nil, fmt.Errorf("cannot mention more than 10 users")
-		}
 		for _, userHandle := range userHandleList {
 			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
 			if address != "" {
@@ -565,19 +636,19 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 
 	// Validate the message
 	if len(msg.Comment) == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidRequest, "Comment cannot be empty")
+		return nil, types.NewInvalidRequestError("comment cannot be empty")
 	}
 	if len(msg.Quote) == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidRequest, "Quote cannot be empty")
+		return nil, types.NewInvalidRequestError("quote cannot be empty")
 	}
 	if err := types.ValidatePostContent(msg.Comment); err != nil {
-		return nil, errors.Wrap(types.ErrInvalidRequest, err.Error())
+		return nil, err
 	}
 
 	// Validate sender address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+		return nil, types.NewInvalidAddressErrorf("invalid sender address: %s", err)
 	}
 
 	blockTime := ctx.BlockTime().Unix()
@@ -605,15 +676,18 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 	ms.addToUserCreatedPosts(ctx, msg.Creator, post)
 	ms.k.ProfileKeeper.CheckAndCreateUserHandle(ctx, msg.Creator)
 
-	parentPost, _ := ms.k.GetPost(ctx, msg.Quote)
+	parentPost, found := ms.k.GetPost(ctx, msg.Quote)
+	if !found {
+		return nil, types.NewPostNotFoundError(msg.Quote)
+	}
 	parentPost.RepostCount += 1
 	ms.k.SetPost(ctx, parentPost)
 
 	// mentions add to activitiesReceived
 	userHandleList := msg.Mention
 	if len(userHandleList) > 0 {
-		if len(userHandleList) > 10 {
-			return nil, fmt.Errorf("cannot mention more than 10 users")
+		if err := types.ValidateMentions(userHandleList); err != nil {
+			return nil, err
 		}
 		for _, userHandle := range userHandleList {
 			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
@@ -633,7 +707,7 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeCreateFreePostWithTitle,
+			types.EventTypeQuotePost,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyPostID, postId),
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
@@ -649,16 +723,19 @@ func (ms msgServer) Repost(goCtx context.Context, msg *types.MsgRepostRequest) (
 
 	// Validate the message
 	if len(msg.Quote) == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidRequest, "Quote cannot be empty")
+		return nil, types.NewInvalidRequestError("quote cannot be empty")
 	}
 
 	// Validate sender address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+		return nil, types.NewInvalidAddressErrorf("invalid sender address: %s", err)
 	}
 
-	parentPost, _ := ms.k.GetPost(ctx, msg.Quote)
+	parentPost, found := ms.k.GetPost(ctx, msg.Quote)
+	if !found {
+		return nil, types.NewPostNotFoundError(msg.Quote)
+	}
 	// add home posts
 	//ms.addToHomePosts(ctx, parentPost)
 	// add to user created posts
@@ -668,19 +745,36 @@ func (ms msgServer) Repost(goCtx context.Context, msg *types.MsgRepostRequest) (
 	parentPost.RepostCount += 1
 	ms.k.SetPost(ctx, parentPost)
 
+	blockTime := ctx.BlockTime().Unix()
+	//Emit an event for the repost
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeRepost,
+			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
+			sdk.NewAttribute(types.AttributeKeyPostID, msg.Quote),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
+		),
+	})
+
 	return &types.MsgRepostResponse{}, nil
 }
 
 // LikePost implements types.MsgServer.
 func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*types.MsgLikeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	//hasLiked := ms.k.HasUserLikedPost(ctx, msg.Sender, msg.Id)
-	//if hasLiked {
-	//	return nil, errors.Wrap(types.ErrAlreadyLiked, "user has already liked this post")
-	//}
-	post, found := ms.k.GetPost(ctx, msg.Id)
-	if !found {
-		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
+
+	// Check if user has already liked this post
+	hasLiked := ms.k.HasUserLikedPost(ctx, msg.Sender, msg.Id)
+	if hasLiked {
+		return nil, types.ErrAlreadyLiked
+	}
+
+	ms.k.MarkUserLikedPost(ctx, msg.Sender, msg.Id)
+
+	post, err := ms.getPostWithValidation(ctx, msg.Id)
+	if err != nil {
+		ms.k.UnmarkUserLikedPost(ctx, msg.Sender, msg.Id)
+		return nil, err
 	}
 
 	oldScore := post.Score
@@ -721,13 +815,14 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	post.HomePostsUpdate = blockTime
 	ms.k.SetPost(ctx, post)
 
+	// post reward
+	ms.k.PostReward(ctx, post)
 	// set likes I made
 	likesIMade := types.LikesIMade{
 		PostId:    post.Id,
 		Timestamp: blockTime,
 	}
 	ms.k.SetLikesIMade(ctx, likesIMade, msg.Sender)
-	ms.k.MarkUserLikedPost(ctx, msg.Sender, post.Id)
 
 	// set likes received
 	likesReceived := types.LikesReceived{
@@ -754,32 +849,45 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	return &types.MsgLikeResponse{Status: true}, nil
 }
 
-// UnlikePost implements types.MsgServer.
+// Unlike implements types.MsgServer.
 func (ms msgServer) Unlike(goCtx context.Context, msg *types.MsgUnlikeRequest) (*types.MsgUnlikeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	post, found := ms.k.GetPost(ctx, msg.Id)
-	if !found {
-		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
+	hasLiked := ms.k.HasUserLikedPost(ctx, msg.Sender, msg.Id)
+	if !hasLiked {
+		return nil, types.NewInvalidRequestError("user has not liked this post")
+	}
+
+	post, err := ms.getPostWithValidation(ctx, msg.Id)
+	if err != nil {
+		return nil, err
 	}
 
 	if post.LikeCount > 0 {
 		post.LikeCount -= 1
 	} else {
-		return nil, errors.Wrap(types.ErrInvalidLikeCount, "like count is already zero")
+		return nil, types.ErrInvalidLikeCount
 	}
+
+	ms.k.UnmarkUserLikedPost(ctx, msg.Sender, msg.Id)
 
 	ms.k.SetPost(ctx, post)
 
 	// remove from likes I made
-	err := ms.k.RemoveFromLikesIMade(ctx, msg.Sender, msg.Id)
-	if err != nil {
-		return nil, errors.Wrap(types.ErrLikesIMadeRemove, msg.Id)
+	removeErr := ms.k.RemoveFromLikesIMade(ctx, msg.Sender, msg.Id)
+	if removeErr != nil {
+		ms.k.MarkUserLikedPost(ctx, msg.Sender, msg.Id)
+		return nil, types.WrapErrorf(types.ErrLikesIMadeRemove, "failed to remove likes I made for post %s", msg.Id)
 	}
 
 	err2 := ms.k.RemoveFromLikesReceived(ctx, post.Creator, msg.Sender, msg.Id)
 	if err2 != nil {
-		return nil, errors.Wrap(types.ErrLikesReceivedRemove, msg.Id)
+		ms.k.MarkUserLikedPost(ctx, msg.Sender, msg.Id)
+		ms.k.SetLikesIMade(ctx, types.LikesIMade{PostId: msg.Id, Timestamp: ctx.BlockTime().Unix()}, msg.Sender)
+		//if restoreErr := ms.k.SetLikesIMade(ctx, types.LikesIMade{PostId: msg.Id, Timestamp: ctx.BlockTime().Unix()}, msg.Sender); restoreErr != nil {
+		//	types.LogError(ms.k.logger, "restore_likes_i_made", restoreErr, "post_id", msg.Id, "sender", msg.Sender)
+		//}
+		return nil, types.WrapErrorf(types.ErrLikesReceivedRemove, "failed to remove likes received for post %s", msg.Id)
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -798,17 +906,17 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	hasSaved := ms.k.HasUserSavedPost(ctx, msg.Sender, msg.Id)
 	if hasSaved {
-		return nil, errors.Wrap(types.ErrAlreadySaved, "user has already saved this post")
+		return nil, types.ErrAlreadySaved
 	}
 	// Retrieve the post by ID
-	post, found := ms.k.GetPost(ctx, msg.Id)
-	if !found {
-		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
+	post, err := ms.getPostWithValidation(ctx, msg.Id)
+	if err != nil {
+		return nil, err
 	}
 
 	// Check if the post type is COMMENT
 	if post.PostType == types.PostType_COMMENT {
-		return nil, errors.Wrap(types.ErrInvalidPostType, "cannot save a comment type post")
+		return nil, types.NewInvalidRequestError("cannot save a comment type post")
 	}
 
 	blockTime := ctx.BlockTime().Unix()
@@ -853,20 +961,20 @@ func (ms msgServer) SavePost(goCtx context.Context, msg *types.MsgSaveRequest) (
 func (ms msgServer) UnsavePost(goCtx context.Context, msg *types.MsgUnsaveRequest) (*types.MsgUnsaveResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	post, found := ms.k.GetPost(ctx, msg.Id)
-	if !found {
-		return nil, errors.Wrap(types.ErrPostNotFound, msg.Id)
+	post, err := ms.getPostWithValidation(ctx, msg.Id)
+	if err != nil {
+		return nil, err
 	}
 
 	// remove from saves I made
-	err := ms.k.RemoveFromSavesIMade(ctx, msg.Sender, msg.Id)
+	err = ms.k.RemoveFromSavesIMade(ctx, msg.Sender, msg.Id)
 	if err != nil {
-		return nil, errors.Wrap(types.ErrSavesIMadeRemove, msg.Id)
+		return nil, types.WrapErrorf(types.ErrSavesIMadeRemove, "failed to remove saves I made for post %s", msg.Id)
 	}
 
 	err2 := ms.k.RemoveFromLikesReceived(ctx, post.Creator, msg.Sender, msg.Id)
 	if err2 != nil {
-		return nil, errors.Wrap(types.ErrLikesReceivedRemove, msg.Id)
+		return nil, types.WrapErrorf(types.ErrLikesReceivedRemove, "failed to remove likes received for post %s", msg.Id)
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -885,16 +993,15 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// Validate the message
 	if len(msg.ParentId) == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidRequest, "parent id cannot be empty")
+		return nil, types.NewInvalidRequestError("parent id cannot be empty")
 	}
 	if len(msg.Comment) == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidRequest, "Comment cannot be empty")
+		return nil, types.NewInvalidRequestError("comment cannot be empty")
 	}
 
 	// Validate sender address
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return nil, errors.Wrapf(types.ErrInvalidAddress, "Invalid sender address: %s", err)
+	if err := ms.validateAddress(msg.Creator); err != nil {
+		return nil, err
 	}
 
 	blockTime := ctx.BlockTime().Unix()
@@ -916,9 +1023,9 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	// post reward
 	ms.k.PostReward(ctx, comment)
 
-	post, found := ms.k.GetPost(ctx, msg.ParentId)
-	if !found {
-		return nil, errors.Wrap(types.ErrPostNotFound, msg.ParentId)
+	post, err := ms.getPostWithValidation(ctx, msg.ParentId)
+	if err != nil {
+		return nil, err
 	}
 
 	oldScore := post.Score
@@ -968,8 +1075,8 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	// mentions add to activitiesReceived
 	userHandleList := msg.Mention
 	if len(userHandleList) > 0 {
-		if len(userHandleList) > 10 {
-			return nil, fmt.Errorf("cannot mention more than 10 users")
+		if err := types.ValidateMentions(userHandleList); err != nil {
+			return nil, err
 		}
 		for _, userHandle := range userHandleList {
 			address := ms.k.ProfileKeeper.GetAddressByUserHandle(ctx, userHandle)
@@ -982,7 +1089,7 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	//Emit an event for the creation
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeCreateFreePostWithTitle,
+			types.EventTypeComment,
 			sdk.NewAttribute(types.AttributeKeyCreator, msg.Creator),
 			sdk.NewAttribute(types.AttributeKeyCommentID, commentID),
 			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", blockTime)),
@@ -996,7 +1103,8 @@ func (ms msgServer) updateHomePosts(ctx sdk.Context, post types.Post) {
 	ms.k.SetHomePosts(ctx, post.Id)
 	count, b := ms.k.GetHomePostsCount(ctx)
 	if !b {
-		panic("GetHomePostsCount error")
+		types.LogError(ms.k.logger, "updateHomePosts", types.ErrDatabaseOperation, "operation", "GetHomePostsCount")
+		return
 	}
 	if count > types.HomePostsCount {
 		ms.k.DeleteLastPostFromHomePosts(ctx)
@@ -1009,7 +1117,8 @@ func (ms msgServer) addToHomePosts(ctx sdk.Context, post types.Post) {
 	ms.k.SetHomePosts(ctx, post.Id)
 	count, b := ms.k.GetHomePostsCount(ctx)
 	if !b {
-		panic("GetHomePostsCount error")
+		types.LogError(ms.k.logger, "addToHomePosts", types.ErrDatabaseOperation, "operation", "GetHomePostsCount")
+		return
 	}
 	count += 1
 	if count > types.HomePostsCount {
@@ -1023,7 +1132,8 @@ func (ms msgServer) addToUserCreatedPosts(ctx sdk.Context, creator string, post 
 	ms.k.AddToUserCreatedPosts(ctx, creator, post.Id)
 	count, b := ms.k.GetUserCreatedPostsCount(ctx, creator)
 	if !b {
-		panic("GetUserCreatedPostsCount error")
+		types.LogError(ms.k.logger, "addToUserCreatedPosts", types.ErrDatabaseOperation, "operation", "GetUserCreatedPostsCount", "creator", creator)
+		return
 	}
 	count += 1
 	if count > types.UserCreatedPostsCount {
@@ -1037,7 +1147,8 @@ func (ms msgServer) addToTopicPosts(ctx sdk.Context, topicHash string, postId st
 	ms.k.SetTopicPosts(ctx, topicHash, postId)
 	count, b := ms.k.GetTopicPostsCount(ctx, topicHash)
 	if !b {
-		panic("GetTopicPostsCount error")
+		types.LogError(ms.k.logger, "addToTopicPosts", types.ErrDatabaseOperation, "operation", "GetTopicPostsCount", "topicHash", topicHash)
+		return
 	}
 	count += 1
 	if count > types.TopicPostsCount {
@@ -1055,7 +1166,8 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 			ms.k.SetTopicPosts(ctx, topicHash, post.Id)
 			count, b := ms.k.GetTopicPostsCount(ctx, topicHash)
 			if !b {
-				panic("GetTopicPostsCount error")
+				types.LogError(ms.k.logger, "updateTopicPosts", types.ErrDatabaseOperation, "operation", "GetTopicPostsCount", "topicHash", topicHash)
+				return
 			}
 			if count > types.TopicPostsCount {
 				ms.k.DeleteLastPostFromTopicPosts(ctx, topicHash)
@@ -1080,10 +1192,10 @@ func (ms msgServer) updateTopicPosts(ctx sdk.Context, post types.Post, uintExpon
 				//trendingKeywordsTime := topic.GetTrendingKeywordsTime()
 				//hotKeywordsCount, b := ms.k.GetTrendingKeywordsCount(ctx)
 				//if !b {
-				//	panic("GetTrendingKeywordsCount error")
+				//	ms.k.Logger().Error("GetTrendingKeywordsCount error")
 				//}
 				//if trendingKeywordsTime > 0 {
-				//	ms.k.deleteFormTrendingKeywords(ctx, topicHash, oldKeywordsScore)
+				//	ms.k.deleteFromTrendingKeywords(ctx, topicHash, oldKeywordsScore)
 				//	isWithin72 := isWithin72Hours(trendingKeywordsTime, blockTime)
 				//	if isWithin72 {
 				//		ms.k.addToTrendingKeywords(ctx, topicHash, newKeywordsScore)
@@ -1130,10 +1242,10 @@ func (ms msgServer) trendingKeywordsUpdate(ctx sdk.Context, topic types.Topic, o
 	trendingKeywordsTime := topic.GetTrendingKeywordsTime()
 	trendingKeywordsCount, b := ms.k.GetTrendingKeywordsCount(ctx)
 	if !b {
-		panic("GetTrendingKeywordsCount error")
+		types.LogError(ms.k.logger, "trendingKeywordsUpdate", types.ErrDatabaseOperation, "operation", "GetTrendingKeywordsCount")
 	}
 	if trendingKeywordsTime > 0 {
-		ms.k.deleteFormTrendingKeywords(ctx, topic.Id, oldKeywordsScore)
+		ms.k.deleteFromTrendingKeywords(ctx, topic.Id, oldKeywordsScore)
 		withinSpecifiedHours := isWithinHours(trendingKeywordsTime, blockTime, types.TrendingKeyWordsRetentionHours)
 		if withinSpecifiedHours {
 			ms.k.addToTrendingKeywords(ctx, topic.Id, newKeywordsScore)
@@ -1169,7 +1281,7 @@ func (ms msgServer) trendingTopicsUpdate(ctx sdk.Context, topic types.Topic, old
 	createTime := topic.GetCreateTime()
 	trendingTopicsCount, b := ms.k.GetTrendingTopicsCount(ctx)
 	if !b {
-		panic("GetTrendingKeywordsCount error")
+		types.LogError(ms.k.logger, "trending_topics_update", types.ErrDatabaseOperation, "operation", "GetTrendingTopicsCount")
 	}
 
 	withinSpecifiedHours := isWithinHours(createTime, blockTime, types.TrendingTopicsRetentionHours)
@@ -1177,14 +1289,14 @@ func (ms msgServer) trendingTopicsUpdate(ctx sdk.Context, topic types.Topic, old
 
 	if withinSpecifiedHours {
 		if isWithinTrendingTopics {
-			ms.k.deleteFormTrendingTopics(ctx, topic.Id, oldTopicScore)
+			ms.k.deleteFromTrendingTopics(ctx, topic.Id, oldTopicScore)
 			trendingTopicsCount -= 1
 		}
 		ms.k.addToTrendingTopics(ctx, topic.Id, newTopicScore)
 		trendingTopicsCount += 1
 	} else {
 		if isWithinTrendingTopics {
-			ms.k.deleteFormTrendingTopics(ctx, topic.Id, oldTopicScore)
+			ms.k.deleteFromTrendingTopics(ctx, topic.Id, oldTopicScore)
 			trendingTopicsCount -= 1
 		}
 	}
@@ -1274,7 +1386,7 @@ func (ms msgServer) ScoreAccumulation(ctx sdk.Context, operator string, post typ
 //		ms.k.ProfileKeeper.SetActivitiesReceived(sdkCtx, activitiesReceived, address, msg.Creator)
 //		count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(sdkCtx, address)
 //		if !b {
-//			panic("GetActivitiesReceivedCount error")
+//			ms.k.Logger().Error("GetActivitiesReceivedCount error")
 //		}
 //		count += 1
 //		if count > profiletypes.ActivitiesReceivedCount {
@@ -1312,7 +1424,8 @@ func (ms msgServer) addActivitiesReceived(sdkCtx sdk.Context, parentPost types.P
 	ms.k.ProfileKeeper.SetActivitiesReceived(sdkCtx, activitiesReceived, target, operator)
 	count, b := ms.k.ProfileKeeper.GetActivitiesReceivedCount(sdkCtx, target)
 	if !b {
-		panic("GetActivitiesReceivedCount error")
+		types.LogError(ms.k.logger, "addActivitiesReceived", types.ErrDatabaseOperation, "operation", "GetActivitiesReceivedCount", "target", target)
+		return
 	}
 	count += 1
 	if count > profiletypes.ActivitiesReceivedCount {
@@ -1324,7 +1437,7 @@ func (ms msgServer) addActivitiesReceived(sdkCtx sdk.Context, parentPost types.P
 func (ms msgServer) handleCategoryTopicPost(ctx sdk.Context, creator string, topicList []string, category string, blockTime int64, postId string) error {
 	if len(topicList) > 0 {
 		if len(topicList) > 10 {
-			return fmt.Errorf("topic list length can not be larger than 10")
+			return types.NewInvalidRequestError("topic list length cannot be larger than 10")
 		}
 		var hashTopics []string
 		for _, topicName := range topicList {
@@ -1419,7 +1532,8 @@ func (ms msgServer) addToCategoryPosts(ctx sdk.Context, categoryHash string, pos
 	ms.k.SetCategoryPosts(ctx, categoryHash, postId)
 	count, b := ms.k.GetCategoryPostsCount(ctx, categoryHash)
 	if !b {
-		panic("GetCategoryPostsCount error")
+		types.LogError(ms.k.logger, "addToCategoryPosts", types.ErrDatabaseOperation, "operation", "GetCategoryPostsCount", "categoryHash", categoryHash)
+		return
 	}
 	count += 1
 	if count > types.CategoryPostsCount {
@@ -1434,7 +1548,8 @@ func (ms msgServer) updateCategoryPosts(ctx sdk.Context, post types.Post) {
 	ms.k.SetCategoryPosts(ctx, category, post.Id)
 	count, b := ms.k.GetCategoryPostsCount(ctx, category)
 	if !b {
-		panic("GetCategoryPostsCount error")
+		types.LogError(ms.k.logger, "updateCategoryPosts", types.ErrDatabaseOperation, "operation", "GetCategoryPostsCount", "category", category)
+		return
 	}
 	if count > types.CategoryPostsCount {
 		ms.k.DeleteLastPostFromCategoryPosts(ctx, category)
@@ -1446,7 +1561,8 @@ func (ms msgServer) addToCategoryTopics(ctx sdk.Context, categoryHash string, to
 	ms.k.SetCategoryTopics(ctx, categoryHash, topic.Id, topic.Score)
 	count, b := ms.k.GetCategoryTopicsCount(ctx, categoryHash)
 	if !b {
-		panic("GetCategoryTopicsCount error")
+		types.LogError(ms.k.logger, "addToCategoryTopics", types.ErrDatabaseOperation, "operation", "GetCategoryTopicsCount", "categoryHash", categoryHash)
+		return
 	}
 	count += 1
 	if count > types.CategoryTopicsCount {
@@ -1460,28 +1576,61 @@ func (ms msgServer) addToCategoryTopics(ctx sdk.Context, categoryHash string, to
 func (ms msgServer) CastVoteOnPoll(goCtx context.Context, msg *types.CastVoteOnPollRequest) (*types.CastVoteOnPollResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	blockTime := ctx.BlockTime().Unix()
-	parentPost, _ := ms.k.GetPost(ctx, msg.Id)
+
+	// Validate and get parent post
+	parentPost, err := ms.getPostWithValidation(ctx, msg.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate poll exists
+	if parentPost.Poll == nil {
+		return nil, types.NewInvalidRequestError("post does not contain a poll")
+	}
 
 	if blockTime < parentPost.Poll.VotingStart {
-		return nil, errors.Wrapf(types.ErrVotingNotStarted, "voting has not started yet")
+		return nil, types.ErrVotingNotStarted
 	}
 	if blockTime > parentPost.Poll.VotingEnd {
-		return nil, errors.Wrapf(types.ErrVotingEnded, "voting has ended")
+		return nil, types.ErrVotingEnded
 	}
-	_, b := ms.k.GetPoll(ctx, msg.Id, msg.Creator)
-	if b {
-		return nil, errors.Wrapf(types.ErrAlreadyVoted, "already voted")
+
+	// 原子性检查：在同一个事务中检查和设置投票状态
+	_, alreadyVoted := ms.k.GetPoll(ctx, msg.Id, msg.Creator)
+	if alreadyVoted {
+		return nil, types.ErrAlreadyVoted
 	}
+
+	// 立即设置投票状态，防止竞态条件
 	ms.k.SetPoll(ctx, msg.Id, msg.Creator, msg.OptionId)
+
+	// 验证选项ID是否有效
+	validOptionId := false
+	for _, option := range parentPost.Poll.Vote {
+		if option.Id == msg.OptionId {
+			validOptionId = true
+			break
+		}
+	}
+	if !validOptionId {
+		// 如果选项ID无效，回滚投票状态
+		ms.k.RemovePoll(ctx, msg.Id, msg.Creator)
+		return nil, types.NewInvalidRequestError("invalid option ID")
+	}
+
+	// 更新投票数量
 	parentPost.Poll.TotalVotes += 1
 	voteList := parentPost.Poll.Vote
-	for i, _ := range voteList {
+	for i := range voteList {
 		if parentPost.Poll.Vote[i].Id == msg.OptionId {
 			parentPost.Poll.Vote[i].Count += 1
 			break
 		}
 	}
+
+	// 保存更新后的帖子
 	ms.k.SetPost(ctx, parentPost)
+
 	return &types.CastVoteOnPollResponse{Status: true}, nil
 }
 
@@ -1523,7 +1672,7 @@ func (ms msgServer) AddCategory(ctx context.Context, msg *types.AddCategoryReque
 	} else {
 		return &types.AddCategoryResponse{
 			Status: false,
-		}, errors.Wrapf(types.ErrRequestDenied, "request denied")
+		}, types.ErrRequestDenied
 	}
 }
 
@@ -1548,7 +1697,7 @@ func (ms msgServer) DeleteCategory(ctx context.Context, msg *types.DeleteCategor
 	} else {
 		return &types.DeleteCategoryResponse{
 			Status: false,
-		}, errors.Wrapf(types.ErrRequestDenied, "request denied")
+		}, types.ErrRequestDenied
 	}
 }
 
@@ -1561,7 +1710,7 @@ func (ms msgServer) UpdateTopic(goCtx context.Context, msg *types.UpdateTopicReq
 	//	json := msg.TopicJson
 	//	id := json.Id
 	//	topic, _ := ms.k.GetTopic(ctx, id)
-	//	//ms.k.deleteFormHotTopics72(ctx, id, topic.Score)
+	//	//ms.k.deleteFromHotTopics72(ctx, id, topic.Score)
 	//	topic.Score = json.Score
 	//	if json.Avatar != "" {
 	//		//topic.Avatar = json.Avatar
@@ -1639,7 +1788,7 @@ func (ms msgServer) ClassifyUncategorizedTopic(goCtx context.Context, msg *types
 		if operator != "" {
 			operatorProfile, _ := ms.k.ProfileKeeper.GetProfile(ctx, operator)
 			if adminLevel < 4 && operatorProfile.AdminLevel > adminLevel {
-				return nil, errors.Wrapf(types.ErrRequestDenied, "request denied")
+				return nil, types.ErrRequestDenied
 			}
 			topic, _ := ms.k.GetTopic(ctx, msg.TopicId)
 			ms.addToCategoryTopics(ctx, msg.CategoryId, topic)

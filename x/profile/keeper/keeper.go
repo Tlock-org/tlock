@@ -60,12 +60,14 @@ func NewKeeper(
 
 	db, err := ormdb.NewModuleDB(&types.ORMModuleSchema, ormdb.ModuleDBOptions{KVStoreService: storeService})
 	if err != nil {
-		panic(err)
+		logger.Error("Failed to create ORM module database", "error", err)
+		panic(err) // Keep panic for initialization failure as it's critical
 	}
 
 	store, err := apiv1.NewStateStore(db)
 	if err != nil {
-		panic(err)
+		logger.Error("Failed to create state store", "error", err)
+		panic(err) // Keep panic for initialization failure as it's critical
 	}
 
 	k := Keeper{
@@ -82,7 +84,8 @@ func NewKeeper(
 
 	schema, err := sb.Build()
 	if err != nil {
-		panic(err)
+		logger.Error("Failed to build schema", "error", err)
+		return Keeper{}
 	}
 
 	k.Schema = schema
@@ -95,19 +98,8 @@ func (k Keeper) Logger() log.Logger {
 }
 
 // InitGenesis initializes the module's state from a genesis state.
-// func (k *Keeper) InitGenesis(ctx context.Context, data *types.GenesisState) error {
-//
-//		if err := data.Params.Validate(); err != nil {
-//			return err
-//		}
-//		return k.Params.Set(ctx, data.Params)
-//	}
 func (k *Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) error {
 	if err := data.Params.Validate(); err != nil {
-		return err
-	}
-	err := k.SetParams(ctx, data.Params)
-	if err != nil {
 		return err
 	}
 	return k.Params.Set(ctx, data.Params)
@@ -431,13 +423,13 @@ func (k Keeper) GetFollowingSearch(ctx sdk.Context, address string, matching str
 }
 
 func (k Keeper) Unfollow(ctx sdk.Context, followerAddr string, time uint64, targetAddr string) {
-	storeFlowing := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowingPrefix+followerAddr+"/"))
-	keyFlowing := append(itob(int64(time)), []byte(targetAddr)...)
-	storeFlowing.Delete(keyFlowing)
+	storeFollowing := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowingPrefix+followerAddr+"/"))
+	keyFollowing := append(itob(int64(time)), []byte(targetAddr)...)
+	storeFollowing.Delete(keyFollowing)
 
-	storeFlower := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowersPrefix+targetAddr+"/"))
-	keyFlower := append(itob(int64(time)), []byte(followerAddr)...)
-	storeFlower.Delete(keyFlower)
+	storeFollower := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileFollowersPrefix+targetAddr+"/"))
+	keyFollower := append(itob(int64(time)), []byte(followerAddr)...)
+	storeFollower.Delete(keyFollower)
 }
 
 // AddFollower adds the follower address to the target's followers list
@@ -587,7 +579,8 @@ func (k Keeper) AddAdmin(ctx sdk.Context, address string) error {
 	key := append([]byte(address))
 
 	if store.Has(key) {
-		return fmt.Errorf("address %s is already an admin", address)
+		types.LogError(k.logger, "add_admin", types.ErrInvalidRequest, "address", address)
+		return types.NewInvalidRequestErrorf("address %s is already an admin", address)
 	}
 
 	store.Set(key, []byte(address))
@@ -611,7 +604,8 @@ func (k Keeper) AddEditableAdmin(ctx sdk.Context, address string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.AuthorityEditableAdminKeyPrefix))
 	key := append([]byte(address))
 	if store.Has(key) {
-		return fmt.Errorf("address %s is already an editable admin", address)
+		types.LogError(k.logger, "add_editable_admin", types.ErrInvalidRequest, "address", address)
+		return types.NewInvalidRequestErrorf("address %s is already an editable admin", address)
 	}
 	store.Set(key, []byte(address))
 	return nil
