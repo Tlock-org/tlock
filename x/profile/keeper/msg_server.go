@@ -98,32 +98,32 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 				}
 
 			} else {
-				if dbUserHandle == "" {
-					suffixHandle := ms.k.TruncateAddressSuffix(dbProfile.WalletAddress)
-					suffixExist := ms.k.HasUserHandle(ctx, suffixHandle)
-					if suffixExist {
-						return nil, errors.Wrapf(types.ErrInvalidUserHandle, "userHandle unavailable: %s", err)
-					} else {
-						ms.k.AddToUserHandleList(ctx, suffixHandle, msg.Creator)
-						dbProfile.UserHandle = suffixHandle
 
-						// add userHandle to userSearch
-						ms.k.DeleteFromUserSearchList(ctx, suffixHandle, msg.Creator)
-						userSearch := types.UserSearch{
-							UserHandle:    suffixHandle,
-							WalletAddress: msg.Creator,
-							Nickname:      nickname,
-							Avatar:        profileJson.Avatar,
-						}
-						ms.k.AddToUserSearchList(ctx, suffixHandle, userSearch)
-					}
-				}
 			}
 		} else {
 			return &types.MsgAddProfileResponse{}, err
 		}
 	} else {
+		if dbUserHandle == "" {
+			suffixHandle := ms.k.TruncateAddressSuffix(dbProfile.WalletAddress)
+			suffixExist := ms.k.HasUserHandle(ctx, suffixHandle)
+			if suffixExist {
+				return nil, errors.Wrapf(types.ErrInvalidUserHandle, "userHandle unavailable: %s", err)
+			} else {
+				ms.k.AddToUserHandleList(ctx, suffixHandle, msg.Creator)
+				dbProfile.UserHandle = suffixHandle
 
+				// add userHandle to userSearch
+				ms.k.DeleteFromUserSearchList(ctx, suffixHandle, msg.Creator)
+				userSearch := types.UserSearch{
+					UserHandle:    suffixHandle,
+					WalletAddress: msg.Creator,
+					Nickname:      nickname,
+					Avatar:        profileJson.Avatar,
+				}
+				ms.k.AddToUserSearchList(ctx, suffixHandle, userSearch)
+			}
+		}
 	}
 
 	// add nickName to userSearch
