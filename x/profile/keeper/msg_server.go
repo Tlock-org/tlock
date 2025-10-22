@@ -43,7 +43,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	blockTime := ctx.BlockTime().Unix()
 
 	profileJson := msg.ProfileJson
-
+	ms.k.Logger().Warn("00==========00", "profileJson", profileJson)
 	dbProfile, _ := ms.k.GetProfileForUpdate(ctx, msg.GetCreator())
 	dbProfile.HasAvatar = false
 	dbUserHandle := dbProfile.UserHandle
@@ -53,6 +53,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	nickname := profileJson.Nickname
 	if userHandle != "" {
 		userHandle = strings.TrimSpace(userHandle)
+		ms.k.Logger().Warn("00==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 		validateUserHandle, err := types.ValidateUserHandle(userHandle)
 		if validateUserHandle {
 			userHandle = strings.ToLower(userHandle)
@@ -60,6 +61,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 				exist := ms.k.HasUserHandle(ctx, userHandle)
 				if exist {
 					if dbUserHandle == "" {
+						ms.k.Logger().Warn("02==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 						suffixHandle := ms.k.TruncateAddressSuffix(dbProfile.WalletAddress)
 						suffixExist := ms.k.HasUserHandle(ctx, suffixHandle)
 						if suffixExist {
@@ -81,6 +83,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 					}
 				} else {
 					if dbUserHandle != "" {
+						ms.k.Logger().Warn("01==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 						ms.k.DeleteFromUserHandleList(ctx, dbUserHandle)
 						ms.k.AddToUserHandleList(ctx, userHandle, msg.Creator)
 						dbProfile.UserHandle = userHandle
