@@ -44,7 +44,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 
 	profileJson := msg.ProfileJson
 
-	dbProfile, _ := ms.k.GetProfile(ctx, msg.GetCreator())
+	dbProfile, _ := ms.k.GetProfileForUpdate(ctx, msg.GetCreator())
 	dbProfile.HasAvatar = false
 	dbUserHandle := dbProfile.UserHandle
 	dbNickname := dbProfile.Nickname

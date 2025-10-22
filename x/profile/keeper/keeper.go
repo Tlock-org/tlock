@@ -177,6 +177,19 @@ func (k Keeper) GetProfile(ctx sdk.Context, address string) (types.Profile, bool
 	k.cdc.MustUnmarshal(bz, &profile)
 	return profile, true
 }
+func (k Keeper) GetProfileForUpdate(ctx sdk.Context, address string) (types.Profile, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileKeyPrefix))
+	bz := store.Get([]byte(address))
+	if bz == nil {
+		return types.Profile{
+			WalletAddress: address,
+		}, true
+	}
+
+	var profile types.Profile
+	k.cdc.MustUnmarshal(bz, &profile)
+	return profile, true
+}
 func (k Keeper) SetProfileAvatar(ctx sdk.Context, address string, avatar string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileAvatarPrefix))
 	key := []byte(address)
