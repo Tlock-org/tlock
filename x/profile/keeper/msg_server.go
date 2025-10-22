@@ -55,6 +55,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 		userHandle = strings.TrimSpace(userHandle)
 		ms.k.Logger().Warn("00==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 		validateUserHandle, err := types.ValidateUserHandle(userHandle)
+		ms.k.Logger().Warn("0v==========", "validateUserHandle", validateUserHandle)
 		if validateUserHandle {
 			userHandle = strings.ToLower(userHandle)
 			if dbUserHandle != userHandle {
@@ -82,6 +83,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 						}
 					}
 				} else {
+					ms.k.Logger().Warn("010==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 					if dbUserHandle != "" {
 						ms.k.Logger().Warn("01==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 						ms.k.DeleteFromUserHandleList(ctx, dbUserHandle)
@@ -104,6 +106,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 
 			}
 		} else {
+			ms.k.Logger().Warn("0-false-==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 			return &types.MsgAddProfileResponse{}, err
 		}
 	} else {
