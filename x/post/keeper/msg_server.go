@@ -144,6 +144,16 @@ func (ms msgServer) validateCreatePostRequest(msg *types.MsgCreatePost) error {
 func (ms msgServer) CreatePost(goCtx context.Context, msg *types.MsgCreatePost) (*types.MsgCreatePostResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	//txBytes := ctx.TxBytes()
+	//if len(txBytes) == 0 {
+	//	//types.LogError(ms.k.logger, "updateHomePosts", types.ErrDatabaseOperation, "operation", "GetHomePostsCount")
+	//	//return nil
+	//	return nil, errors.Wrap(types.ErrInvalidRequest, "tx bytes not found")
+	//}
+	//rawHash := tmhash.Sum(txBytes) // [32]byte
+	//txHash := strings.ToUpper(hex.EncodeToString(rawHash[:]))
+	//ms.k.Logger().Warn("=========:", "txHash", txHash)
+
 	postDetail := msg.GetPostDetail()
 	// Validate params
 	err := ms.validateCreatePostRequest(msg)
@@ -1116,7 +1126,7 @@ func (ms msgServer) updateHomePosts(ctx sdk.Context, post types.Post) {
 func (ms msgServer) addToHomePosts(ctx sdk.Context, post types.Post) {
 	ms.k.SetHomePosts(ctx, post.Id)
 	count, b := ms.k.GetHomePostsCount(ctx)
-	ms.k.Logger().Warn("==========b:{}", b)
+	//ms.k.Logger().Warn("==========b:{}", b)
 	if !b {
 		types.LogError(ms.k.logger, "addToHomePosts", types.ErrDatabaseOperation, "operation", "GetHomePostsCount")
 		return

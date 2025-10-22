@@ -122,12 +122,31 @@ func (k Querier) batchGetPostsWithProfiles(ctx sdk.Context, postIDs []string) ([
 
 		// Handle quoted posts
 		if post.Quote != "" {
-			if quotePost, hasQuote := quotePosts[post.Quote]; hasQuote {
+			var quotePost types.Post
+			var foundQuote bool
+
+			// Try to locate the quote post in quotePosts first
+			if qp, ok := quotePosts[post.Quote]; ok {
+				quotePost = qp
+				foundQuote = true
+			} else if qp, ok := posts[post.Quote]; ok { // Otherwise, try to locate in main posts
+				quotePost = qp
+				foundQuote = true
+			}
+
+			if foundQuote {
 				postResponse.QuotePost = &quotePost
 				if quoteProfile, hasQuoteProfile := profiles[quotePost.Creator]; hasQuoteProfile {
 					postResponse.QuoteProfile = &quoteProfile
 				}
 			}
+
+			//if quotePost, hasQuote := quotePosts[post.Quote]; hasQuote {
+			//	postResponse.QuotePost = &quotePost
+			//	if quoteProfile, hasQuoteProfile := profiles[quotePost.Creator]; hasQuoteProfile {
+			//		postResponse.QuoteProfile = &quoteProfile
+			//	}
+			//}
 		}
 
 		responses = append(responses, postResponse)
