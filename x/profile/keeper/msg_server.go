@@ -53,9 +53,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	nickname := profileJson.Nickname
 	if userHandle != "" {
 		userHandle = strings.TrimSpace(userHandle)
-		ms.k.Logger().Warn("00==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 		validateUserHandle, err := types.ValidateUserHandle(userHandle)
-		ms.k.Logger().Warn("0v==========", "validateUserHandle", validateUserHandle)
 		if validateUserHandle {
 			userHandle = strings.ToLower(userHandle)
 			if dbUserHandle != userHandle {
@@ -83,9 +81,7 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 						}
 					}
 				} else {
-					ms.k.Logger().Warn("010==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 					if dbUserHandle != "" {
-						ms.k.Logger().Warn("01==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 						ms.k.DeleteFromUserHandleList(ctx, dbUserHandle)
 						ms.k.AddToUserHandleList(ctx, userHandle, msg.Creator)
 						dbProfile.UserHandle = userHandle
@@ -99,6 +95,26 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 							Avatar:        profileJson.Avatar,
 						}
 						ms.k.AddToUserSearchList(ctx, userHandle, userSearch)
+					} else {
+						suffixHandle := ms.k.TruncateAddressSuffix(dbProfile.WalletAddress)
+						suffixExist := ms.k.HasUserHandle(ctx, suffixHandle)
+						if suffixExist {
+							return nil, errors.Wrapf(types.ErrInvalidUserHandle, "userHandle unavailable: %s", err)
+						} else {
+							ms.k.Logger().Warn("3==========", "suffixHandle", suffixHandle)
+							ms.k.AddToUserHandleList(ctx, suffixHandle, msg.Creator)
+							dbProfile.UserHandle = suffixHandle
+
+							// add userHandle to userSearch
+							ms.k.DeleteFromUserSearchList(ctx, suffixHandle, msg.Creator)
+							userSearch := types.UserSearch{
+								UserHandle:    suffixHandle,
+								WalletAddress: msg.Creator,
+								Nickname:      nickname,
+								Avatar:        profileJson.Avatar,
+							}
+							ms.k.AddToUserSearchList(ctx, suffixHandle, userSearch)
+						}
 					}
 				}
 
@@ -106,19 +122,15 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 
 			}
 		} else {
-			ms.k.Logger().Warn("0-false-==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 			return &types.MsgAddProfileResponse{}, err
 		}
 	} else {
-		ms.k.Logger().Warn("1==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 		if dbUserHandle == "" {
-			ms.k.Logger().Warn("2==========", "dbUserHandle", dbUserHandle, "userHandle", userHandle)
 			suffixHandle := ms.k.TruncateAddressSuffix(dbProfile.WalletAddress)
 			suffixExist := ms.k.HasUserHandle(ctx, suffixHandle)
 			if suffixExist {
 				return nil, errors.Wrapf(types.ErrInvalidUserHandle, "userHandle unavailable: %s", err)
 			} else {
-				ms.k.Logger().Warn("3==========", "suffixHandle", suffixHandle)
 				ms.k.AddToUserHandleList(ctx, suffixHandle, msg.Creator)
 				dbProfile.UserHandle = suffixHandle
 
