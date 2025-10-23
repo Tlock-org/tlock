@@ -678,8 +678,7 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
-	// post reward
-	ms.k.PostReward(ctx, post.Creator)
+
 	// add home posts
 	ms.addToHomePosts(ctx, post)
 	// add to user created posts
@@ -692,6 +691,11 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 	}
 	parentPost.RepostCount += 1
 	ms.k.SetPost(ctx, parentPost)
+
+	// post reward
+	if post.Creator != parentPost.Creator {
+		ms.k.PostReward(ctx, post.Creator)
+	}
 
 	// mentions add to activitiesReceived
 	userHandleList := msg.Mention
@@ -826,7 +830,9 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	ms.k.SetPost(ctx, post)
 
 	// post reward
-	ms.k.PostReward(ctx, msg.Sender)
+	if msg.Sender != post.Creator {
+		ms.k.PostReward(ctx, msg.Sender)
+	}
 	// set likes I made
 	likesIMade := types.LikesIMade{
 		PostId:    post.Id,
@@ -1030,8 +1036,6 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 
 	// Store the post in the state
 	ms.k.SetPost(ctx, comment)
-	// post reward
-	ms.k.PostReward(ctx, comment.Creator)
 
 	post, err := ms.getPostWithValidation(ctx, msg.ParentId)
 	if err != nil {
@@ -1081,6 +1085,11 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 
 	// comment add to activitiesReceived
 	ms.addActivitiesReceived(ctx, post, commentID, msg.Comment, msg.Creator, post.Creator, profiletypes.ActivitiesType_ACTIVITIES_COMMENT)
+
+	// post reward
+	if comment.Creator != post.Creator {
+		ms.k.PostReward(ctx, comment.Creator)
+	}
 
 	// mentions add to activitiesReceived
 	userHandleList := msg.Mention
