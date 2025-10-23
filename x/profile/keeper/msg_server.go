@@ -149,7 +149,9 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 		validateNickName, err := types.ValidateNickname(nickname)
 		if validateNickName {
 			if dbNickname != nickname {
-				ms.k.DeleteFromUserSearchList(ctx, dbNickname, msg.Creator)
+				if dbProfile.UserHandle != dbNickname {
+					ms.k.DeleteFromUserSearchList(ctx, dbNickname, msg.Creator)
+				}
 				if nickname != userHandle {
 					userSearch := types.UserSearch{
 						UserHandle:    userHandle,
