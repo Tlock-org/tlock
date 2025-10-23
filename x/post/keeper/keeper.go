@@ -955,7 +955,7 @@ func (k Keeper) RemoveFromLikesReceived(ctx sdk.Context, creator string, sender 
 	return types.NewPostNotFoundError(postId)
 }
 
-func (k Keeper) PostReward(ctx sdk.Context, post types.Post) {
+func (k Keeper) PostReward(ctx sdk.Context, creator string) {
 	metadata, found := k.bankKeeper.GetDenomMetaData(ctx, types.DenomBase)
 	if !found {
 		return
@@ -977,7 +977,7 @@ func (k Keeper) PostReward(ctx sdk.Context, post types.Post) {
 	rewardAmount := sdkmath.NewInt(10).Mul(exchangeRate)
 	// send post reward
 	amount := sdk.NewCoins(sdk.NewCoin(types.DenomBase, rewardAmount))
-	userAddr, err := sdk.AccAddressFromBech32(post.Creator)
+	userAddr, err := sdk.AccAddressFromBech32(creator)
 
 	if err != nil {
 		return
