@@ -679,7 +679,7 @@ func (ms msgServer) QuotePost(goCtx context.Context, msg *types.MsgQuotePostRequ
 	// Store the post in the state
 	ms.k.SetPost(ctx, post)
 	// post reward
-	ms.k.PostReward(ctx, post)
+	ms.k.PostReward(ctx, post.Creator)
 	// add home posts
 	ms.addToHomePosts(ctx, post)
 	// add to user created posts
@@ -826,7 +826,7 @@ func (ms msgServer) Like(goCtx context.Context, msg *types.MsgLikeRequest) (*typ
 	ms.k.SetPost(ctx, post)
 
 	// post reward
-	ms.k.PostReward(ctx, post)
+	ms.k.PostReward(ctx, msg.Sender)
 	// set likes I made
 	likesIMade := types.LikesIMade{
 		PostId:    post.Id,
@@ -1031,7 +1031,7 @@ func (ms msgServer) Comment(goCtx context.Context, msg *types.MsgCommentRequest)
 	// Store the post in the state
 	ms.k.SetPost(ctx, comment)
 	// post reward
-	ms.k.PostReward(ctx, comment)
+	ms.k.PostReward(ctx, comment.Creator)
 
 	post, err := ms.getPostWithValidation(ctx, msg.ParentId)
 	if err != nil {
