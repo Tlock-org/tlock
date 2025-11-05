@@ -344,26 +344,37 @@ func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeReques
 		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get likes made"))
 	}
 
-	var postResponses []*types.PostResponse
+	var postIDs []string
 	for _, likesIMade := range likes {
-		postID := likesIMade.PostId
-		post, success := k.GetPost(sdkCtx, postID)
-		if !success {
-			types.LogError(k.logger, "get_post_for_likes", types.ErrPostNotFound, "post_id", postID)
-			return nil, types.ToGRPCError(types.NewPostNotFoundError(postID))
-		}
-		postCopy := post
-
-		profile, _ := k.ProfileKeeper.GetProfile(sdkCtx, post.Creator)
-
-		profileResponseCopy := profile
-		postResponse := types.PostResponse{
-			Post:    &postCopy,
-			Profile: &profileResponseCopy,
-		}
-
-		postResponses = append(postResponses, &postResponse)
+		postIDs = append(postIDs, likesIMade.PostId)
 	}
+
+	postResponses, err := k.batchGetPostsWithProfiles(sdkCtx, postIDs)
+	if err != nil {
+		types.LogError(k.logger, "batch_get_posts_with_profiles", err, "address", request.Address)
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get posts with profiles"))
+	}
+
+	//var postResponses []*types.PostResponse
+	//for _, likesIMade := range likes {
+	//	postID := likesIMade.PostId
+	//	post, success := k.GetPost(sdkCtx, postID)
+	//	if !success {
+	//		types.LogError(k.logger, "get_post_for_likes", types.ErrPostNotFound, "post_id", postID)
+	//		return nil, types.ToGRPCError(types.NewPostNotFoundError(postID))
+	//	}
+	//	postCopy := post
+	//
+	//	profile, _ := k.ProfileKeeper.GetProfile(sdkCtx, post.Creator)
+	//
+	//	profileResponseCopy := profile
+	//	postResponse := types.PostResponse{
+	//		Post:    &postCopy,
+	//		Profile: &profileResponseCopy,
+	//	}
+	//
+	//	postResponses = append(postResponses, &postResponse)
+	//}
 	return &types.LikesIMadeResponse{
 		Page:  page,
 		Posts: postResponses,
