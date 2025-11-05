@@ -183,7 +183,7 @@ func (k Keeper) GetProfileForUpdate(ctx sdk.Context, address string) (types.Prof
 	if bz == nil {
 		return types.Profile{
 			WalletAddress: address,
-		}, true
+		}, false
 	}
 
 	var profile types.Profile

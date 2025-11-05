@@ -43,8 +43,10 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 	blockTime := ctx.BlockTime().Unix()
 
 	profileJson := msg.ProfileJson
-	dbProfile, _ := ms.k.GetProfileForUpdate(ctx, msg.GetCreator())
-	dbProfile.HasAvatar = false
+	dbProfile, hasProfile := ms.k.GetProfileForUpdate(ctx, msg.GetCreator())
+	if !hasProfile {
+		dbProfile.HasAvatar = false
+	}
 	dbUserHandle := dbProfile.UserHandle
 	dbNickname := dbProfile.Nickname
 
