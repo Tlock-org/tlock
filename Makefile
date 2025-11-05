@@ -295,9 +295,9 @@ ictest-ratelimit:
 setup-testnet: mod-tidy is-localic-installed install local-image set-testnet-configs setup-testnet-keys
 
 # Run this before testnet keys are added
-# localchain-1 is used in the testnet.json
+# tlock-testnet-1 is used in the testnet.json
 set-testnet-configs:
-	tlockd config set client chain-id localchain-1
+	tlockd config set client chain-id tlock-devnet-1
 	tlockd config set client keyring-backend test
 	tlockd config set client output text
 
@@ -310,9 +310,35 @@ testnet: setup-testnet
 	spawn local-ic start testnet
 
 sh-testnet: mod-tidy
-	CHAIN_ID="10889" BLOCK_TIME="1000ms" CLEAN=true sh scripts/test_node.sh
+	CHAIN_ID="tlock-devnet-1" BLOCK_TIME="1000ms" CLEAN=true sh scripts/test_node.sh
 
 .PHONY: setup-testnet set-testnet-configs testnet testnet-basic sh-testnet
+
+###############################################################################
+###                                    mainnet                              ###
+###############################################################################
+
+setup-mainnet: mod-tidy is-localic-installed install local-image set-mainnet-configs setup-mainnet-keys
+
+# Run this before mainnet keys are added
+# tlock-mainnet-1 is used in the mainnet.json
+set-mainnet-configs:
+	tlockd config set client chain-id tlock-mainnet-1
+	tlockd config set client keyring-backend test
+	tlockd config set client output text
+
+# import keys from mainnet.json into test keyring
+setup-mainnet-keys:
+	-`echo "decorate bright ozone fork gallery riot bus exhaust worth way bone indoor calm squirrel merry zero scheme cotton until shop any excess stage laundry" | tlockd keys add acc0 --recover`
+	-`echo "wealth flavor believe regret funny network recall kiss grape useless pepper cram hint member few certain unveil rather brick bargain curious require crowd raise" | tlockd keys add acc1 --recover`
+
+mainnet: setup-mainnet
+	spawn local-ic start mainnet
+
+sh-mainnet: mod-tidy
+	CHAIN_ID="tlock-mainnet-1" BLOCK_TIME="1000ms" CLEAN=true sh scripts/main_node.sh
+
+.PHONY: setup-mainnet set-mainnet-configs mainnet mainnet-basic sh-mainnet
 
 ###############################################################################
 ###                                     help                                ###
@@ -336,6 +362,8 @@ help:
 	@echo "  proto-gen           : Generate code from proto files"
 	@echo "  testnet             : Local devnet with IBC"
 	@echo "  sh-testnet          : Shell local devnet"
+	@echo "  mainnet             : Mainnet with IBC"
+	@echo "  sh-mainnet          : Shell mainnet"
 	@echo "  ictest-basic        : Basic end-to-end test"
 	@echo "  ictest-ibc          : IBC end-to-end test"
 	@echo "  generate-webapp     : Create a new webapp template"

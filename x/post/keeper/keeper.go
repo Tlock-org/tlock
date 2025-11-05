@@ -1063,8 +1063,8 @@ func (k Keeper) GrantPeriodicAllowance(ctx sdk.Context, sender sdk.AccAddress, u
 		expiration := now.Add(5 * 365 * 24 * time.Hour)
 
 		period := 24 * time.Hour
-		totalSpendLimit := sdk.NewCoins(sdk.NewCoin("uTOK", sdkmath.NewInt(20000000000)))
-		spendLimit := sdk.NewCoins(sdk.NewCoin("uTOK", sdkmath.NewInt(10000000)))
+		totalSpendLimit := sdk.NewCoins(sdk.NewCoin("uTOK", sdkmath.NewInt(200000000000)))
+		spendLimit := sdk.NewCoins(sdk.NewCoin("uTOK", sdkmath.NewInt(100000000)))
 		// create a basic allowance
 		basicAllowance := feegrant.BasicAllowance{
 			SpendLimit: totalSpendLimit,
