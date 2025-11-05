@@ -355,26 +355,6 @@ func (k Querier) LikesIMade(ctx context.Context, request *types.LikesIMadeReques
 		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get posts with profiles"))
 	}
 
-	//var postResponses []*types.PostResponse
-	//for _, likesIMade := range likes {
-	//	postID := likesIMade.PostId
-	//	post, success := k.GetPost(sdkCtx, postID)
-	//	if !success {
-	//		types.LogError(k.logger, "get_post_for_likes", types.ErrPostNotFound, "post_id", postID)
-	//		return nil, types.ToGRPCError(types.NewPostNotFoundError(postID))
-	//	}
-	//	postCopy := post
-	//
-	//	profile, _ := k.ProfileKeeper.GetProfile(sdkCtx, post.Creator)
-	//
-	//	profileResponseCopy := profile
-	//	postResponse := types.PostResponse{
-	//		Post:    &postCopy,
-	//		Profile: &profileResponseCopy,
-	//	}
-	//
-	//	postResponses = append(postResponses, &postResponse)
-	//}
 	return &types.LikesIMadeResponse{
 		Page:  page,
 		Posts: postResponses,
@@ -394,25 +374,15 @@ func (k Querier) SavesIMade(ctx context.Context, request *types.SavesIMadeReques
 		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get saves made"))
 	}
 
-	var postResponses []*types.PostResponse
+	var postIDs []string
 	for _, savesIMade := range saves {
-		postID := savesIMade.PostId
-		post, success := k.GetPost(sdkCtx, postID)
-		if !success {
-			types.LogError(k.logger, "get_post_for_saves", types.ErrPostNotFound, "post_id", postID)
-			return nil, types.ToGRPCError(types.NewPostNotFoundError(postID))
-		}
-		postCopy := post
+		postIDs = append(postIDs, savesIMade.PostId)
+	}
 
-		profile, _ := k.ProfileKeeper.GetProfile(sdkCtx, post.Creator)
-
-		profileResponseCopy := profile
-		postResponse := types.PostResponse{
-			Post:    &postCopy,
-			Profile: &profileResponseCopy,
-		}
-
-		postResponses = append(postResponses, &postResponse)
+	postResponses, err := k.batchGetPostsWithProfiles(sdkCtx, postIDs)
+	if err != nil {
+		types.LogError(k.logger, "batch_get_posts_with_profiles", err, "address", request.Address)
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get posts with profiles"))
 	}
 
 	return &types.SavesIMadeResponse{
