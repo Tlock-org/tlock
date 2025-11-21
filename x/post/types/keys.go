@@ -100,6 +100,8 @@ const (
 
 	FollowTopicPrefix     = "Post/follow/topic/"
 	FollowTopicTimePrefix = "Post/follow/topic/time/"
+
+	PostTxHashMappingKeyPrefix = "Post/txhash/mapping/"
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{

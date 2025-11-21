@@ -49,6 +49,11 @@ service Query {
     option (google.api.http).get = "/post/v1/get/{post_id}";
   }
 
+  // QueryTxHashByPostId returns the tx hash associated with a given post ID
+  rpc QueryTxHashByPostId(QueryTxHashByPostIdRequest) returns (QueryTxHashByPostIdResponse) {
+    option (google.api.http).get = "/post/v1/tx_hash/{post_id}";
+  }
+
   rpc QueryUserCreatedPosts(QueryUserCreatedPostsRequest) returns (QueryUserCreatedPostsResponse) {
     option (google.api.http).get = "/post/v1/user/created/{address}/{page}";
   }
@@ -202,6 +207,17 @@ message QueryPostRequest {
 message QueryPostResponse {
   PostResponse post = 1;
   repeated TopicResponse topics = 2;
+}
+
+// QueryTxHashByPostIdRequest defines the request for querying tx hash by post ID
+message QueryTxHashByPostIdRequest {
+  string post_id = 1;
+}
+
+// QueryTxHashByPostIdResponse defines the response containing tx hash for a post ID
+message QueryTxHashByPostIdResponse {
+  string post_id = 1;
+  string tx_hash = 2;
 }
 
 message LikesIMadeRequest {
