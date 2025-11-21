@@ -1915,3 +1915,21 @@ func (k Keeper) GetPaidPostImage(ctx sdk.Context, imageHash string) (string, boo
 	}
 	return image, true
 }
+
+// SetPostTxHashMapping stores the mapping from postId to txHash
+func (k Keeper) SetPostTxHashMapping(ctx sdk.Context, postId string, txHash string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostTxHashMappingKeyPrefix))
+	key := []byte(postId)
+	store.Set(key, []byte(txHash))
+}
+
+// GetTxHashByPostId retrieves the txHash for a given postId
+func (k Keeper) GetTxHashByPostId(ctx sdk.Context, postId string) (string, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostTxHashMappingKeyPrefix))
+	key := []byte(postId)
+	bz := store.Get(key)
+	if bz == nil {
+		return "", false
+	}
+	return string(bz), true
+}

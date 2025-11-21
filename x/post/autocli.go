@@ -82,6 +82,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					},
 				},
 				{
+					RpcMethod: "QueryTxHashByPostId",
+					Use:       "tx-hash-by-post-id [post_id]",
+					Short:     "Get tx hash by post_id",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "post_id"},
+					},
+				},
+				{
 					RpcMethod: "SearchTopics",
 					Use:       "search-topics [matching]",
 					Short:     "Get topics by matching",

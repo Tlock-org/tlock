@@ -2,11 +2,12 @@ package keeper
 
 import (
 	"context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
 	"sort"
 	"strings"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
 
 	"github.com/rollchains/tlock/x/post/types"
 	profileTypes "github.com/rollchains/tlock/x/profile/types"
@@ -248,6 +249,26 @@ func (k Querier) QueryUserCreatedPosts(goCtx context.Context, req *types.QueryUs
 		Posts: postResponses,
 	}, nil
 
+}
+
+// QueryTxHashByPostId implements types.QueryServer.
+// It returns the tx hash associated with a given post ID.
+func (k Querier) QueryTxHashByPostId(goCtx context.Context, req *types.QueryTxHashByPostIdRequest) (*types.QueryTxHashByPostIdResponse, error) {
+	if req == nil || strings.TrimSpace(req.PostId) == "" {
+		return nil, types.ToGRPCError(types.ErrInvalidRequest)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	txHash, found := k.Keeper.GetTxHashByPostId(ctx, req.PostId)
+	if !found {
+		return nil, types.ToGRPCError(types.NewPostNotFoundError(req.PostId))
+	}
+
+	return &types.QueryTxHashByPostIdResponse{
+		PostId: req.PostId,
+		TxHash: txHash,
+	}, nil
 }
 
 // QueryPost implements types.QueryServer.
