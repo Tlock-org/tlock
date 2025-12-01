@@ -22,7 +22,8 @@ func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*type
 
 	p, err := k.Keeper.Params.Get(ctx)
 	if err != nil {
-		return nil, err
+		types.LogError(k.logger, "get_params", err)
+		return nil, types.ToGRPCError(types.WrapError(types.ErrDatabaseOperation, "failed to get params"))
 	}
 
 	return &types.QueryParamsResponse{Params: &p}, nil
@@ -32,7 +33,7 @@ func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*type
 func (k Querier) QueryProfile(goCtx context.Context, req *types.QueryProfileRequest) (*types.QueryProfileResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if req == nil {
-		return nil, types.ErrInvalidRequest
+		return nil, types.ToGRPCError(types.ErrInvalidRequest)
 	}
 
 	// Retrieve the post from the state
