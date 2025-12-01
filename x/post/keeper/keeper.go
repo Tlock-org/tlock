@@ -1154,7 +1154,9 @@ func (k Keeper) GetCategoryPosts(ctx sdk.Context, categoryHash string, page uint
 	first := (page - 1) * pageSize
 	const totalPosts = types.CategoryPostsCount
 	if first >= totalPosts {
-		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of category posts")
+		err := types.NewInvalidRequestErrorf("offset %d exceeds total number of category posts %d", first, totalPosts)
+		types.LogError(k.logger, "get_category_posts_offset", err, "category_id", categoryHash, "page", page, "page_size", pageSize)
+		return nil, nil, uint64(0), err
 	}
 
 	pagination := &query.PageRequest{}
@@ -1171,7 +1173,8 @@ func (k Keeper) GetCategoryPosts(ctx sdk.Context, categoryHash string, page uint
 	})
 
 	if err != nil {
-		return nil, nil, uint64(0), err
+		types.LogError(k.logger, "get_category_posts_paginate", err, "category_id", categoryHash, "page", page, "page_size", pageSize)
+		return nil, nil, uint64(0), types.WrapError(types.ErrDatabaseOperation, "failed to paginate category posts")
 	}
 	return postIDs, pageRes, page, nil
 }
@@ -1272,9 +1275,9 @@ func (k Keeper) GetAllCategories(ctx sdk.Context) []types.Category {
 		// Unmarshal the binary data into the Category struct
 		err := k.cdc.Unmarshal(iterator.Value(), &category)
 		if err != nil {
-			// If unmarshalling fails, panic with an error message
-			// Consider handling the error more gracefully in production
-			panic(fmt.Sprintf("failed to unmarshal category with key %s: %v", iterator.Key(), err))
+			// Log and skip invalid category instead of panicking
+			types.LogError(k.logger, "unmarshal_category", err, "key", string(iterator.Key()))
+			continue
 		}
 		// Append the unmarshalled category to the slice
 		categories = append(categories, category)
@@ -1322,8 +1325,9 @@ func (k Keeper) GetTopic(ctx sdk.Context, topicHash string) (types.Topic, bool) 
 	// Unmarshal the binary data into the Topic struct
 	err := k.cdc.Unmarshal(bz, &topic)
 	if err != nil {
-		// If unmarshalling fails, log an error and return false
-		panic(fmt.Sprintf("Failed to unmarshal topic with topicHash %s: %v", topicHash, err))
+		// Log and treat as not found instead of panicking
+		types.LogError(k.logger, "unmarshal_topic", err, "topic_hash", topicHash)
+		return types.Topic{}, false
 	}
 	return topic, true
 }
@@ -1357,7 +1361,9 @@ func (k Keeper) DeleteLastFromTrendingKeywords(ctx sdk.Context) string {
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 	if !iterator.Valid() {
-		panic("trendingKeywords exceeds 1000 but no found")
+		err := types.NewResourceNotFoundError("no trending keywords found to delete")
+		types.LogError(k.logger, "delete_last_trending_keywords", err)
+		return ""
 	}
 	earliestKey := iterator.Key()
 	bz := store.Get(earliestKey)
@@ -1398,7 +1404,9 @@ func (k Keeper) GetTrendingKeywords(ctx sdk.Context, page uint64) ([]string, *qu
 
 	const totalTopics = types.TrendingKeywordsCount
 	if first >= totalTopics {
-		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of trending keywords")
+		err := types.NewInvalidRequestErrorf("offset %d exceeds total number of trending keywords %d", first, totalTopics)
+		types.LogError(k.logger, "get_trending_keywords_offset", err, "page", page, "page_size", pageSize)
+		return nil, nil, uint64(0), err
 	}
 
 	pagination := &query.PageRequest{}
@@ -1414,7 +1422,8 @@ func (k Keeper) GetTrendingKeywords(ctx sdk.Context, page uint64) ([]string, *qu
 		return nil
 	})
 	if err != nil {
-		return nil, nil, uint64(0), err
+		types.LogError(k.logger, "get_trending_keywords_paginate", err, "page", page, "page_size", pageSize)
+		return nil, nil, uint64(0), types.WrapError(types.ErrDatabaseOperation, "failed to paginate trending keywords")
 	}
 	return topicIds, pageRes, page, nil
 }
@@ -1466,7 +1475,9 @@ func (k Keeper) DeleteLastFromTrendingTopics(ctx sdk.Context) {
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 	if !iterator.Valid() {
-		panic("trendingTopicsCount exceeds 1000 but no found")
+		err := types.NewResourceNotFoundError("no trending topics found to delete")
+		types.LogError(k.logger, "delete_last_trending_topics", err)
+		return
 	}
 	earliestKey := iterator.Key()
 	store.Delete(earliestKey)
@@ -1504,7 +1515,9 @@ func (k Keeper) GetTrendingTopics(ctx sdk.Context, page uint64) ([]string, *quer
 
 	const totalTopics = types.TrendingTopicsCount
 	if first >= totalTopics {
-		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of trending topics")
+		err := types.NewInvalidRequestErrorf("offset %d exceeds total number of trending topics %d", first, totalTopics)
+		types.LogError(k.logger, "get_trending_topics_offset", err, "page", page, "page_size", pageSize)
+		return nil, nil, uint64(0), err
 	}
 
 	pagination := &query.PageRequest{}
@@ -1520,7 +1533,8 @@ func (k Keeper) GetTrendingTopics(ctx sdk.Context, page uint64) ([]string, *quer
 		return nil
 	})
 	if err != nil {
-		return nil, nil, uint64(0), err
+		types.LogError(k.logger, "get_trending_topics_paginate", err, "page", page, "page_size", pageSize)
+		return nil, nil, uint64(0), types.WrapError(types.ErrDatabaseOperation, "failed to paginate trending topics")
 	}
 	return topicIds, pageRes, page, nil
 }
@@ -1617,7 +1631,9 @@ func (k Keeper) GetCategoryTopics(ctx sdk.Context, categoryHash string, page uin
 	first := (page - 1) * pageSize
 	const totalTopics = types.CategoryTopicsCount
 	if first >= totalTopics {
-		return nil, nil, uint64(0), fmt.Errorf("offset exceeds total number of category posts")
+		err := types.NewInvalidRequestErrorf("offset %d exceeds total number of category topics %d", first, totalTopics)
+		types.LogError(k.logger, "get_category_topics_offset", err, "category_id", categoryHash, "page", page, "page_size", pageSize)
+		return nil, nil, uint64(0), err
 	}
 
 	pagination := &query.PageRequest{}
@@ -1634,7 +1650,8 @@ func (k Keeper) GetCategoryTopics(ctx sdk.Context, categoryHash string, page uin
 	})
 
 	if err != nil {
-		return nil, nil, uint64(0), err
+		types.LogError(k.logger, "get_category_topics_paginate", err, "category_id", categoryHash, "page", page, "page_size", pageSize)
+		return nil, nil, uint64(0), types.WrapError(types.ErrDatabaseOperation, "failed to paginate category topics")
 	}
 	return topics, pageRes, page, nil
 }
@@ -1696,7 +1713,9 @@ func (k Keeper) RemoveFromUncategorizedTopics(ctx sdk.Context, topicHash string)
 }
 func (k Keeper) GetUncategorizedTopics(ctx sdk.Context, page, limit int64) ([]string, *query.PageResponse, error) {
 	if page < 1 || limit < 1 {
-		return nil, nil, fmt.Errorf("invalid page (%d) or limit (%d)", page, limit)
+		err := types.NewInvalidRequestErrorf("invalid page (%d) or limit (%d)", page, limit)
+		types.LogError(k.logger, "get_uncategorized_topics_invalid_pagination", err, "page", page, "limit", limit)
+		return nil, nil, err
 	}
 	unCategoryTopicsCount, _ := k.GetUncategorizedTopicsCount(ctx)
 	if unCategoryTopicsCount == 0 {
@@ -1725,7 +1744,9 @@ func (k Keeper) GetUncategorizedTopics(ctx sdk.Context, page, limit int64) ([]st
 	first := pageIndex * limit
 	const totalTopics = types.CategoryTopicsCount
 	if first >= totalTopics {
-		return nil, nil, fmt.Errorf("offset exceeds total number of category posts")
+		err := types.NewInvalidRequestErrorf("offset %d exceeds total number of category topics %d", first, totalTopics)
+		types.LogError(k.logger, "get_uncategorized_topics_offset", err, "page_index", pageIndex, "limit", limit)
+		return nil, nil, err
 	}
 
 	pagination := &query.PageRequest{}
@@ -1743,7 +1764,8 @@ func (k Keeper) GetUncategorizedTopics(ctx sdk.Context, page, limit int64) ([]st
 	})
 
 	if err != nil {
-		return nil, nil, err
+		types.LogError(k.logger, "get_uncategorized_topics_paginate", err, "page", page, "limit", limit)
+		return nil, nil, types.WrapError(types.ErrDatabaseOperation, "failed to paginate uncategorized topics")
 	}
 	//k.Logger().Warn("============topics:", "topics", topics)
 	return topics, pageRes, nil
