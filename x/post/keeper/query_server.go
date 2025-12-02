@@ -2,11 +2,12 @@ package keeper
 
 import (
 	"context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
 	"sort"
 	"strings"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
 
 	"github.com/rollchains/tlock/x/post/types"
 	profileTypes "github.com/rollchains/tlock/x/profile/types"
@@ -250,6 +251,26 @@ func (k Querier) QueryUserCreatedPosts(goCtx context.Context, req *types.QueryUs
 
 }
 
+// QueryTxHashByPostId implements types.QueryServer.
+// It returns the tx hash associated with a given post ID.
+func (k Querier) QueryTxHashByPostId(goCtx context.Context, req *types.QueryTxHashByPostIdRequest) (*types.QueryTxHashByPostIdResponse, error) {
+	if req == nil || strings.TrimSpace(req.PostId) == "" {
+		return nil, types.ToGRPCError(types.ErrInvalidRequest)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	txHash, found := k.Keeper.GetTxHashByPostId(ctx, req.PostId)
+	if !found {
+		return nil, types.ToGRPCError(types.NewPostNotFoundError(req.PostId))
+	}
+
+	return &types.QueryTxHashByPostIdResponse{
+		PostId: req.PostId,
+		TxHash: txHash,
+	}, nil
+}
+
 // QueryPost implements types.QueryServer.
 func (k Querier) QueryPost(goCtx context.Context, req *types.QueryPostRequest) (*types.QueryPostResponse, error) {
 	if req == nil {
@@ -412,7 +433,11 @@ func (k Querier) LikesReceived(ctx context.Context, request *types.LikesReceived
 // QueryComments implements types.QueryServer.
 func (k Querier) QueryComments(goCtx context.Context, req *types.QueryCommentsRequest) (*types.QueryCommentsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	ids, _, page, _ := k.Keeper.GetCommentsByParentId(ctx, req.Id, req.Page)
+	ids, _, page, err := k.Keeper.GetCommentsByParentId(ctx, req.Id, req.Page)
+	if err != nil {
+		types.LogError(k.logger, "get_comments_by_parent_id", err, "parent_id", req.Id)
+		return nil, types.ToGRPCError(err)
+	}
 
 	var commentResponses []*types.CommentResponse
 	for _, commentId := range ids {
@@ -480,7 +505,11 @@ func (k Querier) QueryCommentsReceived(goCtx context.Context, req *types.QueryCo
 func (k Querier) QueryActivitiesReceived(goCtx context.Context, req *types.QueryActivitiesReceivedRequest) (*types.QueryActivitiesReceivedResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	list, _, page, _ := k.ProfileKeeper.GetActivitiesReceived(ctx, req.Address, req.Page)
+	list, _, page, err := k.ProfileKeeper.GetActivitiesReceived(ctx, req.Address, req.Page)
+	if err != nil {
+		profileTypes.LogError(k.ProfileKeeper.Logger(), "get_activities_received", err, "address", req.Address)
+		return nil, profileTypes.ToGRPCError(profileTypes.WrapError(profileTypes.ErrDatabaseOperation, "failed to get activities received"))
+	}
 	var activitiesReceivedList []*types.ActivitiesReceivedResponse
 	for _, activitiesReceived := range list {
 		activitiesReceivedResponse := types.ActivitiesReceivedResponse{
@@ -874,7 +903,8 @@ func (k Querier) QueryTrendingKeywords(goCtx context.Context, req *types.QueryTr
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	keywords, _, page, err := k.GetTrendingKeywords(ctx, req.Page)
 	if err != nil {
-		return &types.QueryTrendingKeywordsResponse{}, nil
+		types.LogError(k.logger, "get_trending_keywords", err, "page", req.Page)
+		return nil, types.ToGRPCError(err)
 	}
 	var topicResponseList []*types.TopicResponse
 	for _, topicHash := range keywords {
@@ -903,7 +933,8 @@ func (k Querier) QueryTrendingTopics(goCtx context.Context, req *types.QueryTren
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	topics, _, page, err := k.GetTrendingTopics(ctx, req.Page)
 	if err != nil {
-		return &types.QueryTrendingTopicsResponse{}, nil
+		types.LogError(k.logger, "get_trending_topics", err, "page", req.Page)
+		return nil, types.ToGRPCError(err)
 	}
 	var topicResponseList []*types.TopicResponse
 	for _, topicHash := range topics {

@@ -373,7 +373,8 @@ func (k Keeper) GetFollowingPagination(ctx sdk.Context, address string, page uin
 	})
 
 	if err != nil {
-		return nil, nil, err
+		types.LogError(k.logger, "get_following_pagination", types.ErrDatabaseOperation, "address", address, "page", page, "limit", limit)
+		return nil, nil, types.WrapError(types.ErrDatabaseOperation, "failed to paginate following list")
 	}
 	return followings, pageRes, nil
 }
@@ -481,7 +482,8 @@ func (k Keeper) GetFollowersPagination(ctx sdk.Context, address string, page uin
 	})
 
 	if err != nil {
-		return nil, nil, err
+		types.LogError(k.logger, "get_followers_pagination", types.ErrDatabaseOperation, "address", address, "page", page, "limit", limit)
+		return nil, nil, types.WrapError(types.ErrDatabaseOperation, "failed to paginate followers list")
 	}
 	return followers, pageRes, nil
 }
@@ -545,14 +547,16 @@ func (k Keeper) GetActivitiesReceived(ctx sdk.Context, address string, page uint
 	pageResponse, err := query.Paginate(store, pageRequest, func(key []byte, value []byte) error {
 		var activity types.ActivitiesReceived
 		if err := k.cdc.Unmarshal(value, &activity); err != nil {
-			return err
+			types.LogError(k.logger, "unmarshal_activities_received", err, "address", address)
+			return types.WrapError(types.ErrDatabaseOperation, "failed to unmarshal activities received")
 		}
 		activitiesList = append(activitiesList, &activity)
 		return nil
 	})
 
 	if err != nil {
-		return nil, nil, uint64(0), err
+		types.LogError(k.logger, "get_activities_received_paginate", err, "address", address, "page", page)
+		return nil, nil, uint64(0), types.WrapError(types.ErrDatabaseOperation, "failed to paginate activities received")
 	}
 	return activitiesList, pageResponse, page, nil
 }
