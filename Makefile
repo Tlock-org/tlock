@@ -315,6 +315,58 @@ sh-testnet: mod-tidy
 .PHONY: setup-testnet set-testnet-configs testnet testnet-basic sh-testnet
 
 ###############################################################################
+###                                    devnet                              ###
+###############################################################################
+
+setup-devnet: mod-tidy is-localic-installed install local-image set-devnet-configs setup-devnet-keys
+
+# Run this before testnet keys are added
+# tlock-testnet-1 is used in the testnet.json
+set-devnet-configs:
+	tlockd config set client chain-id tlock-devnet-1
+	tlockd config set client keyring-backend test
+	tlockd config set client output text
+
+# import keys from testnet.json into test keyring
+setup-devnet-keys:
+	-`echo "decorate bright ozone fork gallery riot bus exhaust worth way bone indoor calm squirrel merry zero scheme cotton until shop any excess stage laundry" | tlockd keys add acc0 --recover`
+	-`echo "wealth flavor believe regret funny network recall kiss grape useless pepper cram hint member few certain unveil rather brick bargain curious require crowd raise" | tlockd keys add acc1 --recover`
+
+devnet: setup-devnet
+	spawn local-ic start devnet
+
+sh-devnet: mod-tidy
+	CHAIN_ID="tlock-devnet-1" BLOCK_TIME="1000ms" CLEAN=true sh scripts/dev_node.sh
+
+.PHONY: setup-devnet set-devnet-configs devnet devnet-basic sh-devnet
+
+###############################################################################
+###                                    devnet2                              ###
+###############################################################################
+
+setup-devnet2: mod-tidy is-localic-installed install local-image set-devnet2-configs setup-devnet2-keys
+
+# Run this before testnet keys are added
+# tlock-devnet2-1 is used in the testnet.json
+set-devnet2-configs:
+	tlockd config set client chain-id tlock-devnet-2
+	tlockd config set client keyring-backend test
+	tlockd config set client output text
+
+# import keys from testnet.json into test keyring
+setup-devnet2-keys:
+	-`echo "decorate bright ozone fork gallery riot bus exhaust worth way bone indoor calm squirrel merry zero scheme cotton until shop any excess stage laundry" | tlockd keys add acc0 --recover`
+	-`echo "wealth flavor believe regret funny network recall kiss grape useless pepper cram hint member few certain unveil rather brick bargain curious require crowd raise" | tlockd keys add acc1 --recover`
+
+devnet2: setup-devnet2
+	spawn local-ic start devnet2
+
+sh-devnet2: mod-tidy
+	CHAIN_ID="tlock-devnet-2" BLOCK_TIME="1000ms" CLEAN=true sh scripts/dev_node_2.sh
+
+.PHONY: setup-devnet2 set-devnet2-configs devnet devnet2-basic sh-devnet2
+
+###############################################################################
 ###                                    mainnet                              ###
 ###############################################################################
 

@@ -673,6 +673,24 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 					},
 				},
+				{
+					RpcMethod: "AdminUpdateTopicCategory",
+					Use:       "admin-update-topic-category [creator] [topic_ids] [category_id]",
+					Short:     "Update topics category (admin operation, supports batch)",
+					Long:      "Update the category assignment of multiple topics at once. Provide topic_ids as comma-separated values. Use empty string for category_id to uncategorize all topics. This is an administrative operation.",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+							Optional:   false,
+						},
+						{
+							ProtoField: "topic_ids",
+						},
+						{
+							ProtoField: "category_id",
+						},
+					},
+				},
 				//{
 				//	RpcMethod: "Mention",
 				//	Use:       "mention [creator] [mention_json]",

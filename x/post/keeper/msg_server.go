@@ -1755,6 +1755,7 @@ func (ms msgServer) UpdateTopic(goCtx context.Context, msg *types.UpdateTopicReq
 
 		ms.k.SetCategoryTopics(ctx, categoryId, id, topic.Score)
 		ms.k.SetTopicCategoryMapping(ctx, id, categoryId)
+		ms.k.RemoveFromUncategorizedTopics(ctx, id)
 	}
 	ms.k.AddTopic(ctx, topic)
 
@@ -1822,4 +1823,142 @@ func (ms msgServer) ClassifyUncategorizedTopic(goCtx context.Context, msg *types
 		}
 	}
 	return &types.ClassifyUncategorizedTopicResponse{Status: true}, nil
+}
+
+// AdminUpdateTopicCategory updates the category assignment of multiple topics (batch operation).
+// This is an administrative operation for managing topic categorization.
+//
+// PERMISSIONS:
+//   - Current: Open to all users (for development/testing)
+//   - Planned: Admin-only (adminLevel > 0)
+//   - TODO: Uncomment admin permission check before production release
+//
+// This method handles batch category management scenarios:
+//   - Assigning multiple topics to a category
+//   - Moving multiple topics between categories
+//   - Removing category assignment from multiple topics (uncategorizing)
+func (ms msgServer) AdminUpdateTopicCategory(goCtx context.Context, msg *types.AdminUpdateTopicCategoryRequest) (*types.AdminUpdateTopicCategoryResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// TODO(SECURITY): Uncomment this block when ready to enforce admin-only access
+	creator := msg.Creator
+	//profile, exists := ms.k.ProfileKeeper.GetProfile(ctx, creator)
+	//if !exists || profile.AdminLevel == 0 {
+	//	return nil, types.ErrRequestDenied
+	//}
+
+	// Step 1: Validate input parameters
+	topicIDs := msg.TopicIds
+	newCategoryID := msg.CategoryId
+
+	if len(topicIDs) == 0 {
+		return nil, types.NewInvalidRequestError("topic_ids cannot be empty")
+	}
+
+	// Limit batch size to prevent abuse
+	if len(topicIDs) > 100 {
+		return nil, types.NewInvalidRequestError("cannot update more than 100 topics at once")
+	}
+
+	// Step 2: Validate category exists if provided
+	if newCategoryID != "" {
+		if !ms.k.CategoryExists(ctx, newCategoryID) {
+			return nil, types.NewInvalidRequestError("category does not exist")
+		}
+	}
+
+	// Step 3: Process each topic
+	var successCount uint64
+	var failedTopics []*types.FailedTopicUpdate
+
+	for _, topicID := range topicIDs {
+		if topicID == "" {
+			failedTopics = append(failedTopics, &types.FailedTopicUpdate{
+				TopicId:      topicID,
+				ErrorMessage: "topic_id cannot be empty",
+			})
+			continue
+		}
+
+		// Get and validate topic exists
+		topic, found := ms.k.GetTopic(ctx, topicID)
+		if !found {
+			failedTopics = append(failedTopics, &types.FailedTopicUpdate{
+				TopicId:      topicID,
+				ErrorMessage: "topic does not exist",
+			})
+			continue
+		}
+
+		oldCategoryID := topic.CategoryId
+
+		// Skip if no change needed
+		if oldCategoryID == newCategoryID {
+			successCount++
+			continue
+		}
+
+		// Remove from old category if exists
+		if oldCategoryID != "" {
+			ms.k.DeleteFromCategoryTopicsByCategoryAndTopicId(ctx, oldCategoryID, topicID, topic.Score)
+
+			// Decrease old category topics count
+			count, found := ms.k.GetCategoryTopicsCount(ctx, oldCategoryID)
+			if found && count > 0 {
+				ms.k.SetCategoryTopicsCount(ctx, oldCategoryID, count-1)
+			}
+		}
+
+		// Remove from uncategorized list if exists
+		if ms.k.IsUncategorizedTopic(ctx, topicID) {
+			ms.k.RemoveFromUncategorizedTopics(ctx, topicID)
+
+			// Decrease uncategorized count
+			unCatCount, found := ms.k.GetUncategorizedTopicsCount(ctx)
+			if found && unCatCount > 0 {
+				ms.k.SetUncategorizedTopicsCount(ctx, uint64(unCatCount-1))
+			}
+		}
+
+		// Add to new category or mark as uncategorized
+		if newCategoryID != "" {
+			// Assign to new category
+			topic.CategoryId = newCategoryID
+			ms.k.SetTopicCategoryMapping(ctx, topicID, newCategoryID)
+			ms.addToCategoryTopics(ctx, newCategoryID, topic)
+		} else {
+			// Uncategorize the topic
+			topic.CategoryId = ""
+			ms.k.SetUncategorizedTopics(ctx, topicID)
+
+			// Increase uncategorized count
+			unCatCount, _ := ms.k.GetUncategorizedTopicsCount(ctx)
+			ms.k.SetUncategorizedTopicsCount(ctx, uint64(unCatCount+1))
+		}
+
+		// Save updated topic
+		ms.k.AddTopic(ctx, topic)
+
+		successCount++
+	}
+
+	// Step 4: Emit event
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeUpdateTopicCategory,
+			sdk.NewAttribute(types.AttributeKeyCreator, creator),
+			sdk.NewAttribute(types.AttributeKeyNewCategoryID, newCategoryID),
+			sdk.NewAttribute("total_topics", fmt.Sprintf("%d", len(topicIDs))),
+			sdk.NewAttribute("success_count", fmt.Sprintf("%d", successCount)),
+			sdk.NewAttribute("failed_count", fmt.Sprintf("%d", len(failedTopics))),
+			sdk.NewAttribute(types.AttributeKeyTimestamp, fmt.Sprintf("%d", ctx.BlockTime().Unix())),
+		),
+	})
+
+	// Step 5: Return response
+	return &types.AdminUpdateTopicCategoryResponse{
+		Success:      len(failedTopics) == 0,
+		TotalUpdated: successCount,
+		FailedTopics: failedTopics,
+	}, nil
 }
