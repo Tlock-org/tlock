@@ -1734,19 +1734,15 @@ func (k Keeper) GetUncategorizedTopics(ctx sdk.Context, page, limit int64) ([]st
 		totalPages = 1
 	}
 
-	currentTime := time.Now()
-	unixMilli := currentTime.Unix()
-	lastTwoDigits := unixMilli % 100
+	// Use the page parameter directly instead of calculating from current time
+	first := (page - 1) * limit
 
-	pageIndex := lastTwoDigits % totalPages
-	// 00-99  10000 00:1-100 01:101-200 02:201-300
-	//first := lastTwoDigits * 100
-	first := pageIndex * limit
-	const totalTopics = types.CategoryTopicsCount
-	if first >= totalTopics {
-		err := types.NewInvalidRequestErrorf("offset %d exceeds total number of category topics %d", first, totalTopics)
-		types.LogError(k.logger, "get_uncategorized_topics_offset", err, "page_index", pageIndex, "limit", limit)
-		return nil, nil, err
+	// Validate offset doesn't exceed total count
+	if first >= unCategoryTopicsCount {
+		return []string{}, &query.PageResponse{
+			NextKey: nil,
+			Total:   uint64(unCategoryTopicsCount),
+		}, nil
 	}
 
 	pagination := &query.PageRequest{}

@@ -66,6 +66,8 @@ service Msg {
 
   rpc ClassifyUncategorizedTopic(ClassifyUncategorizedTopicRequest) returns (ClassifyUncategorizedTopicResponse);
 
+  rpc AdminUpdateTopicCategory(AdminUpdateTopicCategoryRequest) returns (AdminUpdateTopicCategoryResponse);
+
 }
 
 // MsgSetServiceName defines the structure for setting a name.
@@ -383,6 +385,33 @@ message ClassifyUncategorizedTopicRequest {
 
 message ClassifyUncategorizedTopicResponse {
   bool status = 1;
+}
+
+// AdminUpdateTopicCategoryRequest is the request to update topics' category assignment.
+// This is an administrative operation that supports batch updates.
+message AdminUpdateTopicCategoryRequest {
+  option (cosmos.msg.v1.signer) = "creator";
+  // creator is the address performing the operation
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // topic_ids are the IDs of the topics to update (supports multiple topics)
+  repeated string topic_ids = 2;
+  // category_id is the target category ID (empty string to uncategorize all topics)
+  string category_id = 3;
+}
+
+// AdminUpdateTopicCategoryResponse is the response for AdminUpdateTopicCategory.
+message AdminUpdateTopicCategoryResponse {
+  bool success = 1;
+  // total_updated is the number of topics successfully updated
+  uint64 total_updated = 2;
+  // failed_topics contains topic IDs that failed to update with error messages
+  repeated FailedTopicUpdate failed_topics = 3;
+}
+
+// FailedTopicUpdate represents a topic that failed to update
+message FailedTopicUpdate {
+  string topic_id = 1;
+  string error_message = 2;
 }
 
 
