@@ -825,34 +825,34 @@ func (k Querier) QueryIsFollowingTopic(goCtx context.Context, req *types.QueryIs
 // QueryUncategorizedTopics implements types.QueryServer.
 func (k Querier) QueryUncategorizedTopics(goCtx context.Context, req *types.QueryUncategorizedTopicsRequest) (*types.QueryUncategorizedTopicsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	address := req.Address
-	profile, _ := k.ProfileKeeper.GetProfile(ctx, address)
-	if profile.AdminLevel > 0 {
-		topics, response, _ := k.GetUncategorizedTopics(ctx, req.Page, req.Limit)
-		total := response.Total
-		var topicResponseList []*types.TopicResponse
-		for _, topicHash := range topics {
-			topic, _ := k.GetTopic(ctx, topicHash)
-			topicResponse := types.TopicResponse{
-				Id:                    topic.Id,
-				Name:                  topic.Name,
-				Image:                 topic.Image,
-				Title:                 topic.Title,
-				Summary:               topic.Summary,
-				Score:                 topic.Score,
-				TrendingKeywordsScore: topic.TrendingKeywordsScore,
-				CategoryId:            topic.CategoryId,
-				Creator:               topic.Creator,
-			}
-			topicResponseList = append(topicResponseList, &topicResponse)
+	//address := req.Address
+	//profile, _ := k.ProfileKeeper.GetProfile(ctx, address)
+	//if profile.AdminLevel > 0 {
+	topics, response, _ := k.GetUncategorizedTopics(ctx, req.Page, req.Limit)
+	total := response.Total
+	var topicResponseList []*types.TopicResponse
+	for _, topicHash := range topics {
+		topic, _ := k.GetTopic(ctx, topicHash)
+		topicResponse := types.TopicResponse{
+			Id:                    topic.Id,
+			Name:                  topic.Name,
+			Image:                 topic.Image,
+			Title:                 topic.Title,
+			Summary:               topic.Summary,
+			Score:                 topic.Score,
+			TrendingKeywordsScore: topic.TrendingKeywordsScore,
+			CategoryId:            topic.CategoryId,
+			Creator:               topic.Creator,
 		}
-		return &types.QueryUncategorizedTopicsResponse{
-			Total:  total,
-			Topics: topicResponseList,
-		}, nil
-	} else {
-		return nil, types.ToGRPCError(types.ErrRequestDenied)
+		topicResponseList = append(topicResponseList, &topicResponse)
 	}
+	return &types.QueryUncategorizedTopicsResponse{
+		Total:  total,
+		Topics: topicResponseList,
+	}, nil
+	//} else {
+	//	return nil, types.ToGRPCError(types.ErrRequestDenied)
+	//}
 
 }
 
