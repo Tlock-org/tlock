@@ -42,6 +42,10 @@ const (
 
 	UserSearchFixedLength = 36
 	UserSearchPaddingChar = 0
+
+	ProfileMessagePrefix      = "Profile/Messages/"
+	ProfileMessageCountPrefix = "Profile/Messages/count/"
+	ProfileMaxMessagesPerPair = 20
 )
 
 var ORMModuleSchema = ormv1alpha1.ModuleSchemaDescriptor{

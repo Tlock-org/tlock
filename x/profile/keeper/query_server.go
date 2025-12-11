@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/rollchains/tlock/x/profile/types"
@@ -241,5 +242,32 @@ func (k Querier) IsAdmin(goCtx context.Context, req *types.IsAdminRequest) (*typ
 	isAdmin := k.Keeper.IsAdmin(ctx, req.Address)
 	return &types.IsAdminResponse{
 		Status: isAdmin,
+	}, nil
+}
+
+// QueryMessages implements types.QueryServer.
+func (k Querier) QueryMessages(goCtx context.Context, req *types.QueryMessagesRequest) (*types.QueryMessagesResponse, error) {
+	if req == nil {
+		return nil, types.ToGRPCError(types.ErrInvalidRequest)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Validate addresses
+	_, err := sdk.AccAddressFromBech32(req.ReceiverAddr)
+	if err != nil {
+		return nil, errors.Wrapf(types.ErrInvalidAddress, "invalid receiver address: %s", err)
+	}
+
+	_, err = sdk.AccAddressFromBech32(req.SenderAddr)
+	if err != nil {
+		return nil, errors.Wrapf(types.ErrInvalidAddress, "invalid sender address: %s", err)
+	}
+
+	// Get messages
+	txHashes := k.Keeper.GetMessages(ctx, req.ReceiverAddr, req.SenderAddr)
+
+	return &types.QueryMessagesResponse{
+		TxHashes: txHashes,
 	}, nil
 }

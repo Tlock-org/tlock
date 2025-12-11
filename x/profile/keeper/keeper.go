@@ -638,3 +638,66 @@ func (k Keeper) RemoveEditableAdmin(ctx sdk.Context, address string) error {
 	store.Delete(key)
 	return nil
 }
+
+// GetMessageCount returns the message count between two users
+func (k Keeper) GetMessageCount(ctx sdk.Context, receiverAddr string, senderAddr string) int64 {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileMessageCountPrefix))
+	key := []byte(fmt.Sprintf("%s/%s", receiverAddr, senderAddr))
+	bz := store.Get(key)
+	if bz == nil {
+		return 0
+	}
+	return btoi(bz)
+}
+
+// SetMessageCount sets the message count between two users
+func (k Keeper) SetMessageCount(ctx sdk.Context, receiverAddr string, senderAddr string, count int64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.ProfileMessageCountPrefix))
+	key := []byte(fmt.Sprintf("%s/%s", receiverAddr, senderAddr))
+	bz := itob(count)
+	store.Set(key, bz)
+}
+
+// DeleteOldestMessage deletes the oldest message between two users
+func (k Keeper) DeleteOldestMessage(ctx sdk.Context, receiverAddr string, senderAddr string) {
+	storePrefix := fmt.Sprintf("%s%s/%s/", types.ProfileMessagePrefix, receiverAddr, senderAddr)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(storePrefix))
+
+	// Use iterator to find the first (oldest) message
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	if iterator.Valid() {
+		oldestKey := iterator.Key()
+		store.Delete(oldestKey)
+	}
+}
+
+// StoreMessage stores a message txHash between sender and receiver
+func (k Keeper) StoreMessage(ctx sdk.Context, receiverAddr string, senderAddr string, txHash string) {
+	blockTime := ctx.BlockTime().Unix()
+	storePrefix := fmt.Sprintf("%s%s/%s/", types.ProfileMessagePrefix, receiverAddr, senderAddr)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(storePrefix))
+
+	// Use timestamp as key
+	messageKey := itob(blockTime)
+	store.Set(messageKey, []byte(txHash))
+}
+
+// GetMessages retrieves all message txHashes between two users (for query)
+func (k Keeper) GetMessages(ctx sdk.Context, receiverAddr string, senderAddr string) []string {
+	storePrefix := fmt.Sprintf("%s%s/%s/", types.ProfileMessagePrefix, receiverAddr, senderAddr)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(storePrefix))
+
+	// Reverse iterator to get latest messages first
+	iterator := store.ReverseIterator(nil, nil)
+	defer iterator.Close()
+
+	var txHashes []string
+	for ; iterator.Valid(); iterator.Next() {
+		txHash := string(iterator.Value())
+		txHashes = append(txHashes, txHash)
+	}
+
+	return txHashes
+}
