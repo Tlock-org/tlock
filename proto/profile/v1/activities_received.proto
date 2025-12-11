@@ -11,6 +11,7 @@ enum ActivitiesType {
   ACTIVITIES_COMMENT = 2;
   ACTIVITIES_FOLLOW = 3;
   ACTIVITIES_MENTION = 4;
+  ACTIVITIES_SEND_MESSAGE = 5;
 }
 
 // ActivitiesReceived defines the structure of a Activities Received
