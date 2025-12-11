@@ -133,7 +133,7 @@ message MsgManageAdminResponse {
 message SendMessageRequest {
   option (cosmos.msg.v1.signer) = "creator";
   string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  string targetAddr = 2;
+  string receiver = 2;
   string content = 3;
 }
 
