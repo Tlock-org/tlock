@@ -238,7 +238,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				},
 				{
 					RpcMethod: "SendMessage",
-					Use:       "send-message [creator] [targetAddr] [content]",
+					Use:       "send-message [creator] [receiver] [content]",
 					Short:     "Send message",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{
@@ -246,7 +246,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 							Optional:   false,
 						},
 						{
-							ProtoField: "targetAddr",
+							ProtoField: "receiver",
 						},
 						{
 							ProtoField: "content",
