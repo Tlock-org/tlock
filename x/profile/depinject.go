@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 
@@ -45,6 +46,7 @@ type ModuleInputs struct {
 	StoreService store.KVStoreService
 	AddressCodec address.Codec
 
+	AccountKeeper  authkeeper.AccountKeeper
 	StakingKeeper  stakingkeeper.Keeper
 	SlashingKeeper slashingkeeper.Keeper
 	paramSpace     paramstypes.Subspace
@@ -60,7 +62,7 @@ type ModuleOutputs struct {
 func ProvideModule(in ModuleInputs) ModuleOutputs {
 	govAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
-	k := keeper.NewKeeper(in.Cdc, in.storeKey, in.StoreService, log.NewLogger(os.Stderr), govAddr, in.paramSpace)
+	k := keeper.NewKeeper(in.Cdc, in.storeKey, in.StoreService, log.NewLogger(os.Stderr), govAddr, in.paramSpace, in.AccountKeeper)
 	m := NewAppModule(in.Cdc, k)
 
 	return ModuleOutputs{Module: m, Keeper: k, Out: depinject.Out{}}

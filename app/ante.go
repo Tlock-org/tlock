@@ -11,6 +11,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+
+	"github.com/rollchains/tlock/app/decorators"
+	profilekeeper "github.com/rollchains/tlock/x/profile/keeper"
 )
 
 // HandlerOptions extend the SDK's AnteHandler options by requiring the IBC
@@ -20,6 +23,7 @@ type HandlerOptions struct {
 
 	IBCKeeper     *keeper.Keeper
 	CircuitKeeper *circuitkeeper.Keeper
+	ProfileKeeper profilekeeper.Keeper
 
 	BypassMinFeeMsgTypes []string
 }
@@ -48,7 +52,8 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
-		ante.NewSetPubKeyDecorator(options.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
+		ante.NewSetPubKeyDecorator(options.AccountKeeper),                                  // SetPubKeyDecorator must be called before all signature verification decorators
+		decorators.NewProfilePubKeyDecorator(options.AccountKeeper, options.ProfileKeeper), // Update profile public key automatically
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
 		ante.NewSigGasConsumeDecorator(options.AccountKeeper, options.SigGasConsumer),
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
