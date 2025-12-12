@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"strings"
@@ -36,6 +37,7 @@ type Keeper struct {
 	authority     string
 	storeKey      kvtypes.StoreKey
 	paramSubspace paramtypes.Subspace
+	accountKeeper authkeeper.AccountKeeper
 }
 
 // NewKeeper creates a new Keeper instance
@@ -46,6 +48,7 @@ func NewKeeper(
 	logger log.Logger,
 	authority string,
 	paramSpace paramtypes.Subspace,
+	accountKeeper authkeeper.AccountKeeper,
 ) Keeper {
 	logger = logger.With(log.ModuleKey, "x/"+types.ModuleName)
 	if !paramSpace.HasKeyTable() {
@@ -80,6 +83,7 @@ func NewKeeper(
 		storeKey:      storeKey,
 		authority:     authority,
 		paramSubspace: paramSpace,
+		accountKeeper: accountKeeper,
 	}
 
 	schema, err := sb.Build()

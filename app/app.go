@@ -638,6 +638,7 @@ func NewChainApp(
 		logger,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		profileSubspace,
+		app.AccountKeeper, // Add AccountKeeper for public key retrieval
 	)
 
 	// Create the post Keeper
@@ -988,6 +989,7 @@ func NewChainApp(
 			},
 			IBCKeeper:     app.IBCKeeper,
 			CircuitKeeper: &app.CircuitKeeper,
+			ProfileKeeper: app.ProfileKeeper,
 		},
 	)
 	if err != nil {

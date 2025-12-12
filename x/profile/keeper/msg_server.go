@@ -2,15 +2,16 @@ package keeper
 
 import (
 	"context"
-	"cosmossdk.io/errors"
 	"encoding/hex"
 	"fmt"
+	"math/rand"
+	"strings"
+
+	"cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/rollchains/tlock/x/profile/types"
-	"math/rand"
-	"strings"
 )
 
 type msgServer struct {
@@ -226,6 +227,14 @@ func (ms msgServer) AddProfile(goCtx context.Context, msg *types.MsgAddProfileRe
 
 	if dbProfile.Level < 3 {
 		dbProfile.Level = uint64(rand.Intn(3) + 3)
+	}
+
+	// Preserve pub_key if it was set by the ante decorator
+	// The ProfilePubKeyDecorator may have already set the pub_key in the ante handler
+	// We need to preserve it to avoid overwriting
+	currentProfile, exists := ms.k.GetProfile(ctx, msg.Creator)
+	if exists && currentProfile.PubKey != "" && dbProfile.PubKey == "" {
+		dbProfile.PubKey = currentProfile.PubKey
 	}
 
 	ms.k.SetProfile(ctx, dbProfile)
@@ -611,7 +620,7 @@ func (ms msgServer) ManageAdmin(goCtx context.Context, msg *types.MsgManageAdmin
 func (ms msgServer) SendMessage(goCtx context.Context, msg *types.SendMessageRequest) (*types.SendMessageResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	creator := msg.GetCreator()
-	targetAddr := msg.GetTargetAddr()
+	targetAddr := msg.Receiver
 
 	// Validate creator address
 	_, err := sdk.AccAddressFromBech32(creator)
