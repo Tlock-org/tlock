@@ -3,7 +3,9 @@ package keeper
 import (
 	"context"
 	"cosmossdk.io/errors"
+	"encoding/hex"
 	"fmt"
+	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/rollchains/tlock/x/profile/types"
@@ -603,4 +605,81 @@ func (ms msgServer) ManageAdmin(goCtx context.Context, msg *types.MsgManageAdmin
 		Status: true,
 	}, nil
 
+}
+
+// SendMessage implements types.MsgServer.
+func (ms msgServer) SendMessage(goCtx context.Context, msg *types.SendMessageRequest) (*types.SendMessageResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	creator := msg.GetCreator()
+	targetAddr := msg.GetTargetAddr()
+
+	// Validate creator address
+	_, err := sdk.AccAddressFromBech32(creator)
+	if err != nil {
+		return nil, errors.Wrapf(types.ErrInvalidAddress, "invalid creator address: %s", err)
+	}
+
+	// Validate target address
+	_, err = sdk.AccAddressFromBech32(targetAddr)
+	if err != nil {
+		return nil, errors.Wrapf(types.ErrInvalidAddress, "invalid target address: %s", err)
+	}
+
+	// Prevent sending message to self
+	if creator == targetAddr {
+		return nil, errors.Wrap(types.ErrInvalidRequest, "cannot send message to yourself")
+	}
+
+	// Get txHash from transaction bytes
+	txBytes := ctx.TxBytes()
+	if len(txBytes) == 0 {
+		return nil, errors.Wrap(types.ErrInvalidRequest, "tx bytes not found")
+	}
+	rawHash := tmhash.Sum(txBytes)
+	txHash := strings.ToUpper(hex.EncodeToString(rawHash[:]))
+
+	// Store the message
+	ms.k.StoreMessage(ctx, targetAddr, creator, txHash)
+
+	// Get current message count
+	count := ms.k.GetMessageCount(ctx, targetAddr, creator)
+
+	// If count reaches maximum, delete the oldest message
+	if count >= types.ProfileMaxMessagesPerPair {
+		ms.k.DeleteOldestMessage(ctx, targetAddr, creator)
+	} else {
+		// Increment count only if not at maximum
+		count++
+		ms.k.SetMessageCount(ctx, targetAddr, creator, count)
+	}
+
+	activitiesReceived := types.ActivitiesReceived{
+		Address:        creator,
+		TargetAddress:  targetAddr,
+		ActivitiesType: types.ActivitiesType_ACTIVITIES_SEND_MESSAGE,
+		Timestamp:      ctx.BlockTime().Unix(),
+	}
+	ms.k.SetActivitiesReceived(ctx, activitiesReceived, targetAddr, creator)
+	count, b := ms.k.GetActivitiesReceivedCount(ctx, targetAddr)
+	if !b {
+		types.LogError(ms.k.logger, "send_message", types.ErrDatabaseOperation, "operation", "GetActivitiesReceivedCount", "target", targetAddr)
+	}
+	count += 1
+	if count > types.ActivitiesReceivedCount {
+		ms.k.DeleteLastActivitiesReceived(ctx, targetAddr)
+	}
+	ms.k.SetActivitiesReceivedCount(ctx, targetAddr, count)
+
+	// Emit event
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			"send_message",
+			sdk.NewAttribute("sender", creator),
+			sdk.NewAttribute("receiver", targetAddr),
+			sdk.NewAttribute("content", msg.GetContent()),
+			sdk.NewAttribute("tx_hash", txHash),
+		),
+	})
+
+	return &types.SendMessageResponse{Status: true}, nil
 }

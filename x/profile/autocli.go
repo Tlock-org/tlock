@@ -19,7 +19,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 				{
 					RpcMethod: "QueryProfile",
 					Use:       "get [address]",
-					Short:     "Get the profile by wallet_address",
+					Short:     "Get the profile by address",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "address"},
 					},
@@ -114,6 +114,19 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					Short:     "Check if address is admin",
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "address"},
+					},
+				},
+				{
+					RpcMethod: "QueryMessages",
+					Use:       "query-messages [receiver_addr] [sender_addr]",
+					Short:     "Query messages",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "receiver_addr",
+						},
+						{
+							ProtoField: "sender_addr",
+						},
 					},
 				},
 			},
@@ -220,6 +233,23 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 						},
 						{
 							ProtoField: "manage_json",
+						},
+					},
+				},
+				{
+					RpcMethod: "SendMessage",
+					Use:       "send-message [creator] [receiver] [content]",
+					Short:     "Send message",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{
+							ProtoField: "creator",
+							Optional:   false,
+						},
+						{
+							ProtoField: "receiver",
+						},
+						{
+							ProtoField: "content",
 						},
 					},
 				},
